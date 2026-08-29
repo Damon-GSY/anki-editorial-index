@@ -16,6 +16,11 @@ ARCHIVE = ROOT / "dist" / "Editorial-Index.ankiaddon"
 CHECKSUMS = ROOT / "dist" / "SHA256SUMS"
 
 
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise ValueError(message)
+
+
 def check_python() -> None:
     for path in ADDON.glob("*.py"):
         compile(path.read_text(encoding="utf-8"), str(path), "exec")
@@ -24,12 +29,12 @@ def check_python() -> None:
 def check_json() -> None:
     manifest = json.loads((ADDON / "manifest.json").read_text(encoding="utf-8"))
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
-    assert manifest["package"] == "mistline_ui"
-    assert manifest["name"]
-    assert manifest["human_version"] == "0.2.1"
-    assert manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index"
-    assert isinstance(config["enabled"], bool)
-    assert re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])
+    require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
+    require(bool(manifest["name"]), "manifest name is required")
+    require(manifest["human_version"] == "0.2.2", "manifest version must be 0.2.2")
+    require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
+    require(isinstance(config["enabled"], bool), "enabled must be boolean")
+    require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
 
 
 def check_runtime_scope() -> None:
@@ -42,7 +47,7 @@ def check_runtime_scope() -> None:
         "theme_did_change",
         "webview_did_inject_style_into_page",
     ):
-        assert hook in source
+        require(hook in source, f"missing Anki hook: {hook}")
     for context in (
         "DeckBrowser",
         "Overview",
@@ -50,31 +55,40 @@ def check_runtime_scope() -> None:
         "TopToolbar",
         "ReviewerBottomBar",
     ):
-        assert context in source
-    assert "#qa *" not in css
-    assert '#outer #ansbut' in css
-    assert 'padding-block: var(--mist-space-1) var(--mist-space-2)' in css
-    assert 'center > table[width="400"]' in css
-    assert 'tr.deck:has(a.collapse)' in css
-    assert '.decktd' in css and 'min-width: 0' in css
-    assert 'table-layout: fixed' in css
-    assert 'width: calc(25%' not in css
-    assert "congrats" in source
-    assert css.count("{") == css.count("}")
+        require(context in source, f"missing UI context: {context}")
+    require("#qa *" not in css, "reviewer content must not be globally restyled")
+    require('#outer #ansbut' in css, "Show Answer action style missing")
+    require('padding-block: var(--mist-space-1) var(--mist-space-2)' in css, "reviewer bottom spacing token missing")
+    require('center > table[width="400"]' in css, "overview compatibility selector missing")
+    require('tr.deck:has(a.collapse)' in css, "parent deck selector missing")
+    require('.decktd' in css and 'min-width: 0' in css, "compact deck width fallback missing")
+    require('table-layout: fixed' in css, "compact table layout fallback missing")
+    require('width: calc(25%' not in css, "fragile fixed rating width returned")
+    require("congrats" in source, "Congratulations surface hook missing")
+    require(css.count("{") == css.count("}"), "theme.css brace count mismatch")
     runtime = "\n".join(
         path.read_text(encoding="utf-8", errors="ignore")
         for path in ADDON.rglob("*")
         if path.is_file()
     ).lower()
-    assert "bewlycat" not in runtime
-    assert "bewlybewly" not in runtime
-    assert "bilibili" not in runtime
+    require("bewlycat" not in runtime, "runtime contains BewlyCat attribution")
+    require("bewlybewly" not in runtime, "runtime contains BewlyBewly attribution")
+    require("bilibili" not in runtime, "runtime contains unrelated Bilibili content")
 
 
 def check_archive() -> None:
-    assert ARCHIVE.is_file(), "run scripts/package_addon.py first"
+    require(ARCHIVE.is_file(), "run scripts/package_addon.py first")
+    source_files = {
+        path.relative_to(ADDON).as_posix(): path
+        for path in ADDON.rglob("*")
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+    }
     with zipfile.ZipFile(ARCHIVE) as archive:
         entries = set(archive.namelist())
+        expected_entries = set(source_files)
+        require(entries == expected_entries, f"archive file set mismatch; missing={sorted(expected_entries - entries)}, extra={sorted(entries - expected_entries)}")
+        for relative, source_path in source_files.items():
+            require(archive.read(relative) == source_path.read_bytes(), f"archive content is stale: {relative}")
     for required in (
         "__init__.py",
         "LICENSE",
@@ -92,10 +106,10 @@ def check_archive() -> None:
         "web/fonts/OFL.txt",
         "web/fonts/NOTICE.md",
     ):
-        assert required in entries
+        require(required in entries, f"archive missing required file: {required}")
 
     digest = hashlib.sha256(ARCHIVE.read_bytes()).hexdigest()
-    assert CHECKSUMS.read_text(encoding="utf-8") == f"{digest}  {ARCHIVE.name}\n"
+    require(CHECKSUMS.read_text(encoding="utf-8") == f"{digest}  {ARCHIVE.name}\n", "archive checksum is stale")
 
 
 def main() -> None:

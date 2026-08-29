@@ -153,14 +153,19 @@
     color var(--mist-transition),
     background-color var(--mist-transition),
     border-color var(--mist-transition),
+    box-shadow var(--mist-transition),
     transform var(--mist-transition);
 }
 
 :root[data-mistline-context] button:focus-visible,
-:root[data-mistline-context] .btn:focus-visible,
+:root[data-mistline-context] .btn:focus-visible {
+  outline: 2px solid var(--mist-accent) !important;
+  outline-offset: 3px !important;
+}
+
 :root[data-mistline-context] a:focus-visible {
-  outline: 2px solid var(--mist-accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--mist-accent) !important;
+  outline-offset: 3px !important;
 }
 
 :root[data-mistline-context] button:active,
@@ -453,11 +458,17 @@
 
 /* Top toolbar: an editorial masthead, not a floating surface. */
 :root[data-mistline-context="top-toolbar"] body {
+  margin-bottom: 0;
   background-image: none;
 }
 
 :root[data-mistline-context="top-toolbar"] .header,
 :root[data-mistline-context="top-toolbar"][data-mistline-glass="on"] .header {
+  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 60px;
+  padding: var(--mist-space-1) clamp(10px, 2vw, 28px);
   border: 0;
   border-bottom: 1px solid var(--mist-rule-strong);
   background: var(--mist-paper-light);
@@ -466,36 +477,101 @@
   -webkit-backdrop-filter: none;
 }
 
-:root[data-mistline-context="top-toolbar"] .hitem,
+:root[data-mistline-context="top-toolbar"] .toolbar,
+:root[data-mistline-context="top-toolbar"] body.fancy .toolbar,
+:root[data-mistline-context="top-toolbar"] body.fancy:not(.flat) .toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mist-space-1);
+  min-width: 0;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 :root[data-mistline-context="top-toolbar"] .tray-item {
   position: relative;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding-block: 8px;
-  border-radius: 0;
-  color: var(--mist-ink);
-  transition: color var(--mist-transition), background-color var(--mist-transition);
 }
 
-:root[data-mistline-context="top-toolbar"] .hitem:hover,
-:root[data-mistline-context="top-toolbar"] .tray-item:hover {
-  background-color: var(--mist-paper-deep);
+:root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem {
+  position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--mist-rule);
+  border-radius: var(--mist-action-radius);
+  color: var(--mist-ink);
+  background: color-mix(in srgb, var(--mist-paper-light) 78%, transparent);
+  box-shadow: var(--mist-action-shadow);
+  text-decoration: none;
+  transition:
+    color var(--mist-transition),
+    background-color var(--mist-transition),
+    border-color var(--mist-transition),
+    box-shadow var(--mist-transition),
+    transform var(--mist-transition);
+}
+
+:root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:first-child,
+:root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:last-child {
+  padding-inline: 16px;
+}
+
+:root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:hover {
+  border-color: var(--mist-rule-strong);
+  background: color-mix(in srgb, var(--mist-paper-light) 92%, var(--mist-ink) 8%);
+  box-shadow: var(--mist-action-shadow-hover);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+:root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:active {
+  background: var(--mist-paper-deep);
+  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
+  transform: translateY(1px);
 }
 
 :root[data-mistline-context="top-toolbar"] #decks,
 :root[data-mistline-context="top-toolbar"] #add,
 :root[data-mistline-context="top-toolbar"] #browse,
-:root[data-mistline-context="top-toolbar"] #stats {
+:root[data-mistline-context="top-toolbar"] #stats,
+:root[data-mistline-context="top-toolbar"] #sync {
   color: var(--mist-ink);
   font-size: 15px;
   font-weight: 400;
   letter-spacing: -0.01em;
 }
 
+:root[data-mistline-context="top-toolbar"] .header .toolbar > #decks {
+  border-color: color-mix(in srgb, var(--mist-accent) 58%, var(--mist-rule));
+  color: var(--mist-accent);
+  background: color-mix(in srgb, var(--mist-paper-light) 92%, var(--mist-accent) 8%);
+}
+
 :root[data-mistline-context="top-toolbar"] #sync {
   color: var(--mist-accent);
+}
+
+:root[data-mistline-context="top-toolbar"] #sync-spinner {
+  height: 14px;
+  margin-inline-start: 0;
+}
+
+:root[data-mistline-context="top-toolbar"] #sync-spinner.spin {
+  width: 14px !important;
+  margin-inline-start: 6px;
 }
 
 /* Shared bottom toolbar: one quiet baseline. */
@@ -514,22 +590,35 @@
 
 :root[data-mistline-context="standard-bottom-bar"] #header {
   box-sizing: border-box;
+  width: 100%;
+}
+
+:root[data-mistline-context="standard-bottom-bar"] #header td {
+  white-space: normal;
 }
 
 :root[data-mistline-context="standard-bottom-bar"] #outer button,
 :root[data-mistline-context="reviewer-bottom-bar"] #outer button {
-  min-height: 36px;
-  border: 1px solid transparent;
-  border-radius: 2px;
+  min-height: 44px;
+  border: 1px solid var(--mist-rule);
+  border-radius: var(--mist-action-radius);
   color: var(--mist-ink);
-  background: transparent;
-  box-shadow: none;
+  background: color-mix(in srgb, var(--mist-paper-light) 78%, transparent);
+  box-shadow: var(--mist-action-shadow);
 }
 
 :root[data-mistline-context="standard-bottom-bar"] #outer button:hover,
 :root[data-mistline-context="reviewer-bottom-bar"] #outer button:hover {
-  border-color: var(--mist-rule);
-  background: var(--mist-paper-deep);
+  border-color: var(--mist-rule-strong);
+  background: color-mix(in srgb, var(--mist-paper-light) 90%, var(--mist-ink) 10%);
+  box-shadow: var(--mist-action-shadow-hover);
+  transform: translateY(-1px);
+}
+
+:root[data-mistline-context="standard-bottom-bar"] #outer button:active,
+:root[data-mistline-context="reviewer-bottom-bar"] #outer button:active {
+  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
+  transform: translateY(1px);
 }
 
 /* Reviewer rating tray: four related decisions with individually legible surfaces. */
@@ -555,16 +644,23 @@
   min-width: 0;
   min-height: 52px;
   border: 1px solid var(--mist-accent);
-  border-radius: 2px;
+  border-radius: var(--mist-action-radius);
   color: var(--mist-accent);
-  background: transparent;
-  box-shadow: none;
+  background: color-mix(in srgb, var(--mist-paper-light) 82%, transparent);
+  box-shadow: var(--mist-action-shadow);
   font-weight: 700;
 }
 
 :root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut:hover {
   color: var(--mist-paper-light);
   background: var(--mist-accent);
+  box-shadow: var(--mist-action-shadow-hover);
+  transform: translateY(-1px);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut:active {
+  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
+  transform: translateY(1px);
 }
 
 :root[data-mistline-context="reviewer-bottom-bar"] #middle > center {
@@ -610,17 +706,27 @@
   color: var(--mist-due);
 }
 
-:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease="2"] {
+:root[data-mistline-context="reviewer-bottom-bar"] #middle > center:has(button[data-ease="4"]) button[data-ease="2"] {
   border-color: var(--mist-learn);
   color: var(--mist-learn);
 }
 
-:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease="3"] {
+:root[data-mistline-context="reviewer-bottom-bar"] #middle > center:has(button[data-ease="4"]) button[data-ease="3"] {
   border-color: var(--mist-good);
   color: var(--mist-good);
 }
 
 :root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease="4"] {
+  border-color: var(--mist-easy);
+  color: var(--mist-easy);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle > center:not(:has(button[data-ease="4"])) button[data-ease="2"] {
+  border-color: var(--mist-good);
+  color: var(--mist-good);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle > center:not(:has(button[data-ease="4"])) button[data-ease="3"] {
   border-color: var(--mist-easy);
   color: var(--mist-easy);
 }
@@ -637,8 +743,8 @@
 }
 
 :root[data-mistline-context="reviewer-bottom-bar"] #defease {
-  outline: 2px solid var(--mist-accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--mist-accent) !important;
+  outline-offset: 3px !important;
 }
 
 /* External Congratulations surface. */
@@ -680,12 +786,27 @@
 }
 
 @media (max-width: 720px) {
-  :root[data-mistline-context="reviewer-bottom-bar"] .stat {
-    display: none;
+  :root[data-mistline-context="top-toolbar"] .header,
+  :root[data-mistline-context="top-toolbar"][data-mistline-glass="on"] .header {
+    min-height: 56px;
+    padding-inline: 4px;
+  }
+
+  :root[data-mistline-context="top-toolbar"] .toolbar,
+  :root[data-mistline-context="top-toolbar"] body.fancy .toolbar,
+  :root[data-mistline-context="top-toolbar"] body.fancy:not(.flat) .toolbar {
+    gap: 4px;
+  }
+
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem,
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:first-child,
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:last-child {
+    padding-inline: 10px;
   }
 
   :root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut {
-    width: min(78vw, 420px);
+    width: min(100%, 420px);
+    max-width: calc(100% - 8px);
   }
 
   :root[data-mistline-context="reviewer-bottom-bar"] #outer {
@@ -701,7 +822,29 @@
   }
 }
 
+@media (max-width: 583px) {
+  :root[data-mistline-context="reviewer-bottom-bar"] .stat {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem,
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:first-child,
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:last-child {
+    padding-inline: 8px;
+  }
+
+  :root[data-mistline-context="standard-bottom-bar"] #header {
+    padding-inline: 4px;
+  }
+
+  :root[data-mistline-context="standard-bottom-bar"] #outer button {
+    margin: 4px 2px;
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+
   :root[data-mistline-context="deck-browser"] table {
     table-layout: fixed;
   }
@@ -731,6 +874,44 @@
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: middle;
+  }
+}
+
+@media (max-width: 360px) {
+  :root[data-mistline-context="top-toolbar"] .header,
+  :root[data-mistline-context="top-toolbar"][data-mistline-glass="on"] .header {
+    padding-inline: 2px;
+  }
+
+  :root[data-mistline-context="top-toolbar"] .toolbar,
+  :root[data-mistline-context="top-toolbar"] body.fancy .toolbar,
+  :root[data-mistline-context="top-toolbar"] body.fancy:not(.flat) .toolbar {
+    width: calc(100vw - 4px);
+    gap: 2px;
+  }
+
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem,
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:first-child,
+  :root[data-mistline-context="top-toolbar"] .header .toolbar > .hitem:last-child {
+    flex: 1 1 0;
+    overflow: hidden;
+    padding-inline: 6px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :root[data-mistline-context="top-toolbar"] #decks,
+  :root[data-mistline-context="top-toolbar"] #add,
+  :root[data-mistline-context="top-toolbar"] #browse,
+  :root[data-mistline-context="top-toolbar"] #stats,
+  :root[data-mistline-context="top-toolbar"] #sync {
+    font-size: 14px;
+  }
+
+  :root[data-mistline-context="top-toolbar"] #sync-spinner.spin {
+    width: 12px !important;
+    height: 12px;
+    margin-inline-start: 3px;
   }
 }
 
