@@ -26,7 +26,7 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     assert manifest["package"] == "mistline_ui"
     assert manifest["name"]
-    assert manifest["human_version"] == "0.2.0"
+    assert manifest["human_version"] == "0.2.1"
     assert manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index"
     assert isinstance(config["enabled"], bool)
     assert re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])
@@ -52,6 +52,13 @@ def check_runtime_scope() -> None:
     ):
         assert context in source
     assert "#qa *" not in css
+    assert '#outer #ansbut' in css
+    assert 'padding-block: var(--mist-space-1) var(--mist-space-2)' in css
+    assert 'center > table[width="400"]' in css
+    assert 'tr.deck:has(a.collapse)' in css
+    assert '.decktd' in css and 'min-width: 0' in css
+    assert 'table-layout: fixed' in css
+    assert 'width: calc(25%' not in css
     assert "congrats" in source
     assert css.count("{") == css.count("}")
     runtime = "\n".join(

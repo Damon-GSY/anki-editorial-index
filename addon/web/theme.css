@@ -144,6 +144,7 @@
 
 :root[data-mistline-context] button,
 :root[data-mistline-context] .btn {
+  box-sizing: border-box;
   border-radius: 2px;
   box-shadow: none;
   font-family: var(--mist-sans);
@@ -170,8 +171,9 @@
 /* Deck Browser: a quiet ledger with one scanning typeface and fixed count axes. */
 :root[data-mistline-context="deck-browser"] body {
   width: min(100%, 1160px);
+  margin-block: 0;
   margin-inline: auto;
-  padding: clamp(40px, 6vh, 72px) clamp(20px, 5vw, 72px) 48px;
+  padding: clamp(40px, 6vh, 72px) clamp(14px, 5vw, 72px) 48px;
 }
 
 :root[data-mistline-context="deck-browser"] .mistline-deck-heading {
@@ -187,7 +189,7 @@
 :root[data-mistline-context="deck-browser"] .mistline-deck-heading h1 {
   margin: 0;
   color: var(--mist-ink);
-  font: 600 clamp(34px, 3vw, 46px) / 1 var(--mist-serif);
+  font: 600 clamp(30px, 3vw, 46px) / 1 var(--mist-serif);
   letter-spacing: -0.025em;
 }
 
@@ -199,7 +201,9 @@
 }
 
 :root[data-mistline-context="deck-browser"] table {
+  box-sizing: border-box;
   width: 100%;
+  padding: 0;
   border-collapse: collapse;
 }
 
@@ -247,7 +251,7 @@
   text-decoration: none;
 }
 
-:root[data-mistline-context="deck-browser"] tr.deck:has(.collapse) a.deck {
+:root[data-mistline-context="deck-browser"] tr.deck:has(a.collapse) a.deck {
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.008em;
@@ -310,8 +314,16 @@
 /* Overview: a quiet reading sheet between index and review. */
 :root[data-mistline-context="overview"] body {
   width: min(100%, 860px);
+  margin-block: 0;
   margin-inline: auto;
-  padding: clamp(48px, 8vh, 88px) clamp(22px, 6vw, 72px) 56px;
+  padding: clamp(48px, 8vh, 88px) clamp(14px, 6vw, 72px) 56px;
+}
+
+:root[data-mistline-context="overview"] center > table[width="400"] {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 640px;
+  table-layout: fixed;
 }
 
 :root[data-mistline-context="overview"] h3 {
@@ -391,7 +403,7 @@
   box-sizing: border-box;
   min-height: 100vh;
   margin: 0;
-  padding: clamp(24px, 5vw, 64px);
+  padding: clamp(12px, 5vw, 64px);
   color: var(--mist-ink);
   background-color: var(--mist-paper);
   background-image: var(--mist-paper-field);
@@ -405,7 +417,7 @@
   width: min(100%, var(--mist-measure));
   min-height: min(58vh, 620px);
   margin-inline: auto;
-  padding: clamp(48px, 8vh, 88px) clamp(16px, 4vw, 44px);
+  padding: clamp(28px, 8vh, 88px) clamp(12px, 4vw, 44px);
   border: 0;
   border-block: 1px solid var(--mist-rule);
   border-radius: 0;
@@ -457,6 +469,11 @@
 :root[data-mistline-context="top-toolbar"] .hitem,
 :root[data-mistline-context="top-toolbar"] .tray-item {
   position: relative;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 8px;
   border-radius: 0;
   color: var(--mist-ink);
   transition: color var(--mist-transition), background-color var(--mist-transition);
@@ -495,6 +512,10 @@
   box-shadow: none;
 }
 
+:root[data-mistline-context="standard-bottom-bar"] #header {
+  box-sizing: border-box;
+}
+
 :root[data-mistline-context="standard-bottom-bar"] #outer button,
 :root[data-mistline-context="reviewer-bottom-bar"] #outer button {
   min-height: 36px;
@@ -516,6 +537,11 @@
   color: var(--mist-muted);
 }
 
+:root[data-mistline-context="reviewer-bottom-bar"] #outer {
+  box-sizing: border-box;
+  padding-block: var(--mist-space-1) var(--mist-space-2);
+}
+
 :root[data-mistline-context="reviewer-bottom-bar"] .stattxt,
 :root[data-mistline-context="reviewer-bottom-bar"] .nobold,
 :root[data-mistline-context="reviewer-bottom-bar"] #time {
@@ -524,10 +550,10 @@
   font-weight: 500;
 }
 
-:root[data-mistline-context="reviewer-bottom-bar"] #ansbut {
+:root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut {
   width: clamp(280px, 38vw, 460px);
   min-width: 0;
-  min-height: 48px;
+  min-height: 52px;
   border: 1px solid var(--mist-accent);
   border-radius: 2px;
   color: var(--mist-accent);
@@ -536,14 +562,30 @@
   font-weight: 700;
 }
 
-:root[data-mistline-context="reviewer-bottom-bar"] #ansbut:hover {
+:root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut:hover {
   color: var(--mist-paper-light);
   background: var(--mist-accent);
 }
 
+:root[data-mistline-context="reviewer-bottom-bar"] #middle > center {
+  display: block;
+  width: min(100%, 720px);
+  margin-inline: auto;
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle > center > table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle > table {
+  border-spacing: 0;
+}
+
 :root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease] {
-  width: calc(25% - 12px);
-  min-width: clamp(92px, 12vw, 152px);
+  box-sizing: border-box;
+  width: calc(100% - 12px);
+  min-width: 0;
   max-width: 268px;
   min-height: 52px;
   margin-inline: 6px;
@@ -638,33 +680,75 @@
 }
 
 @media (max-width: 720px) {
-  :root[data-mistline-context="deck-browser"] body,
-  :root[data-mistline-context="overview"] body {
-    padding-inline: 14px;
+  :root[data-mistline-context="reviewer-bottom-bar"] .stat {
+    display: none;
   }
 
-  :root[data-mistline-context="deck-browser"] .mistline-deck-heading h1 {
-    font-size: 30px;
-  }
-
-  :root[data-mistline-context="reviewer"] body.card {
-    padding: 12px;
-  }
-
-  :root[data-mistline-context="reviewer"] #qa {
-    min-height: 0;
-    padding: 28px 12px;
-  }
-
-  :root[data-mistline-context="reviewer-bottom-bar"] #ansbut {
+  :root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut {
     width: min(78vw, 420px);
   }
 
+  :root[data-mistline-context="reviewer-bottom-bar"] #outer {
+    padding-inline: var(--mist-space-1);
+  }
+
   :root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease] {
-    width: calc(25% - 4px);
+    width: calc(100% - 4px);
     min-width: 0;
     margin-inline: 2px;
     padding-inline: 8px;
     border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root[data-mistline-context="deck-browser"] table {
+    table-layout: fixed;
+  }
+
+  :root[data-mistline-context="deck-browser"] .decktd {
+    min-width: 0;
+    max-width: none;
+    overflow: hidden;
+  }
+
+  :root[data-mistline-context="deck-browser"] .count {
+    width: 42px;
+    min-width: 0;
+  }
+
+  :root[data-mistline-context="deck-browser"] .optscol {
+    width: 24px;
+  }
+
+  :root[data-mistline-context="deck-browser"] tr.deck > td {
+    padding-inline: 4px;
+  }
+
+  :root[data-mistline-context="deck-browser"] a.deck {
+    min-width: 0;
+    max-width: calc(100% - 1.25em);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+}
+
+@media (max-width: 420px) {
+  :root[data-mistline-context="overview"] center > table[width="400"] {
+    table-layout: auto;
+  }
+
+  :root[data-mistline-context="overview"] center > table[width="400"] > tbody > tr {
+    display: grid;
+    gap: var(--mist-space-3);
+  }
+
+  :root[data-mistline-context="overview"] center > table[width="400"] > tbody > tr > td {
+    display: block;
+  }
+
+  :root[data-mistline-context="overview"] #study {
+    width: 100%;
   }
 }
