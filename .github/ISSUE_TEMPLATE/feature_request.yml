@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest a focused improvement to Editorial Index
+title: "[Request] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What feels difficult today
+      description: Describe the Anki screen or workflow that needs improvement.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested result
+      description: Explain the visible result you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Screenshots or references
+      description: Remove private card content before uploading images.

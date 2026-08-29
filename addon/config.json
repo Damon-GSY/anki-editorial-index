@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "accent_color": "#315FC4",
+  "style_native_chrome": true,
+  "style_reviewer": true,
+  "animations": true
+}

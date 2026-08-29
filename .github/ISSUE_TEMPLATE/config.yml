@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Installation and troubleshooting
+    url: https://github.com/Damon-GSY/anki-editorial-index/blob/main/docs/TROUBLESHOOTING.md
+    about: Check the common fixes before opening an issue.

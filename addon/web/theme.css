@@ -1,0 +1,670 @@
+/*
+ * Editorial Index UI for Anki Desktop
+ * Independent implementation. No third-party source code or assets.
+ */
+
+@font-face {
+  font-family: "Mist Inter";
+  src: url("./fonts/inter-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Mist Inter";
+  src: url("./fonts/inter-semibold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Mist Source Serif";
+  src: url("./fonts/source-serif-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Mist Source Serif";
+  src: url("./fonts/source-serif-semibold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root[data-mistline-context] {
+  color-scheme: light dark;
+  --mist-accent: var(--mist-user-accent, #315fc4);
+  --mist-paper: #f1ede4;
+  --mist-paper-light: #f8f5ed;
+  --mist-paper-deep: #e7e0d4;
+  --mist-ink: #1d1d1b;
+  --mist-muted: #6f6a62;
+  --mist-faint: #989184;
+  --mist-rule: #d7d0c4;
+  --mist-rule-strong: #aaa193;
+  --mist-new: var(--mist-accent);
+  --mist-learn: #aa6817;
+  --mist-due: #c54132;
+  --mist-good: #2c7355;
+  --mist-easy: #37689a;
+  --mist-serif: "Mist Source Serif", "Source Serif Pro", "Noto Serif CJK SC", "Noto Serif CJK JP", "Songti SC", STSong, serif;
+  --mist-sans: "Mist Inter", Inter, "Segoe UI Variable", "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif;
+  --mist-space-1: 8px;
+  --mist-space-2: 16px;
+  --mist-space-3: 24px;
+  --mist-space-4: 40px;
+  --mist-space-5: 64px;
+  --mist-measure: 860px;
+  --mist-action-radius: 10px;
+  --mist-action-shadow: 0 3px 10px rgba(54, 45, 32, 0.1), 0 1px 2px rgba(54, 45, 32, 0.1);
+  --mist-action-shadow-hover: 0 7px 18px rgba(54, 45, 32, 0.13), 0 2px 4px rgba(54, 45, 32, 0.1);
+  --mist-transition: 180ms cubic-bezier(0.22, 0.8, 0.22, 1);
+  font-synthesis: none;
+  font-kerning: normal;
+  --mist-paper-field:
+    radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, 0.28), transparent 34%),
+    radial-gradient(ellipse at 78% 70%, rgba(83, 69, 49, 0.025), transparent 45%),
+    repeating-linear-gradient(0deg, rgba(83, 69, 49, 0.012) 0 1px, transparent 1px 6px);
+}
+
+:root.night-mode[data-mistline-context],
+:root[data-bs-theme="dark"][data-mistline-context] {
+  --mist-paper: #1b1916;
+  --mist-paper-light: #221f1a;
+  --mist-paper-deep: #2b2721;
+  --mist-ink: #f1eadf;
+  --mist-muted: #b3ab9e;
+  --mist-faint: #80786d;
+  --mist-rule: #514a40;
+  --mist-rule-strong: #71685b;
+  --mist-learn: #d49a46;
+  --mist-due: #e4786b;
+  --mist-good: #69b38b;
+  --mist-easy: #7ca6d2;
+  --mist-action-shadow: 0 3px 10px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.32);
+  --mist-action-shadow-hover: 0 7px 18px rgba(0, 0, 0, 0.34), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --mist-paper-field:
+    radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, 0.035), transparent 34%),
+    radial-gradient(ellipse at 78% 70%, rgba(0, 0, 0, 0.1), transparent 45%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.008) 0 1px, transparent 1px 6px);
+}
+
+/* Map Editorial Index onto Anki-owned semantic variables. */
+:root[data-mistline-context]:not([data-mistline-context="reviewer"]) {
+  --canvas: var(--mist-paper);
+  --canvas-elevated: var(--mist-paper-light);
+  --canvas-inset: var(--mist-paper-deep);
+  --canvas-overlay: var(--mist-paper-light);
+  --canvas-glass: var(--mist-paper-light);
+  --fg: var(--mist-ink);
+  --fg-subtle: var(--mist-muted);
+  --fg-faint: var(--mist-faint);
+  --fg-link: var(--mist-accent);
+  --border: var(--mist-rule);
+  --border-subtle: var(--mist-rule);
+  --border-strong: var(--mist-rule-strong);
+  --border-focus: var(--mist-accent);
+  --button-bg: transparent;
+  --button-gradient-start: transparent;
+  --button-gradient-end: transparent;
+  --button-hover-border: var(--mist-rule-strong);
+  --button-primary-bg: var(--mist-accent);
+  --button-primary-gradient-start: var(--mist-accent);
+  --button-primary-gradient-end: var(--mist-accent);
+  --selected-bg: var(--mist-paper-deep);
+  --highlight-bg: var(--mist-paper-deep);
+  --shadow: none;
+  --shadow-subtle: none;
+  --border-radius: 2px;
+  --border-radius-medium: 3px;
+  --border-radius-large: 4px;
+  --transition: 180ms;
+  --transition-medium: 260ms;
+}
+
+:root[data-mistline-context]:not([data-mistline-context="reviewer"]) body {
+  box-sizing: border-box;
+  color: var(--mist-ink);
+  background-color: var(--mist-paper);
+  background-image: var(--mist-paper-field);
+  font-family: var(--mist-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:root[data-mistline-context]:not([data-mistline-context="reviewer"]) a {
+  color: var(--mist-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+:root[data-mistline-context] button,
+:root[data-mistline-context] .btn {
+  border-radius: 2px;
+  box-shadow: none;
+  font-family: var(--mist-sans);
+  font-weight: 600;
+  transition:
+    color var(--mist-transition),
+    background-color var(--mist-transition),
+    border-color var(--mist-transition),
+    transform var(--mist-transition);
+}
+
+:root[data-mistline-context] button:focus-visible,
+:root[data-mistline-context] .btn:focus-visible,
+:root[data-mistline-context] a:focus-visible {
+  outline: 2px solid var(--mist-accent);
+  outline-offset: 3px;
+}
+
+:root[data-mistline-context] button:active,
+:root[data-mistline-context] .btn:active {
+  transform: translateY(1px);
+}
+
+/* Deck Browser: a quiet ledger with one scanning typeface and fixed count axes. */
+:root[data-mistline-context="deck-browser"] body {
+  width: min(100%, 1160px);
+  margin-inline: auto;
+  padding: clamp(40px, 6vh, 72px) clamp(20px, 5vw, 72px) 48px;
+}
+
+:root[data-mistline-context="deck-browser"] .mistline-deck-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--mist-space-3);
+  margin: 0 0 var(--mist-space-2);
+  padding: 0 0 var(--mist-space-3);
+  border-bottom: 1px solid var(--mist-rule-strong);
+}
+
+:root[data-mistline-context="deck-browser"] .mistline-deck-heading h1 {
+  margin: 0;
+  color: var(--mist-ink);
+  font: 600 clamp(34px, 3vw, 46px) / 1 var(--mist-serif);
+  letter-spacing: -0.025em;
+}
+
+:root[data-mistline-context="deck-browser"] .mistline-deck-heading p {
+  margin: 0 0 4px;
+  color: var(--mist-muted);
+  font-size: 12px;
+  letter-spacing: 0.015em;
+}
+
+:root[data-mistline-context="deck-browser"] table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+:root[data-mistline-context="deck-browser"] thead td,
+:root[data-mistline-context="deck-browser"] thead th {
+  height: 36px;
+  color: var(--mist-muted);
+  font-family: var(--mist-sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+:root[data-mistline-context="deck-browser"] tr.deck > td {
+  height: 54px;
+  border: 0;
+  border-bottom: 1px solid var(--mist-rule);
+  background: transparent;
+  transition: background-color var(--mist-transition), box-shadow var(--mist-transition);
+}
+
+:root[data-mistline-context="deck-browser"] tr.deck:hover > td {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
+:root.night-mode[data-mistline-context="deck-browser"] tr.deck:hover > td,
+:root[data-bs-theme="dark"][data-mistline-context="deck-browser"] tr.deck:hover > td {
+  background-color: rgba(255, 255, 255, 0.035);
+}
+
+:root[data-mistline-context="deck-browser"] tr.deck.current > td {
+  background-color: var(--mist-paper-deep);
+}
+
+:root[data-mistline-context="deck-browser"] tr.deck.current > td:first-child {
+  box-shadow: inset 2px 0 var(--mist-ink);
+}
+
+:root[data-mistline-context="deck-browser"] a.deck {
+  color: var(--mist-ink);
+  font-family: var(--mist-sans);
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+:root[data-mistline-context="deck-browser"] tr.deck:has(.collapse) a.deck {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.008em;
+}
+
+:root[data-mistline-context="deck-browser"] tr.deck:hover a.deck,
+:root[data-mistline-context="deck-browser"] tr.deck.current a.deck {
+  color: var(--mist-ink);
+}
+
+:root[data-mistline-context="deck-browser"] .filtered {
+  color: var(--mist-accent);
+}
+
+:root[data-mistline-context="deck-browser"] .count,
+:root[data-mistline-context="deck-browser"] .new-count,
+:root[data-mistline-context="deck-browser"] .learn-count,
+:root[data-mistline-context="deck-browser"] .review-count,
+:root[data-mistline-context="deck-browser"] .zero-count {
+  font-family: var(--mist-sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+:root[data-mistline-context="deck-browser"] .new-count { color: var(--mist-new); }
+:root[data-mistline-context="deck-browser"] .learn-count { color: var(--mist-learn); }
+:root[data-mistline-context="deck-browser"] .review-count { color: var(--mist-due); }
+:root[data-mistline-context="deck-browser"] .zero-count { color: var(--mist-faint); }
+
+:root[data-mistline-context="deck-browser"] .opts,
+:root[data-mistline-context="deck-browser"] .gears {
+  border-radius: 2px;
+  opacity: 0.62;
+  transition: opacity var(--mist-transition), background-color var(--mist-transition);
+}
+
+:root[data-mistline-context="deck-browser"] .opts:hover,
+:root[data-mistline-context="deck-browser"] .gears:hover {
+  background: var(--mist-paper-deep);
+  opacity: 1;
+}
+
+:root[data-mistline-context="deck-browser"] #studiedToday {
+  margin-top: var(--mist-space-3);
+  padding: var(--mist-space-2) 0 0;
+  border: 0;
+  border-top: 1px solid var(--mist-rule);
+  border-radius: 0;
+  color: var(--mist-muted);
+  background: transparent;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+:root[data-mistline-context="deck-browser"] tr.drag-hover > td {
+  box-shadow: inset 0 0 0 2px var(--mist-accent);
+}
+
+/* Overview: a quiet reading sheet between index and review. */
+:root[data-mistline-context="overview"] body {
+  width: min(100%, 860px);
+  margin-inline: auto;
+  padding: clamp(48px, 8vh, 88px) clamp(22px, 6vw, 72px) 56px;
+}
+
+:root[data-mistline-context="overview"] h3 {
+  margin: 0 0 var(--mist-space-4);
+  padding-bottom: var(--mist-space-3);
+  border-bottom: 1px solid var(--mist-rule-strong);
+  color: var(--mist-ink);
+  font: 600 clamp(36px, 5vw, 50px) / 1.02 var(--mist-serif);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+:root[data-mistline-context="overview"] .description,
+:root[data-mistline-context="overview"] .descmid,
+:root[data-mistline-context="overview"] .dyn {
+  max-width: 68ch;
+  margin: var(--mist-space-3) auto;
+  padding: var(--mist-space-3) 0;
+  border: 0;
+  border-block: 1px solid var(--mist-rule);
+  border-radius: 0;
+  color: var(--mist-muted);
+  background: transparent;
+  font-family: var(--mist-sans);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+:root[data-mistline-context="overview"] .new-count,
+:root[data-mistline-context="overview"] .learn-count,
+:root[data-mistline-context="overview"] .review-count,
+:root[data-mistline-context="overview"] .bury-count {
+  font-family: var(--mist-sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+:root[data-mistline-context="overview"] .new-count { color: var(--mist-new); }
+:root[data-mistline-context="overview"] .learn-count { color: var(--mist-learn); }
+:root[data-mistline-context="overview"] .review-count { color: var(--mist-due); }
+
+:root[data-mistline-context="overview"] #study {
+  display: block;
+  width: min(100%, 420px);
+  min-height: 50px;
+  margin-inline: auto;
+  padding-inline: 30px;
+  border: 1px solid var(--mist-accent);
+  border-radius: var(--mist-action-radius);
+  color: var(--mist-accent);
+  background: color-mix(in srgb, var(--mist-paper-light) 76%, transparent);
+  box-shadow: var(--mist-action-shadow);
+  font-size: 16px;
+  font-weight: 700;
+  transition:
+    color var(--mist-transition),
+    background-color var(--mist-transition),
+    border-color var(--mist-transition),
+    box-shadow var(--mist-transition),
+    transform var(--mist-transition);
+}
+
+:root[data-mistline-context="overview"] #study:hover {
+  color: var(--mist-paper-light);
+  background: var(--mist-accent);
+  box-shadow: var(--mist-action-shadow-hover);
+  transform: translateY(-1px);
+}
+
+:root[data-mistline-context="overview"] #study:active {
+  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
+  transform: translateY(1px);
+}
+
+/* Reviewer: a measured reading plane; user-owned card descendants stay untouched. */
+:root[data-mistline-context="reviewer"] body.card {
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0;
+  padding: clamp(24px, 5vw, 64px);
+  color: var(--mist-ink);
+  background-color: var(--mist-paper);
+  background-image: var(--mist-paper-field);
+  font-family: var(--mist-serif);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:root[data-mistline-context="reviewer"] #qa {
+  box-sizing: border-box;
+  width: min(100%, var(--mist-measure));
+  min-height: min(58vh, 620px);
+  margin-inline: auto;
+  padding: clamp(48px, 8vh, 88px) clamp(16px, 4vw, 44px);
+  border: 0;
+  border-block: 1px solid var(--mist-rule);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--mist-serif);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+:root[data-mistline-context="reviewer"] #typeans {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--mist-rule-strong);
+  border-radius: 2px;
+  color: var(--mist-ink);
+  background: var(--mist-paper-light);
+  font-family: var(--mist-sans);
+}
+
+:root[data-mistline-context="reviewer"] #typeans:focus {
+  border-color: var(--mist-accent);
+  outline: 2px solid var(--mist-accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+:root[data-mistline-context="reviewer"] #_mark,
+:root[data-mistline-context="reviewer"] #_flag {
+  filter: none;
+  opacity: 0.72;
+}
+
+/* Top toolbar: an editorial masthead, not a floating surface. */
+:root[data-mistline-context="top-toolbar"] body {
+  background-image: none;
+}
+
+:root[data-mistline-context="top-toolbar"] .header,
+:root[data-mistline-context="top-toolbar"][data-mistline-glass="on"] .header {
+  border: 0;
+  border-bottom: 1px solid var(--mist-rule-strong);
+  background: var(--mist-paper-light);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-mistline-context="top-toolbar"] .hitem,
+:root[data-mistline-context="top-toolbar"] .tray-item {
+  position: relative;
+  border-radius: 0;
+  color: var(--mist-ink);
+  transition: color var(--mist-transition), background-color var(--mist-transition);
+}
+
+:root[data-mistline-context="top-toolbar"] .hitem:hover,
+:root[data-mistline-context="top-toolbar"] .tray-item:hover {
+  background-color: var(--mist-paper-deep);
+}
+
+:root[data-mistline-context="top-toolbar"] #decks,
+:root[data-mistline-context="top-toolbar"] #add,
+:root[data-mistline-context="top-toolbar"] #browse,
+:root[data-mistline-context="top-toolbar"] #stats {
+  color: var(--mist-ink);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+:root[data-mistline-context="top-toolbar"] #sync {
+  color: var(--mist-accent);
+}
+
+/* Shared bottom toolbar: one quiet baseline. */
+:root[data-mistline-context="standard-bottom-bar"] body,
+:root[data-mistline-context="reviewer-bottom-bar"] body {
+  background-image: none;
+}
+
+:root[data-mistline-context="standard-bottom-bar"] #outer,
+:root[data-mistline-context="reviewer-bottom-bar"] #outer {
+  border: 0;
+  border-top: 1px solid var(--mist-rule-strong);
+  background: var(--mist-paper-light);
+  box-shadow: none;
+}
+
+:root[data-mistline-context="standard-bottom-bar"] #outer button,
+:root[data-mistline-context="reviewer-bottom-bar"] #outer button {
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--mist-ink);
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-mistline-context="standard-bottom-bar"] #outer button:hover,
+:root[data-mistline-context="reviewer-bottom-bar"] #outer button:hover {
+  border-color: var(--mist-rule);
+  background: var(--mist-paper-deep);
+}
+
+/* Reviewer rating tray: four related decisions with individually legible surfaces. */
+:root[data-mistline-context="reviewer-bottom-bar"] #innertable {
+  color: var(--mist-muted);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] .stattxt,
+:root[data-mistline-context="reviewer-bottom-bar"] .nobold,
+:root[data-mistline-context="reviewer-bottom-bar"] #time {
+  color: var(--mist-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #ansbut {
+  width: clamp(280px, 38vw, 460px);
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid var(--mist-accent);
+  border-radius: 2px;
+  color: var(--mist-accent);
+  background: transparent;
+  box-shadow: none;
+  font-weight: 700;
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #ansbut:hover {
+  color: var(--mist-paper-light);
+  background: var(--mist-accent);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease] {
+  width: calc(25% - 12px);
+  min-width: clamp(92px, 12vw, 152px);
+  max-width: 268px;
+  min-height: 52px;
+  margin-inline: 6px;
+  padding-inline: 14px;
+  border: 1px solid currentColor;
+  border-radius: var(--mist-action-radius);
+  background: color-mix(in srgb, var(--mist-paper-light) 76%, transparent);
+  box-shadow: var(--mist-action-shadow);
+  font-family: var(--mist-sans);
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    color var(--mist-transition),
+    background-color var(--mist-transition),
+    border-color var(--mist-transition),
+    box-shadow var(--mist-transition),
+    transform var(--mist-transition);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease="1"] {
+  border-color: var(--mist-due);
+  color: var(--mist-due);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease="2"] {
+  border-color: var(--mist-learn);
+  color: var(--mist-learn);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease="3"] {
+  border-color: var(--mist-good);
+  color: var(--mist-good);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease="4"] {
+  border-color: var(--mist-easy);
+  color: var(--mist-easy);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease]:hover {
+  background: var(--mist-paper-deep);
+  box-shadow: var(--mist-action-shadow-hover);
+  transform: translateY(-1px);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease]:active {
+  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
+  transform: translateY(1px);
+}
+
+:root[data-mistline-context="reviewer-bottom-bar"] #defease {
+  outline: 2px solid var(--mist-accent);
+  outline-offset: 3px;
+}
+
+/* External Congratulations surface. */
+:root[data-mistline-context="congrats"] body {
+  color: var(--mist-ink);
+  background-color: var(--mist-paper);
+  background-image: var(--mist-paper-field);
+  font-family: var(--mist-sans);
+}
+
+/* Motion and compact-window fallbacks. */
+:root[data-mistline-motion="on"][data-mistline-context="deck-browser"] tr.deck {
+  animation: mistline-row-in 260ms both;
+}
+
+@keyframes mistline-row-in {
+  from { opacity: 0; transform: translateY(5px); }
+}
+
+:root[data-mistline-motion="off"] *,
+:root[data-mistline-motion="off"] *::before,
+:root[data-mistline-motion="off"] *::after,
+:root[data-mistline-context] body.reduce-motion *,
+:root[data-mistline-context] body.reduce-motion *::before,
+:root[data-mistline-context] body.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-mistline-context] *,
+  :root[data-mistline-context] *::before,
+  :root[data-mistline-context] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 720px) {
+  :root[data-mistline-context="deck-browser"] body,
+  :root[data-mistline-context="overview"] body {
+    padding-inline: 14px;
+  }
+
+  :root[data-mistline-context="deck-browser"] .mistline-deck-heading h1 {
+    font-size: 30px;
+  }
+
+  :root[data-mistline-context="reviewer"] body.card {
+    padding: 12px;
+  }
+
+  :root[data-mistline-context="reviewer"] #qa {
+    min-height: 0;
+    padding: 28px 12px;
+  }
+
+  :root[data-mistline-context="reviewer-bottom-bar"] #ansbut {
+    width: min(78vw, 420px);
+  }
+
+  :root[data-mistline-context="reviewer-bottom-bar"] #middle button[data-ease] {
+    width: calc(25% - 4px);
+    min-width: 0;
+    margin-inline: 2px;
+    padding-inline: 8px;
+    border-radius: 8px;
+  }
+}

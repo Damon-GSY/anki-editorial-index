@@ -1,0 +1,94 @@
+.preview-toolbar {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 14px;
+  background: rgba(250, 255, 252, 0.78);
+  box-shadow: 0 12px 30px rgba(49, 82, 97, 0.12);
+  backdrop-filter: blur(16px);
+  transform: translateX(-50%);
+}
+
+.preview-toolbar button {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 9px;
+  color: #67777f;
+  background: transparent;
+  font: 650 12px/1 "Avenir Next", "PingFang SC", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.preview-toolbar button:hover {
+  color: #0087b4;
+  background: #eaf8fd;
+}
+
+.preview-toolbar button:active {
+  transform: scale(0.97);
+}
+
+.preview-toolbar button:focus-visible {
+  outline: 2px solid #00a1d6;
+  outline-offset: 2px;
+}
+
+.preview-toolbar button.is-active {
+  color: white;
+  background: #00a1d6;
+}
+
+.preview-toolbar__divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: rgba(70, 112, 91, 0.14);
+}
+
+.preview-stage {
+  width: 100%;
+  padding-top: 62px;
+}
+
+.preview-side[hidden] {
+  display: none;
+}
+
+html[data-theme="dark"] .preview-toolbar {
+  border-color: rgba(210, 239, 223, 0.08);
+  background: rgba(24, 37, 30, 0.8);
+}
+
+html[data-theme="dark"] .preview-toolbar button {
+  color: #a1b4a9;
+}
+
+html[data-theme="dark"] .preview-toolbar button:hover {
+  color: #72d0ee;
+  background: #223b46;
+}
+
+html[data-theme="dark"] .preview-toolbar button.is-active {
+  color: #10231a;
+  background: #4cc1e8;
+}
+
+@media (max-width: 560px) {
+  .preview-toolbar {
+    top: 8px;
+  }
+
+  .preview-stage {
+    padding-top: 51px;
+  }
+}

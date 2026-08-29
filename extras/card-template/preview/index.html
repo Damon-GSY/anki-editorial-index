@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="BewlyCat / BewlyBewly 风格的 Anki 卡片模板预览">
+  <title>Bewly Anki · 卡片预览</title>
+  <link rel="stylesheet" href="../template/styling.css">
+  <link rel="stylesheet" href="./preview.css">
+</head>
+<body class="card preview-page">
+  <nav class="preview-toolbar" aria-label="预览控制">
+    <button class="is-active" type="button" data-side-target="front">问题面</button>
+    <button type="button" data-side-target="back">答案面</button>
+    <span class="preview-toolbar__divider" aria-hidden="true"></span>
+    <button type="button" id="theme-toggle" aria-pressed="false">切换深色</button>
+  </nav>
+
+  <div class="preview-stage">
+    <section class="preview-side" data-preview-side="front">
+      <div class="bewly-ambient" aria-hidden="true">
+        <span class="bewly-orb bewly-orb--one"></span>
+        <span class="bewly-orb bewly-orb--two"></span>
+        <span class="bewly-spark bewly-spark--one">✦</span>
+        <span class="bewly-spark bewly-spark--two">·</span>
+      </div>
+
+      <main class="study-shell" data-card-side="question">
+        <header class="study-topbar">
+          <div class="study-brand" aria-label="Bewly Anki">
+            <span class="cat-mark" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><path d="M10.5 19.5 8.7 9.7l9 5.2A22 22 0 0 1 24 14c2.3 0 4.4.3 6.3.9l9-5.2-1.8 9.8a14 14 0 0 1 2.5 8c0 8.3-7.2 13.5-16 13.5S8 35.8 8 27.5a14 14 0 0 1 2.5-8Z"/><path class="cat-mark__face" d="M17 27h.01M31 27h.01M20.5 33c2.3 1.7 4.7 1.7 7 0"/></svg>
+            </span>
+            <span><b>Bewly Anki</b><small>专注复习</small></span>
+          </div>
+          <div class="side-indicator" aria-label="当前为问题面">
+            <span class="side-indicator__dot is-active">1</span><span class="side-indicator__line"></span><span class="side-indicator__dot">2</span>
+          </div>
+        </header>
+
+        <article class="study-card">
+          <p class="card-kicker"><span></span>QUESTION · 慢慢想</p>
+          <section class="card-content card-content--question">
+            为什么在 React 中不应该直接修改 state？
+          </section>
+          <div class="thinking-cue">
+            <span class="thinking-cue__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>先在脑海里作答，再查看答案</span>
+          </div>
+        </article>
+        <footer class="study-footer"><span class="tag-line"># React 状态管理</span><span class="reveal-hint"><kbd>Space</kbd> 显示答案</span></footer>
+      </main>
+    </section>
+
+    <section class="preview-side" data-preview-side="back" hidden>
+      <div class="bewly-ambient" aria-hidden="true">
+        <span class="bewly-orb bewly-orb--one"></span>
+        <span class="bewly-orb bewly-orb--two"></span>
+        <span class="bewly-spark bewly-spark--one">✦</span>
+        <span class="bewly-spark bewly-spark--two">·</span>
+      </div>
+
+      <main class="study-shell" data-card-side="answer">
+        <header class="study-topbar">
+          <div class="study-brand" aria-label="Bewly Anki">
+            <span class="cat-mark" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><path d="M10.5 19.5 8.7 9.7l9 5.2A22 22 0 0 1 24 14c2.3 0 4.4.3 6.3.9l9-5.2-1.8 9.8a14 14 0 0 1 2.5 8c0 8.3-7.2 13.5-16 13.5S8 35.8 8 27.5a14 14 0 0 1 2.5-8Z"/><path class="cat-mark__face" d="M17 27h.01M31 27h.01M20.5 33c2.3 1.7 4.7 1.7 7 0"/></svg>
+            </span>
+            <span><b>Bewly Anki</b><small>专注复习</small></span>
+          </div>
+          <div class="side-indicator" aria-label="当前为答案面">
+            <span class="side-indicator__dot is-done">✓</span><span class="side-indicator__line is-done"></span><span class="side-indicator__dot is-active">2</span>
+          </div>
+        </header>
+
+        <article class="study-card study-card--answer">
+          <section class="question-recap">
+            <p class="card-kicker"><span></span>QUESTION · 回顾</p>
+            <div class="card-content card-content--recap">为什么在 React 中不应该直接修改 state？</div>
+          </section>
+          <div id="answer"></div>
+          <div class="answer-divider" aria-hidden="true"><span></span><i><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></i><span></span></div>
+          <section class="answer-block">
+            <p class="card-kicker card-kicker--answer"><span></span>ANSWER · 答案</p>
+            <div class="card-content card-content--answer">
+              <p>直接修改会保留原来的对象引用，React 可能无法判断状态已经改变，因此不会按预期重新渲染。</p>
+              <ul>
+                <li>破坏以引用比较为基础的更新检测</li>
+                <li>让历史状态、调试和并发渲染变得不可靠</li>
+                <li>应创建新值，例如 <code>setItems([...items, nextItem])</code></li>
+              </ul>
+              <blockquote>核心不是“语法不允许”，而是保持状态变化可追踪、可比较。</blockquote>
+            </div>
+          </section>
+        </article>
+        <footer class="study-footer"><span class="tag-line"># React 状态管理</span><span class="answer-ready"><i></i> 已揭晓</span></footer>
+      </main>
+    </section>
+  </div>
+
+  <script src="./preview.js"></script>
+</body>
+</html>

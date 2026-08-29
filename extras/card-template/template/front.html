@@ -1,0 +1,50 @@
+{{#Front}}
+<div class="bewly-ambient" aria-hidden="true">
+  <span class="bewly-orb bewly-orb--one"></span>
+  <span class="bewly-orb bewly-orb--two"></span>
+  <span class="bewly-spark bewly-spark--one">✦</span>
+  <span class="bewly-spark bewly-spark--two">·</span>
+</div>
+
+<main class="study-shell" data-card-side="question">
+  <header class="study-topbar">
+    <div class="study-brand" aria-label="Bewly Anki">
+      <span class="cat-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M10.5 19.5 8.7 9.7l9 5.2A22 22 0 0 1 24 14c2.3 0 4.4.3 6.3.9l9-5.2-1.8 9.8a14 14 0 0 1 2.5 8c0 8.3-7.2 13.5-16 13.5S8 35.8 8 27.5a14 14 0 0 1 2.5-8Z"/>
+          <path class="cat-mark__face" d="M17 27h.01M31 27h.01M20.5 33c2.3 1.7 4.7 1.7 7 0"/>
+        </svg>
+      </span>
+      <span>
+        <b>Bewly Anki</b>
+        <small>专注复习</small>
+      </span>
+    </div>
+
+    <div class="side-indicator" aria-label="当前为问题面">
+      <span class="side-indicator__dot is-active">1</span>
+      <span class="side-indicator__line"></span>
+      <span class="side-indicator__dot">2</span>
+    </div>
+  </header>
+
+  <article class="study-card">
+    <p class="card-kicker"><span></span>QUESTION · 慢慢想</p>
+    <section class="card-content card-content--question">
+      {{Front}}
+    </section>
+
+    <div class="thinking-cue" aria-label="作答提示">
+      <span class="thinking-cue__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span>先在脑海里作答，再查看答案</span>
+    </div>
+  </article>
+
+  <footer class="study-footer">
+    {{#Tags}}
+    <span class="tag-line" title="标签"># {{Tags}}</span>
+    {{/Tags}}
+    <span class="reveal-hint"><kbd>Space</kbd> 显示答案</span>
+  </footer>
+</main>
+{{/Front}}

@@ -1,0 +1,38 @@
+name: Publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build and validate
+        run: |
+          python3 scripts/package_addon.py
+          python3 scripts/validate_addon.py
+          python3 scripts/smoke_test_addon.py
+      - name: Match tag to manifest version
+        run: |
+          manifest_version="$(python3 -c 'import json; print(json.load(open("addon/manifest.json"))["human_version"])')"
+          test "${GITHUB_REF_NAME}" = "v${manifest_version}"
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" dist/Editorial-Index.ankiaddon dist/SHA256SUMS --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" dist/Editorial-Index.ankiaddon dist/SHA256SUMS --generate-notes --title "Editorial Index ${GITHUB_REF_NAME}"
+          fi
