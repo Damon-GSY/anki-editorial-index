@@ -18,7 +18,12 @@
 
 :root {
   --editorial-user-accent: #2f5bbc;
-  --editorial-accent: var(--editorial-user-accent);
+  --editorial-accent-fill: var(--editorial-user-accent);
+  --editorial-accent: var(--editorial-accent-fill);
+  --editorial-focus: var(--editorial-accent);
+  --editorial-accent-hover: color-mix(in srgb, var(--editorial-accent-fill) 88%, #fff);
+  --editorial-accent-pressed: color-mix(in srgb, var(--editorial-accent-fill) 86%, #000);
+  --editorial-on-accent: #fff;
   --editorial-paper: #f1ede4;
   --editorial-surface: #f8f5ed;
   --editorial-field: #fcfaf4;
@@ -36,7 +41,12 @@
 }
 
 :root.night-mode {
-  --editorial-accent: color-mix(in srgb, var(--editorial-user-accent) 65%, #fff);
+  --editorial-accent-fill: color-mix(in srgb, var(--editorial-user-accent) 65%, #fff);
+  --editorial-accent: var(--editorial-accent-fill);
+  --editorial-focus: var(--editorial-accent);
+  --editorial-accent-hover: color-mix(in srgb, var(--editorial-accent-fill) 86%, #fff);
+  --editorial-accent-pressed: color-mix(in srgb, var(--editorial-accent-fill) 84%, #000);
+  --editorial-on-accent: #1b1916;
   --editorial-paper: #1b1916;
   --editorial-surface: #221f1a;
   --editorial-field: #27231e;
@@ -48,6 +58,18 @@
   --editorial-rule-strong: #71685b;
   --editorial-soft-accent: #262b36;
   --editorial-soft-accent: color-mix(in srgb, var(--editorial-accent) 15%, var(--editorial-surface));
+  --editorial-shadow: 0 9px 24px rgba(0, 0, 0, 0.24), 0 1px 3px rgba(0, 0, 0, 0.34);
+  --editorial-control-shadow: 0 2px 6px rgba(0, 0, 0, 0.22), 0 1px 1px rgba(0, 0, 0, 0.28);
+}
+
+:root[data-mistline-tone="light"] {
+  color-scheme: light;
+  --editorial-shadow: 0 8px 22px rgba(54, 45, 32, 0.07), 0 1px 3px rgba(54, 45, 32, 0.11);
+  --editorial-control-shadow: 0 2px 5px rgba(54, 45, 32, 0.09), 0 1px 1px rgba(54, 45, 32, 0.08);
+}
+
+:root[data-mistline-tone="dark"] {
+  color-scheme: dark;
   --editorial-shadow: 0 9px 24px rgba(0, 0, 0, 0.24), 0 1px 3px rgba(0, 0, 0, 0.34);
   --editorial-control-shadow: 0 2px 6px rgba(0, 0, 0, 0.22), 0 1px 1px rgba(0, 0, 0, 0.28);
 }
@@ -142,15 +164,29 @@ body,
 
 .note-editor .editor-toolbar button.active,
 .note-editor .editor-toolbar .linkb.active {
-  border-color: var(--editorial-accent) !important;
-  color: var(--editorial-paper) !important;
-  background: var(--editorial-accent) !important;
+  border-color: var(--editorial-accent-fill) !important;
+  color: var(--editorial-on-accent) !important;
+  background: var(--editorial-accent-fill) !important;
+}
+
+.note-editor .editor-toolbar button.active:hover,
+.note-editor .editor-toolbar .linkb.active:hover {
+  border-color: var(--editorial-accent-hover) !important;
+  color: var(--editorial-on-accent) !important;
+  background: var(--editorial-accent-hover) !important;
+}
+
+.note-editor .editor-toolbar button.active:active,
+.note-editor .editor-toolbar .linkb.active:active {
+  border-color: var(--editorial-accent-pressed) !important;
+  color: var(--editorial-on-accent) !important;
+  background: var(--editorial-accent-pressed) !important;
 }
 
 .note-editor .editor-toolbar button:focus-visible,
 .note-editor .editor-toolbar .linkb:focus-visible,
 .note-editor .tag-editor button:focus-visible {
-  outline: 2px solid var(--editorial-accent) !important;
+  outline: 2px solid var(--editorial-focus) !important;
   outline-offset: 2px;
 }
 
@@ -180,7 +216,7 @@ body,
 }
 
 .note-editor .editor-toolbar select:focus-visible {
-  border-color: var(--editorial-accent);
+  border-color: var(--editorial-focus);
   outline: 2px solid var(--editorial-soft-accent);
   outline-offset: 1px;
 }
@@ -217,7 +253,7 @@ body,
 }
 
 .note-editor .field-container:focus-within {
-  border-color: var(--editorial-accent);
+  border-color: var(--editorial-focus);
   box-shadow: 0 0 0 2px var(--editorial-soft-accent), var(--editorial-shadow);
 }
 
@@ -265,7 +301,7 @@ body,
 }
 
 .note-editor .label-container .badge:focus-visible {
-  outline: 2px solid var(--editorial-accent) !important;
+  outline: 2px solid var(--editorial-focus) !important;
   outline-offset: 1px;
   opacity: 1;
 }
@@ -288,7 +324,7 @@ body,
    even though the normal inner focus outline is consolidated on the card. */
 .note-editor .editor-field.dupe,
 .note-editor .editor-field.dupe:focus-within {
-  box-shadow: inset 0 0 0 2px var(--accent-danger, #c94a3e) !important;
+  box-shadow: inset 0 0 0 2px var(--mist-danger, var(--accent-danger, #c94a3e)) !important;
 }
 
 .note-editor .rich-text-input,
@@ -360,7 +396,7 @@ body,
 }
 
 .note-editor > .collapse-label[role="button"] > .collapse-badge > button.badge:focus-visible {
-  outline: 2px solid var(--editorial-accent) !important;
+  outline: 2px solid var(--editorial-focus) !important;
   outline-offset: 1px;
 }
 
@@ -378,7 +414,7 @@ body,
 }
 
 .note-editor .tag-editor:focus-within {
-  border-color: var(--editorial-accent);
+  border-color: var(--editorial-focus);
   outline: 0 !important;
   box-shadow: 0 0 0 2px var(--editorial-soft-accent), var(--editorial-shadow);
 }
@@ -488,9 +524,9 @@ body,
   }
 }
 
-:root[data-editorial-motion="off"] *,
-:root[data-editorial-motion="off"] *::before,
-:root[data-editorial-motion="off"] *::after {
+:root[data-mistline-motion="off"] *,
+:root[data-mistline-motion="off"] *::before,
+:root[data-mistline-motion="off"] *::after {
   scroll-behavior: auto !important;
   transition-duration: 0.001ms !important;
   animation-duration: 0.001ms !important;

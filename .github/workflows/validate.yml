@@ -34,12 +34,17 @@ jobs:
         run: python3 scripts/smoke_test_addon.py
       - name: Test reversible native theme
         run: python3 scripts/test_native_theme.py
+      - name: Test Catppuccin palette contract
+        run: python3 scripts/test_catppuccin_palette.py
       - name: Install visual test runtime
         run: |
           npm ci
           npx playwright install --with-deps chromium
+          python3 -m pip install playwright==1.60.0
       - name: Run UI regression matrix
-        run: npm run test:ui
+        run: |
+          npm run test:ui
+          python3 scripts/test_catppuccin_web.py
       - name: Save installable package
         uses: actions/upload-artifact@v7
         with:

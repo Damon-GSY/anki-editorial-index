@@ -2,7 +2,7 @@
 
 # Editorial Index
 
-一款给 Anki Desktop 使用的暖纸色编辑索引主题
+一款给 Anki Desktop 使用的编辑索引主题，支持暖纸与 Catppuccin 配色
 
 [English](./README.en.md) · [下载安装](https://github.com/Damon-GSY/anki-editorial-index/releases/latest) · [配置说明](./docs/CONFIGURATION.md) · [问题排查](./docs/TROUBLESHOOTING.md)
 
@@ -24,7 +24,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 4. 点击「从文件安装」，选择刚才下载的文件。
 5. 重新启动 Anki。
 
-安装成功后，「工具」菜单中会出现「Editorial Index 主题」。这里可以随时临时关闭或重新启用主题。
+安装成功后，「工具」菜单中会出现「Editorial Index 主题」和「Editorial Index 配色」。这里可以随时启停主题，或者在暖纸默认、Catppuccin 自动和四种固定 flavor 之间立即切换。
 
 完整步骤包括升级、卸载和校验下载文件，见 [安装指南](./docs/INSTALLATION.md)。
 
@@ -42,21 +42,32 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 
 ![Editorial Index 复习页面](./screenshots/reviewer-answer.png)
 
+## 暖纸或 Catppuccin，随时切换
+
+0.3.0 加入了完整的 Catppuccin 配色系统：Latte、Frappé、Macchiato、Mocha 四种 flavor，以及 Rosewater 到 Lavender 的全部 14 种强调色。「自动」会在 Anki 日间模式使用 Latte，夜间模式使用 Mocha。
+
+新安装和从旧版升级都依然默认使用 Editorial Index 暖纸配色，不会自动切换到 Catppuccin。在「工具 → Editorial Index 配色」选择 Catppuccin 后，主界面、复习页、Add / Browse Editor 和原生窗口会同步更新，无需重启，也不会重载正在编辑的内容。
+
+色板是随插件打包的 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 token 快照，切换时不会联网。原始色值保持不变；对于过浅的原色，按钮文字、小字和键盘焦点会使用由原色推导的高对比度交互色。
+
 ## 配置
 
-在 Anki 中进入「工具 > 插件」，选中 Editorial Index，再点击「配置」。保存后主题会自动刷新，已经打开的少数窗口需要重新打开。
+在 Anki 中进入「工具 > 插件」，选中 Editorial Index，再点击「配置」。保存后主界面、已打开的独立窗口与 Editor 会同步更新。
 
 | 设置 | 默认值 | 用途 |
 | --- | --- | --- |
 | `enabled` | `true` | 控制整个主题是否启用 |
-| `accent_color` | `#2F5BBC` | 设置按钮、选中状态和焦点的强调色 |
+| `color_theme` | `editorial` | 选择 Editorial Index 暖纸或 Catppuccin 配色 |
+| `accent_color` | `#2F5BBC` | 设置 Editorial Index 暖纸配色的强调色 |
+| `catppuccin_flavor` | `auto` | 选择自动、Latte、Frappé、Macchiato 或 Mocha |
+| `catppuccin_accent` | `blue` | 选择 14 种 Catppuccin 强调色之一 |
 | `style_native_chrome` | `true` | 美化独立窗口、对话框、原生控件及其内嵌 Anki 页面 |
 | `style_reviewer` | `true` | 美化复习卡片外层和评分区 |
 | `animations` | `true` | 启用短促的出现与悬停动画 |
 
-强调色只接受六位十六进制颜色，例如 `#2F5BBC`。颜色格式写错时，插件会自动使用默认编辑蓝。
+`accent_color` 只在 `color_theme` 为 `editorial` 时生效，并且只接受六位十六进制颜色，例如 `#2F5BBC`。Catppuccin 的可用 flavor、14 种强调色、JSON 示例和恢复方法都放在 [配置说明](./docs/CONFIGURATION.md) 中。
 
-默认配置、配色示例和恢复方法都放在 [配置说明](./docs/CONFIGURATION.md) 中。
+也可以不打开 JSON，直接使用「工具 → Editorial Index 配色」切换。
 
 ## 字体与卡片模板
 
@@ -76,7 +87,7 @@ Anki 更新有时会改变插件接口或页面结构。如果更新 Anki 后出
 
 ## 隐私与安全
 
-插件不发送网络请求，不收集使用数据，也不读取或修改卡片内容。它只在 Anki 启动时加载本地字体与样式，并通过 Anki 官方插件钩子把样式应用到桌面界面。
+插件不发送网络请求，不收集使用数据，也不读取或修改卡片内容。它只加载安装包内的字体、样式和配色数据，并通过 Anki 官方插件钩子把样式应用到桌面界面。
 
 从 GitHub 下载的发行文件会同时提供 SHA-256 校验值。安全说明见 [SECURITY.md](./SECURITY.md)。
 
@@ -87,15 +98,18 @@ python3 scripts/package_addon.py
 python3 scripts/validate_addon.py
 python3 scripts/smoke_test_addon.py
 python3 scripts/test_native_theme.py
+python3 scripts/test_catppuccin_palette.py
 npm ci
 npx playwright install chromium
 npm run test:ui
+python3 -m pip install playwright==1.60.0
+python3 scripts/test_catppuccin_web.py
 ```
 
 源码位于 [`addon`](./addon/)，生成的安装包位于 [`dist/Editorial-Index.ankiaddon`](./dist/Editorial-Index.ankiaddon)。参与方式见 [CONTRIBUTING.md](./CONTRIBUTING.md)，每个版本的变化见 [CHANGELOG.md](./CHANGELOG.md)。
 
 ## 独立实现与许可
 
-Editorial Index 是面向 Anki 的独立实现，不包含 BewlyCat、BewlyBewly 或 Bilibili 的源代码、图标、插画及其他素材，也未获相关项目或权利方背书。完整边界说明见 [INDEPENDENT_DESIGN.md](./INDEPENDENT_DESIGN.md)。
+Editorial Index 是面向 Anki 的独立实现，不包含 BewlyCat、BewlyBewly 或 Bilibili 的源代码、图标、插画及其他素材，也未获相关项目或权利方背书。Catppuccin 配色使用官方 MIT 许可的 palette 数据，但语义映射、交互色和 Anki 集成均为本项目独立实现；本项目不是 Catppuccin 官方 port。完整边界说明见 [INDEPENDENT_DESIGN.md](./INDEPENDENT_DESIGN.md)。
 
-项目源码按 [MIT License](./LICENSE) 发布。随插件分发的 Inter 与 Source Serif Pro 使用 [SIL Open Font License 1.1](./addon/web/fonts/OFL.txt)。Anki 及其他名称归各自权利方所有。
+项目源码按 [MIT License](./LICENSE) 发布。随插件分发的 Inter 与 Source Serif Pro 使用 [SIL Open Font License 1.1](./addon/web/fonts/OFL.txt)，Catppuccin Palette 快照使用其 [MIT License](./addon/CATPPUCCIN_LICENSE)。详见 [第三方声明](./addon/THIRD_PARTY_NOTICES.md)。Anki 及其他名称归各自权利方所有。

@@ -1,6 +1,6 @@
 # Editorial Index 配置说明
 
-进入「工具 > 插件」，选中 Editorial Index，再点击「配置」。修改 JSON 后点击保存。大部分界面会立即刷新，已经打开的独立窗口可能需要重新打开。
+进入「工具 > 插件」，选中 Editorial Index，再点击「配置」。修改 JSON 后点击保存。主界面、已打开的独立窗口和 Editor 会同步更新，不会重载正在编辑的卡片内容。
 
 ## 默认配置
 
@@ -8,6 +8,9 @@
 {
   "enabled": true,
   "accent_color": "#2F5BBC",
+  "color_theme": "editorial",
+  "catppuccin_flavor": "auto",
+  "catppuccin_accent": "blue",
   "style_native_chrome": true,
   "style_reviewer": true,
   "animations": true
@@ -21,12 +24,28 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 | 设置 | 类型 | 默认值 | 保存后的结果 |
 | --- | --- | --- | --- |
 | `enabled` | 布尔值 | `true` | 控制整个主题。关闭后恢复 Anki 原有界面 |
-| `accent_color` | 字符串 | `#2F5BBC` | 改变按钮、选中状态、链接和键盘焦点的颜色 |
+| `color_theme` | 字符串 | `editorial` | 选择 `editorial` 暖纸配色或 `catppuccin` 配色系统 |
+| `accent_color` | 字符串 | `#2F5BBC` | 改变 Editorial Index 配色的按钮、链接和焦点色；Catppuccin 不使用此值 |
+| `catppuccin_flavor` | 字符串 | `auto` | 选择 `auto`、`latte`、`frappe`、`macchiato` 或 `mocha` |
+| `catppuccin_accent` | 字符串 | `blue` | 选择 14 种官方 Catppuccin 强调色之一 |
 | `style_native_chrome` | 布尔值 | `true` | 控制 Add、Browse、Stats、Deck Options、Preferences、原生对话框及其内嵌 Anki 页面 |
 | `style_reviewer` | 布尔值 | `true` | 控制复习卡片外层、显示答案按钮和评分按钮 |
 | `animations` | 布尔值 | `true` | 控制牌组进入、悬停和按下时的短动画 |
 
-`accent_color` 只接受 `#RRGGBB` 格式。下面这些都可以直接使用。
+## 直接在「工具」菜单切换
+
+日常使用不需要编辑 JSON。打开「工具 → Editorial Index 配色」，可以直接选择：
+
+- Editorial Index（暖纸默认）
+- Catppuccin 自动（Latte / Mocha）
+- Catppuccin Latte、Frappé、Macchiato 或 Mocha
+- 上述 Catppuccin 配色的 14 种强调色
+
+选择后会立即同步到 Anki 主界面、复习页、原生窗口与 Add / Browse Editor，无需重启。「Editorial Index 主题」仍是总开关；关闭时更换配色只会保存选择，不会自动重新启用主题。
+
+## Editorial Index 暖纸强调色
+
+`accent_color` 只接受 `#RRGGBB` 格式，并且只在 `color_theme` 为 `editorial` 时生效。下面这些都可以直接使用。
 
 | 名称 | 色值 | 感觉 |
 | --- | --- | --- |
@@ -37,6 +56,54 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 
 过浅的颜色会降低按钮文字和键盘焦点的辨识度。建议使用中等或偏深的颜色。
 
+## Catppuccin 配色
+
+`catppuccin_flavor` 支持以下值。
+
+| 值 | 显示名称 | 行为 |
+| --- | --- | --- |
+| `auto` | 自动 | Anki 日间模式使用 Latte，夜间模式使用 Mocha |
+| `latte` | Latte | 固定使用浅色配色 |
+| `frappe` | Frappé | 固定使用深色配色 |
+| `macchiato` | Macchiato | 固定使用深色配色 |
+| `mocha` | Mocha | 固定使用深色配色 |
+
+`catppuccin_accent` 支持全部 14 种官方强调色：
+
+`rosewater`、`flamingo`、`pink`、`mauve`、`red`、`maroon`、`peach`、`yellow`、`green`、`teal`、`sky`、`sapphire`、`blue`、`lavender`。
+
+推荐的自动配置：
+
+```json
+{
+  "enabled": true,
+  "accent_color": "#2F5BBC",
+  "color_theme": "catppuccin",
+  "catppuccin_flavor": "auto",
+  "catppuccin_accent": "blue",
+  "style_native_chrome": true,
+  "style_reviewer": true,
+  "animations": true
+}
+```
+
+固定 Mocha 与 Mauve 强调色：
+
+```json
+{
+  "enabled": true,
+  "accent_color": "#2F5BBC",
+  "color_theme": "catppuccin",
+  "catppuccin_flavor": "mocha",
+  "catppuccin_accent": "mauve",
+  "style_native_chrome": true,
+  "style_reviewer": true,
+  "animations": true
+}
+```
+
+插件内置的是 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 26 色 token 快照。原始色值保持不变；为了保证浅色强调色上的小字、键盘焦点和状态文字可读，Editorial Index 会从原色推导高对比度的交互前景色。色板在安装包内本地读取，不会为配色下载或发送任何网络请求。
+
 ## 只美化牌组页
 
 如果希望卡片复习区保持原样，可以使用下面的配置。
@@ -45,6 +112,9 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 {
   "enabled": true,
   "accent_color": "#2F5BBC",
+  "color_theme": "editorial",
+  "catppuccin_flavor": "auto",
+  "catppuccin_accent": "blue",
   "style_native_chrome": true,
   "style_reviewer": false,
   "animations": true
@@ -59,6 +129,9 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 {
   "enabled": true,
   "accent_color": "#2F5BBC",
+  "color_theme": "editorial",
+  "catppuccin_flavor": "auto",
+  "catppuccin_accent": "blue",
   "style_native_chrome": false,
   "style_reviewer": true,
   "animations": true

@@ -2,19 +2,43 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import re
+import weakref
 from typing import Any
 
 from aqt import gui_hooks, mw
-from aqt.qt import QAction, QDialogButtonBox, qconnect
+from aqt.qt import (
+    QAction,
+    QActionGroup,
+    QApplication,
+    QDialogButtonBox,
+    QMenu,
+    qconnect,
+)
+from aqt.theme import theme_manager
 
+from .color_themes import (
+    CATPPUCCIN_ACCENTS,
+    CATPPUCCIN_FLAVOR_OPTIONS,
+    MANAGED_COLOR_VARIABLES,
+    catppuccin_palette,
+    normalize_catppuccin_accent,
+    normalize_catppuccin_flavor,
+    normalize_color_theme,
+    resolve_color_tokens,
+    web_color_variables,
+)
 from .native_theme import apply_native_theme, extend_native_style
 
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "enabled": True,
     "accent_color": "#2F5BBC",
+    "color_theme": "editorial",
+    "catppuccin_flavor": "auto",
+    "catppuccin_accent": "blue",
     "style_native_chrome": True,
     "style_reviewer": True,
     "animations": True,
@@ -36,21 +60,23 @@ CONTEXT_NAMES = {
     "DeckStats": "stats",
     "FindDuplicatesDialog": "native-page",
     "EmptyCards": "native-page",
+    "EmptyCardsDialog": "native-page",
 }
 
-EXTERNAL_PAGE_CONTEXTS = (
-    ("deck-options/", "deck-options"),
-    ("graphs", "stats"),
-    ("card-info/", "native-page"),
-    ("change-notetype/", "native-page"),
-    ("import-page/", "native-page"),
-    ("import-csv/", "native-page"),
-    ("import-anki-package/", "native-page"),
-    ("image-occlusion/", "native-page"),
-    ("congrats", "congrats"),
-)
+EXTERNAL_PAGE_CONTEXTS = {
+    "deck-options": "deck-options",
+    "graphs": "stats",
+    "card-info": "native-page",
+    "change-notetype": "native-page",
+    "import-page": "native-page",
+    "import-csv": "native-page",
+    "import-anki-package": "native-page",
+    "image-occlusion": "native-page",
+    "congrats": "congrats",
+}
 
 WEBVIEW_KIND_CONTEXTS = {
+    "EDITOR": "editor",
     "DECK_OPTIONS": "deck-options",
     "DECK_STATS": "stats",
     "LEGACY_DECK_STATS": "stats",
@@ -68,10 +94,23 @@ STANDALONE_WEB_CONTEXTS = {"editor", "stats", "deck-options", "native-page"}
 
 _HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _menu_action: QAction | None = None
+_palette_menu: QMenu | None = None
+_accent_menu: QMenu | None = None
+_palette_group: QActionGroup | None = None
+_accent_group: QActionGroup | None = None
+_palette_actions: dict[str, QAction] = {}
+_accent_actions: dict[str, QAction] = {}
+_observed_webviews: weakref.WeakSet[Any] = weakref.WeakSet()
+_observed_add_cards: weakref.WeakSet[Any] = weakref.WeakSet()
+_observed_managed_dialogs: weakref.WeakSet[Any] = weakref.WeakSet()
+_observed_browsers: weakref.WeakSet[Any] = weakref.WeakSet()
+_observed_card_layouts: weakref.WeakSet[Any] = weakref.WeakSet()
+_NATIVE_STATE_ATTR = "_mistline_owned_native_state"
 
 
 def _get_config() -> dict[str, Any]:
-    stored = mw.addonManager.getConfig(__name__) or {}
+    raw_stored = mw.addonManager.getConfig(__name__)
+    stored = raw_stored if isinstance(raw_stored, dict) else {}
     config = {**DEFAULT_CONFIG, **stored}
 
     accent = str(config.get("accent_color", DEFAULT_CONFIG["accent_color"]))
@@ -85,6 +124,13 @@ def _get_config() -> dict[str, Any]:
     return {
         "enabled": bool(config.get("enabled", True)),
         "accent_color": accent.upper(),
+        "color_theme": normalize_color_theme(config.get("color_theme")),
+        "catppuccin_flavor": normalize_catppuccin_flavor(
+            config.get("catppuccin_flavor")
+        ),
+        "catppuccin_accent": normalize_catppuccin_accent(
+            config.get("catppuccin_accent")
+        ),
         "style_native_chrome": bool(config.get("style_native_chrome", True)),
         "style_reviewer": bool(config.get("style_reviewer", True)),
         "animations": bool(config.get("animations", True)),
@@ -92,38 +138,91 @@ def _get_config() -> dict[str, Any]:
     }
 
 
+def _write_config_patch(**changes: object) -> None:
+    """Persist only the values a user changed and preserve unknown settings."""
+
+    stored = mw.addonManager.getConfig(__name__)
+    raw = dict(stored) if isinstance(stored, dict) else {}
+    raw.update(changes)
+    mw.addonManager.writeConfig(__name__, raw)
+
+
+def _system_is_dark() -> bool:
+    return bool(getattr(theme_manager, "night_mode", False))
+
+
+def _resolved_tokens(config: dict[str, Any] | None = None):
+    return resolve_color_tokens(config or _get_config(), _system_is_dark())
+
+
+def _theme_metadata(config: dict[str, Any] | None = None) -> dict[str, Any]:
+    current = config or _get_config()
+    tokens = _resolved_tokens(current)
+    return {
+        "family": tokens.family,
+        "flavor": tokens.flavor,
+        "tone": "dark" if tokens.dark else "light",
+        "accentName": tokens.accent_name,
+        "variables": web_color_variables(tokens),
+    }
+
+
 def _context_name(context: object | None) -> str | None:
     if context is None:
         return None
-    return CONTEXT_NAMES.get(type(context).__name__)
+    context_type = type(context)
+    module_name = str(getattr(context_type, "__module__", ""))
+    if module_name != "aqt" and not module_name.startswith("aqt."):
+        return None
+    return CONTEXT_NAMES.get(context_type.__name__)
 
 
-def _inject_theme(web_content: Any, context: object | None) -> None:
-    config = _get_config()
+def _context_is_enabled(config: dict[str, Any], context_name: str | None) -> bool:
     if not config["enabled"]:
-        return
-
-    context_name = _context_name(context)
-    if context_name is None:
-        return
+        return False
     if (
         context_name in STANDALONE_WEB_CONTEXTS
         and not config["style_native_chrome"]
     ):
+        return False
+    if (
+        context_name in {"reviewer", "reviewer-bottom-bar"}
+        and not config["style_reviewer"]
+    ):
+        return False
+    return True
+
+
+def _encoded_editor_tokens(variables: dict[str, str]) -> str:
+    raw = json.dumps(variables, ensure_ascii=True, separators=(",", ":")).encode(
+        "ascii"
+    )
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _inject_theme(web_content: Any, context: object | None) -> None:
+    config = _get_config()
+    context_name = _context_name(context)
+    if context_name is None:
         return
-    if context_name in {"reviewer", "reviewer-bottom-bar"} and not config["style_reviewer"]:
+    if not _context_is_enabled(config, context_name):
         return
 
     package = mw.addonManager.addon_from_module(__name__)
+    metadata = _theme_metadata(config)
     if context_name == "editor":
         # Editor pages enforce a CSP that blocks inline marker scripts. Keep
-        # their chrome in a dedicated stylesheet and pass only validated,
-        # cosmetic settings to a local external script.
+        # their chrome in a dedicated stylesheet and pass a base64url JSON
+        # token bundle to a local external script. The script independently
+        # allow-lists every property before applying it.
         web_content.css.append(f"/_addons/{package}/web/editor.css")
-        accent = config["accent_color"].lstrip("#")
         motion = "on" if config["animations"] else "off"
+        encoded = _encoded_editor_tokens(metadata["variables"])
         web_content.js.append(
-            f"/_addons/{package}/web/editor-marker.js?accent={accent}&motion={motion}"
+            f"/_addons/{package}/web/editor-marker.js?tokens={encoded}"
+            f"&family={metadata['family']}&flavor={metadata['flavor']}"
+            f"&tone={metadata['tone']}&accent={metadata['accentName']}"
+            f"&motion={motion}"
         )
         return
 
@@ -133,21 +232,32 @@ def _inject_theme(web_content: Any, context: object | None) -> None:
         "context": context_name,
         "motion": "on" if config["animations"] else "off",
         "glass": "on" if config["frosted_toolbar"] else "off",
+        **metadata,
     }
     settings_json = json.dumps(settings, ensure_ascii=True)
-    accent = config["accent_color"]
+    declarations = " ".join(
+        f"{name}: {value};" for name, value in metadata["variables"].items()
+    )
 
     # The marker lives on <html>, because Reviewer replaces body.className on
-    # every card. Values are JSON-encoded and the accent is allow-listed above.
+    # every card. Values come from the validated, bundled color contract.
     web_content.head += f"""
-<style>:root {{ --mist-user-accent: {accent}; }}</style>
+<style>:root {{ {declarations} }}</style>
 <script>
 (() => {{
   const settings = {settings_json};
   const root = document.documentElement;
+    Object.entries(settings.variables).forEach(([name, value]) =>
+      root.style.setProperty(name, value)
+    );
     root.dataset.mistlineContext = settings.context;
     root.dataset.mistlineMotion = settings.motion;
     root.dataset.mistlineGlass = settings.glass;
+    root.dataset.mistlineFamily = settings.family;
+    root.dataset.mistlinePalette = settings.flavor;
+    root.dataset.mistlineTone = settings.tone;
+    root.dataset.mistlineAccent = settings.accentName;
+    root.dataset.mistlineEnabled = "on";
     root.dataset.mistlineFonts = "loading";
     const verifyFonts = async () => {{
       await document.fonts.ready;
@@ -166,14 +276,12 @@ def _inject_theme(web_content: Any, context: object | None) -> None:
 def _decorate_deck_browser(_deck_browser: Any, content: Any) -> None:
     """Add one owned heading without replacing Anki's deck tree."""
 
-    if not _get_config()["enabled"]:
-        return
-
     marker = 'data-mistline-owned="deck-heading"'
     if marker in content.tree:
         return
+    hidden = "" if _get_config()["enabled"] else " hidden"
     heading = f"""
-<section class="mistline-deck-heading" {marker}>
+<section class="mistline-deck-heading" {marker}{hidden}>
   <h1>Deck Home</h1>
   <p>Memory index</p>
 </section>
@@ -181,25 +289,35 @@ def _decorate_deck_browser(_deck_browser: Any, content: Any) -> None:
     content.tree = f"{heading}{content.tree}"
 
 
-def _refresh_main_screen() -> None:
-    if mw.col is None:
-        return
-    try:
-        mw.reset()
-    except Exception:
-        # A refresh is cosmetic. Do not block Anki if a future release changes
-        # the reset lifecycle; the theme will apply on the next navigation.
-        pass
+def _is_addon_page(path: str) -> bool:
+    segments = [segment for segment in path.lower().split("/") if segment]
+    return bool(segments and segments[0] == "_addons")
 
 
 def _external_page_context(path: str) -> str | None:
-    for fragment, context_name in EXTERNAL_PAGE_CONTEXTS:
-        if fragment in path:
-            return context_name
-    return None
+    """Resolve only Anki-owned root or legacy page routes, never add-on URLs."""
+
+    segments = [segment for segment in path.lower().split("/") if segment]
+    if not segments or _is_addon_page(path):
+        return None
+
+    if segments[:2] == ["_anki", "pages"]:
+        if len(segments) < 3:
+            return None
+        route = segments[2]
+        if route.endswith(".html"):
+            if len(segments) != 3:
+                return None
+            route = route.removesuffix(".html")
+        return EXTERNAL_PAGE_CONTEXTS.get(route)
+
+    return EXTERNAL_PAGE_CONTEXTS.get(segments[0])
 
 
 def _webview_kind_context(webview: Any) -> str | None:
+    bridge_context = _context_name(getattr(webview, "_bridge_context", None))
+    if bridge_context is not None:
+        return bridge_context
     kind = getattr(webview, "kind", None)
     kind_name = getattr(kind, "name", None)
     if isinstance(kind_name, str):
@@ -207,60 +325,171 @@ def _webview_kind_context(webview: Any) -> str | None:
     return None
 
 
-def _inject_external_style(webview: Any) -> None:
-    """Theme Anki-owned Svelte pages that live in standalone windows."""
-
-    config = _get_config()
-    if not config["enabled"]:
-        return
-
-    context_name = _webview_kind_context(webview)
+def _webview_context(webview: Any) -> str | None:
     try:
         path = webview.url().path().lower()
     except Exception:
         path = ""
-    if context_name is None:
-        context_name = _external_page_context(path)
-    if context_name is None:
-        return
-    if (
-        context_name in STANDALONE_WEB_CONTEXTS
-        and not config["style_native_chrome"]
-    ):
-        return
+    if _is_addon_page(path):
+        return None
+    route_context = _external_page_context(path)
+    if route_context is not None:
+        return route_context
+    return _webview_kind_context(webview)
 
+
+def _remember_webview(webview: Any) -> None:
+    try:
+        _observed_webviews.add(webview)
+    except TypeError:
+        # PyQt wrappers normally support weak references. If a future wrapper
+        # does not, QApplication.allWidgets() remains the fallback below.
+        pass
+
+
+def _iter_open_webviews():
+    seen: set[int] = set()
+    for webview in list(_observed_webviews):
+        if callable(getattr(webview, "eval", None)) and id(webview) not in seen:
+            seen.add(id(webview))
+            yield webview
+    all_widgets = getattr(QApplication, "allWidgets", None)
+    if not callable(all_widgets):
+        return
+    try:
+        widgets = all_widgets()
+    except Exception:
+        return
+    for widget in widgets:
+        if callable(getattr(widget, "eval", None)) and id(widget) not in seen:
+            seen.add(id(widget))
+            yield widget
+
+
+def _runtime_theme_script(
+    config: dict[str, Any], context_name: str | None
+) -> str:
     package = mw.addonManager.addon_from_module(__name__)
-    href = f"/_addons/{package}/web/theme.css"
+    metadata = _theme_metadata(config)
+    blocked_contexts: list[str] = []
+    if not config["style_native_chrome"]:
+        blocked_contexts.extend(sorted(STANDALONE_WEB_CONTEXTS))
+    if not config["style_reviewer"]:
+        blocked_contexts.extend(["reviewer", "reviewer-bottom-bar"])
     payload = {
-        "href": href,
-        "accent": config["accent_color"],
-        "motion": "on" if config["animations"] else "off",
+        "enabled": config["enabled"],
         "context": context_name,
+        "blockedContexts": blocked_contexts,
+        "managedVariables": MANAGED_COLOR_VARIABLES,
+        "themeHref": f"/_addons/{package}/web/theme.css",
+        "editorHref": f"/_addons/{package}/web/editor.css",
+        "motion": "on" if config["animations"] else "off",
+        "glass": "on" if config["frosted_toolbar"] else "off",
+        **metadata,
     }
     payload_json = json.dumps(payload, ensure_ascii=True)
-    webview.eval(
-        f"""
+    return f"""
 (() => {{
   const settings = {payload_json};
   const root = document.documentElement;
-  root.dataset.mistlineContext = settings.context;
-  root.dataset.mistlineMotion = settings.motion;
-  root.style.setProperty("--mist-user-accent", settings.accent);
-  if (!document.getElementById("mistline-external-theme")) {{
-    const link = document.createElement("link");
-    link.id = "mistline-external-theme";
-    link.rel = "stylesheet";
-    link.href = settings.href;
-    document.head.appendChild(link);
-  }}
-  const keepThemeLast = () => {{
-    const link = document.getElementById("mistline-external-theme");
-    const styles = document.head.querySelectorAll('link[rel="stylesheet"], style');
-    if (link && styles.length && styles[styles.length - 1] !== link) {{
-      document.head.appendChild(link);
+  if (!root) return;
+  const context = settings.context || root.dataset.mistlineContext || "";
+  const enabled = settings.enabled && !settings.blockedContexts.includes(context);
+  const absoluteHref = (href) => {{
+    try {{
+      return new URL(href, document.baseURI).href;
+    }} catch (_error) {{
+      return href;
     }}
   }};
-  if (!root._mistlineThemeOrderObserver) {{
+  const ownedIds = new Set([
+    "mistline-external-theme",
+    "mistline-editor-theme",
+  ]);
+  const ownedHrefs = new Set([
+    absoluteHref(settings.themeHref),
+    absoluteHref(settings.editorHref),
+  ]);
+  const themeLinks = () => Array.from(
+    document.querySelectorAll('link[rel="stylesheet"]')
+  ).filter((link) => ownedIds.has(link.id) || ownedHrefs.has(link.href));
+  const ensureLink = (id, href) => {{
+    const resolvedHref = absoluteHref(href);
+    let link = document.querySelector(`link[rel="stylesheet"]#${{id}}`);
+    if (!link) {{
+      link = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+        .find((candidate) => candidate.href === resolvedHref);
+    }}
+    if (!link) {{
+      link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+    }}
+    link.id = id;
+    link.dataset.mistlineOwned = "stylesheet";
+    return link;
+  }};
+
+  if (!enabled) {{
+    settings.managedVariables.forEach((name) => root.style.removeProperty(name));
+    themeLinks().forEach((link) => {{ link.disabled = true; }});
+    if (root.dataset.mistlineOwnsColorScheme === "true") {{
+      root.style.removeProperty("color-scheme");
+      delete root.dataset.mistlineOwnsColorScheme;
+    }}
+    if (context === "deck-browser") {{
+      document.querySelectorAll('[data-mistline-owned="deck-heading"]')
+        .forEach((heading) => {{ heading.hidden = true; }});
+    }}
+    if (root._mistlineThemeOrderObserver) {{
+      root._mistlineThemeOrderObserver.disconnect();
+      delete root._mistlineThemeOrderObserver;
+    }}
+    root.dataset.mistlineEnabled = "off";
+    return;
+  }}
+
+  settings.managedVariables.forEach((name) => root.style.removeProperty(name));
+  Object.entries(settings.variables).forEach(([name, value]) =>
+    root.style.setProperty(name, value)
+  );
+  if (context) root.dataset.mistlineContext = context;
+  root.dataset.mistlineMotion = settings.motion;
+  root.dataset.mistlineGlass = settings.glass;
+  root.dataset.mistlineFamily = settings.family;
+  root.dataset.mistlinePalette = settings.flavor;
+  root.dataset.mistlineTone = settings.tone;
+  root.dataset.mistlineAccent = settings.accentName;
+  root.dataset.mistlineEnabled = "on";
+  if (context === "deck-browser") {{
+    document.querySelectorAll('[data-mistline-owned="deck-heading"]')
+      .forEach((heading) => {{ heading.hidden = false; }});
+  }}
+  if (context !== "reviewer" && context !== "reviewer-bottom-bar") {{
+    root.style.colorScheme = settings.tone;
+    root.dataset.mistlineOwnsColorScheme = "true";
+  }} else if (root.dataset.mistlineOwnsColorScheme === "true") {{
+    root.style.removeProperty("color-scheme");
+    delete root.dataset.mistlineOwnsColorScheme;
+  }}
+
+  let activeLink = null;
+  if (context === "editor") {{
+    activeLink = ensureLink("mistline-editor-theme", settings.editorHref);
+  }} else if (context) {{
+    activeLink = ensureLink("mistline-external-theme", settings.themeHref);
+  }}
+  themeLinks().forEach((link) => {{ link.disabled = link !== activeLink; }});
+
+  const external = context === "editor" ? null : activeLink;
+  const keepThemeLast = () => {{
+    const styles = document.head.querySelectorAll('link[rel="stylesheet"], style');
+    if (external && styles.length && styles[styles.length - 1] !== external) {{
+      document.head.appendChild(external);
+    }}
+  }};
+  if (external && !root._mistlineThemeOrderObserver) {{
     let orderQueued = false;
     root._mistlineThemeOrderObserver = new MutationObserver(() => {{
       if (orderQueued) return;
@@ -277,63 +506,239 @@ def _inject_external_style(webview: Any) -> None:
   setTimeout(keepThemeLast, 250);
 }})();
 """
-    )
 
 
-def _sync_menu_action() -> None:
-    if _menu_action is not None:
-        _menu_action.setChecked(_get_config()["enabled"])
+def _inject_external_style(webview: Any) -> None:
+    """Observe every Anki WebView and theme owned standalone surfaces."""
 
-
-def _apply_current_native_theme() -> None:
-    apply_native_theme(mw, _get_config())
-
-
-def _set_mistline_role(widget: Any, role: str) -> None:
-    """Attach visual semantics without changing a control's Qt behaviour."""
-
-    if widget is None or widget.property("mistlineRole") == role:
+    _remember_webview(webview)
+    config = _get_config()
+    context_name = _webview_context(webview)
+    if context_name is None:
         return
-    widget.setProperty("mistlineRole", role)
+    try:
+        webview.eval(_runtime_theme_script(config, context_name))
+    except (RuntimeError, TypeError):
+        pass
+
+
+def _broadcast_web_theme(config: dict[str, Any] | None = None) -> None:
+    """Update open WebViews without reloads or editor content loss."""
+
+    current = config or _get_config()
+    for webview in _iter_open_webviews():
+        context_name = _webview_context(webview)
+        if context_name is None:
+            # Browser previews, card templates and third-party WebViews are not
+            # owned by Editorial Index. Never broadcast theme state to them.
+            continue
+        try:
+            webview.eval(_runtime_theme_script(current, context_name))
+        except (RuntimeError, TypeError):
+            # A WebView can disappear while Qt is iterating top-level widgets.
+            continue
+
+
+def _sync_menu_actions() -> None:
+    config = _get_config()
+    if _menu_action is not None:
+        _menu_action.setChecked(config["enabled"])
+    selected_palette = (
+        "editorial"
+        if config["color_theme"] == "editorial"
+        else config["catppuccin_flavor"]
+    )
+    for key, action in _palette_actions.items():
+        action.setChecked(key == selected_palette)
+    for key, action in _accent_actions.items():
+        action.setChecked(key == config["catppuccin_accent"])
+    requested_flavor = config["catppuccin_flavor"]
+    preview_flavor = (
+        "mocha" if _system_is_dark() else "latte"
+    ) if requested_flavor == "auto" else requested_flavor
+    preview_palette = catppuccin_palette(preview_flavor)
+    try:
+        from aqt.qt import QColor, QIcon, QPixmap
+
+        for key, action in _accent_actions.items():
+            swatch = QPixmap(14, 14)
+            swatch.fill(QColor(preview_palette[key]))
+            action.setIcon(QIcon(swatch))
+    except Exception:
+        # Text labels remain complete on bindings/platforms without menu icons.
+        pass
+    if _accent_menu is not None:
+        _accent_menu.setEnabled(config["color_theme"] == "catppuccin")
+
+
+def _apply_current_theme() -> None:
+    config = _get_config()
+    _sync_menu_actions()
+    apply_native_theme(mw, config)
+    _sync_open_native_surfaces(config)
+    _broadcast_web_theme(config)
+
+
+def _repolish_widget(widget: Any) -> None:
     try:
         style = widget.style()
         style.unpolish(widget)
         style.polish(widget)
         widget.update()
     except Exception:
-        # The property is set before first show in normal operation. A future
-        # Qt wrapper that cannot be repolished will still pick it up on show.
         pass
+
+
+def _layout_margins(layout: Any) -> tuple[int, int, int, int]:
+    margins = layout.contentsMargins()
+    return (margins.left(), margins.top(), margins.right(), margins.bottom())
+
+
+def _read_native_value(kind: str, target: Any, name: str | None) -> Any:
+    if kind == "property":
+        return target.property(name)
+    if kind == "objectName":
+        return target.objectName()
+    if kind == "spacing":
+        return target.spacing()
+    if kind == "margins":
+        return _layout_margins(target)
+    raise ValueError(f"unknown native value kind: {kind}")
+
+
+def _write_native_value(kind: str, target: Any, name: str | None, value: Any) -> None:
+    if kind == "property":
+        target.setProperty(name, value)
+        _repolish_widget(target)
+    elif kind == "objectName":
+        target.setObjectName(value)
+        _repolish_widget(target)
+    elif kind == "spacing":
+        target.setSpacing(value)
+    elif kind == "margins":
+        target.setContentsMargins(*value)
+    else:
+        raise ValueError(f"unknown native value kind: {kind}")
+
+
+def _own_native_value(
+    root: Any,
+    key: str,
+    target: Any,
+    kind: str,
+    owned: Any,
+    name: str | None = None,
+) -> None:
+    if target is None:
+        return
+    state = getattr(root, _NATIVE_STATE_ATTR, None)
+    if state is None:
+        state = {}
+        setattr(root, _NATIVE_STATE_ATTR, state)
+    if key in state:
+        return
+    try:
+        before = _read_native_value(kind, target, name)
+        _write_native_value(kind, target, name, owned)
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        return
+    state[key] = (kind, target, name, before, owned)
+
+
+def _restore_native_values(root: Any) -> None:
+    state = getattr(root, _NATIVE_STATE_ATTR, None)
+    if not isinstance(state, dict):
+        return
+    for kind, target, name, before, owned in reversed(list(state.values())):
+        try:
+            if _read_native_value(kind, target, name) == owned:
+                _write_native_value(kind, target, name, before)
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            continue
+    try:
+        delattr(root, _NATIVE_STATE_ATTR)
+    except (AttributeError, RuntimeError):
+        pass
+
+
+def _remember_native_surface(surfaces: weakref.WeakSet[Any], surface: Any) -> None:
+    try:
+        surfaces.add(surface)
+    except TypeError:
+        pass
+
+
+def _native_chrome_enabled(config: dict[str, Any]) -> bool:
+    return bool(config["enabled"] and config["style_native_chrome"])
+
+
+def _sync_add_cards(add_cards: Any, enabled: bool) -> None:
+    if not enabled:
+        _restore_native_values(add_cards)
+        return
+
+    roles = (
+        ("add", add_cards.addButton, "primary"),
+        ("history", add_cards.historyButton, "quiet"),
+        ("help", add_cards.helpButton, "quiet"),
+        ("close", add_cards.closeButton, "secondary"),
+        ("actionbar", add_cards.form.buttonBox, "actionbar"),
+        ("notetype", add_cards.notetype_chooser.button, "chooser"),
+        ("deck", add_cards.deck_chooser.deck, "chooser"),
+        ("notetype-label", getattr(add_cards.notetype_chooser, "label", None), "fieldLabel"),
+        ("deck-label", getattr(add_cards.deck_chooser, "deckLabel", None), "fieldLabel"),
+        ("editor", add_cards.form.fieldsArea, "editorCanvas"),
+    )
+    for key, widget, role in roles:
+        _own_native_value(
+            add_cards, f"role:{key}", widget, "property", role, "mistlineRole"
+        )
+
+    _own_native_value(
+        add_cards,
+        "add:margins",
+        add_cards.form.verticalLayout_3,
+        "margins",
+        (16, 10, 16, 14),
+    )
+    _own_native_value(
+        add_cards,
+        "add:vertical-spacing",
+        add_cards.form.verticalLayout_3,
+        "spacing",
+        12,
+    )
+    _own_native_value(
+        add_cards,
+        "add:horizontal-spacing",
+        add_cards.form.horizontalLayout,
+        "spacing",
+        12,
+    )
+    _own_native_value(
+        add_cards,
+        "add:notetype-spacing",
+        add_cards.notetype_chooser,
+        "spacing",
+        8,
+    )
+    _own_native_value(
+        add_cards, "add:deck-spacing", add_cards.deck_chooser, "spacing", 8
+    )
+    _own_native_value(
+        add_cards,
+        "add:button-spacing",
+        add_cards.form.buttonBox.layout(),
+        "spacing",
+        8,
+    )
 
 
 def _style_add_cards(add_cards: Any) -> None:
     """Complete Add's hierarchy while preserving shortcuts and default roles."""
 
-    config = _get_config()
-    if not config["enabled"] or not config["style_native_chrome"]:
-        return
-
-    _set_mistline_role(add_cards.addButton, "primary")
-    _set_mistline_role(add_cards.historyButton, "quiet")
-    _set_mistline_role(add_cards.helpButton, "quiet")
-    _set_mistline_role(add_cards.closeButton, "secondary")
-    _set_mistline_role(add_cards.form.buttonBox, "actionbar")
-    _set_mistline_role(add_cards.notetype_chooser.button, "chooser")
-    _set_mistline_role(add_cards.deck_chooser.deck, "chooser")
-    _set_mistline_role(getattr(add_cards.notetype_chooser, "label", None), "fieldLabel")
-    _set_mistline_role(getattr(add_cards.deck_chooser, "deckLabel", None), "fieldLabel")
-    _set_mistline_role(add_cards.form.fieldsArea, "editorCanvas")
-
-    # One spacing scale owns the native frame around the WebView. The editor
-    # stylesheet owns everything inside the WebView itself.
-    add_cards.form.verticalLayout_3.setContentsMargins(16, 10, 16, 14)
-    add_cards.form.verticalLayout_3.setSpacing(12)
-    add_cards.form.horizontalLayout.setSpacing(12)
-    add_cards.notetype_chooser.setSpacing(8)
-    add_cards.deck_chooser.setSpacing(8)
-    button_layout = add_cards.form.buttonBox.layout()
-    if button_layout is not None:
-        button_layout.setSpacing(8)
+    _remember_native_surface(_observed_add_cards, add_cards)
+    _sync_add_cards(add_cards, _native_chrome_enabled(_get_config()))
 
 
 def _style_managed_dialog(
@@ -341,18 +746,33 @@ def _style_managed_dialog(
 ) -> None:
     """Give managed dialogs semantic actions without reordering Qt buttons."""
 
-    config = _get_config()
-    if not config["enabled"] or not config["style_native_chrome"]:
-        return
     if dialog_name == "AddCards":
         _style_add_cards(dialog_instance)
+        return
+
+    _remember_native_surface(_observed_managed_dialogs, dialog_instance)
+    _sync_managed_dialog(
+        dialog_instance, _native_chrome_enabled(_get_config())
+    )
+
+
+def _sync_managed_dialog(dialog_instance: Any, enabled: bool) -> None:
+    if not enabled:
+        _restore_native_values(dialog_instance)
         return
 
     roles = QDialogButtonBox.ButtonRole
     primary_roles = {roles.AcceptRole, roles.YesRole, roles.ApplyRole}
     destructive_roles = {roles.DestructiveRole}
     for button_box in dialog_instance.findChildren(QDialogButtonBox):
-        _set_mistline_role(button_box, "actionbar")
+        _own_native_value(
+            dialog_instance,
+            f"role:button-box:{id(button_box)}",
+            button_box,
+            "property",
+            "actionbar",
+            "mistlineRole",
+        )
         for button in button_box.buttons():
             button_role = button_box.buttonRole(button)
             if button.isDefault() or button_role in primary_roles:
@@ -361,27 +781,42 @@ def _style_managed_dialog(
                 role = "destructive"
             else:
                 role = "secondary"
-            _set_mistline_role(button, role)
+            _own_native_value(
+                dialog_instance,
+                f"role:button:{id(button)}",
+                button,
+                "property",
+                role,
+                "mistlineRole",
+            )
+
+
+def _refresh_browser_sidebar_style(browser: Any) -> None:
+    """Rebuild Anki's palette-derived, widget-local sidebar stylesheet."""
+
+    try:
+        setup_style = getattr(browser.sidebar, "_setup_style", None)
+        if callable(setup_style):
+            setup_style()
+    except (AttributeError, RuntimeError, TypeError):
+        # Older Anki versions may not expose this implementation detail, and a
+        # Browser can be destroyed while a menu-triggered theme sync is running.
+        pass
 
 
 def _style_browser(browser: Any) -> None:
-    """Expose stable names for Browser surfaces that have local Qt styles."""
+    """Track Browser so its palette-derived sidebar style stays current."""
 
-    config = _get_config()
-    if not config["enabled"] or not config["style_native_chrome"]:
-        return
-    browser.sidebar.setObjectName("mistlineSidebarTree")
-    browser.sidebar.searchBar.setObjectName("mistlineSidebarSearch")
-    browser.sidebar.toolbar.setObjectName("mistlineSidebarToolbar")
-    browser.form.searchEdit.setObjectName("searchEdit")
-    browser.form.tableView.setObjectName("tableView")
+    _remember_native_surface(_observed_browsers, browser)
+    _refresh_browser_sidebar_style(browser)
 
 
 def _style_card_layout(card_layout: Any) -> None:
     """Give Card Layout a clear action hierarchy without touching previews."""
 
-    config = _get_config()
-    if not config["enabled"] or not config["style_native_chrome"]:
+    _remember_native_surface(_observed_card_layouts, card_layout)
+    if not _native_chrome_enabled(_get_config()):
+        _restore_native_values(card_layout)
         return
 
     layout = getattr(card_layout, "buttons", None)
@@ -396,12 +831,46 @@ def _style_card_layout(card_layout: Any) -> None:
     if len(widgets) < 4:
         return
 
-    _set_mistline_role(widgets[0], "quiet")
-    for widget in widgets[1:-2]:
-        _set_mistline_role(widget, "secondary")
-    _set_mistline_role(widgets[-2], "primary")
-    _set_mistline_role(widgets[-1], "secondary")
-    layout.setSpacing(8)
+    role_widgets = [(widgets[0], "quiet")]
+    role_widgets.extend((widget, "secondary") for widget in widgets[1:-2])
+    role_widgets.extend(((widgets[-2], "primary"), (widgets[-1], "secondary")))
+    for index, (widget, role) in enumerate(role_widgets):
+        _own_native_value(
+            card_layout,
+            f"role:button:{index}",
+            widget,
+            "property",
+            role,
+            "mistlineRole",
+        )
+    _own_native_value(card_layout, "card-layout:spacing", layout, "spacing", 8)
+
+
+def _sync_open_native_surfaces(config: dict[str, Any]) -> None:
+    enabled = _native_chrome_enabled(config)
+    for surface in list(_observed_add_cards):
+        try:
+            _sync_add_cards(surface, enabled)
+        except (AttributeError, RuntimeError, TypeError):
+            continue
+    for surface in list(_observed_managed_dialogs):
+        try:
+            _sync_managed_dialog(surface, enabled)
+        except (AttributeError, RuntimeError, TypeError):
+            continue
+    for surface in list(_observed_browsers):
+        try:
+            _refresh_browser_sidebar_style(surface)
+        except (AttributeError, RuntimeError, TypeError):
+            continue
+    for surface in list(_observed_card_layouts):
+        try:
+            if enabled:
+                _style_card_layout(surface)
+            else:
+                _restore_native_values(surface)
+        except (AttributeError, RuntimeError, TypeError):
+            continue
 
 
 def _extend_anki_style(style: str) -> str:
@@ -411,32 +880,95 @@ def _extend_anki_style(style: str) -> str:
 
 
 def _toggle_theme(checked: bool) -> None:
-    config = _get_config()
-    config["enabled"] = bool(checked)
-    mw.addonManager.writeConfig(__name__, config)
-    _apply_current_native_theme()
-    _refresh_main_screen()
+    _write_config_patch(enabled=bool(checked))
+    _apply_current_theme()
+
+
+def _select_palette(palette_id: str) -> None:
+    if palette_id == "editorial":
+        _write_config_patch(color_theme="editorial")
+    else:
+        _write_config_patch(
+            color_theme="catppuccin",
+            catppuccin_flavor=normalize_catppuccin_flavor(palette_id),
+        )
+    _apply_current_theme()
+
+
+def _select_catppuccin_accent(accent_name: str) -> None:
+    _write_config_patch(
+        catppuccin_accent=normalize_catppuccin_accent(accent_name)
+    )
+    _apply_current_theme()
 
 
 def _setup_menu() -> None:
-    global _menu_action
+    global _accent_group, _accent_menu, _menu_action, _palette_group, _palette_menu
     if _menu_action is not None:
         return
 
     action = QAction("Editorial Index 主题", mw)
     action.setCheckable(True)
-    action.setChecked(_get_config()["enabled"])
     qconnect(action.triggered, _toggle_theme)
+
+    palette_menu = QMenu("Editorial Index 配色", mw)
+    palette_group = QActionGroup(palette_menu)
+    palette_group.setExclusive(True)
+    palette_labels = {
+        "editorial": "Editorial Index（暖纸默认）",
+        "auto": "Catppuccin 自动（Latte / Mocha）",
+        "latte": "Catppuccin Latte",
+        "frappe": "Catppuccin Frappé",
+        "macchiato": "Catppuccin Macchiato",
+        "mocha": "Catppuccin Mocha",
+    }
+    for palette_id in ("editorial", *CATPPUCCIN_FLAVOR_OPTIONS):
+        palette_action = QAction(palette_labels[palette_id], palette_menu)
+        palette_action.setCheckable(True)
+        palette_group.addAction(palette_action)
+        palette_menu.addAction(palette_action)
+        qconnect(
+            palette_action.triggered,
+            lambda _checked=False, selected=palette_id: _select_palette(selected),
+        )
+        _palette_actions[palette_id] = palette_action
+
+    palette_menu.addSeparator()
+    accent_menu = palette_menu.addMenu("Catppuccin 强调色")
+    accent_group = QActionGroup(accent_menu)
+    accent_group.setExclusive(True)
+    for accent_name in CATPPUCCIN_ACCENTS:
+        accent_action = QAction(accent_name.capitalize(), accent_menu)
+        accent_action.setCheckable(True)
+        accent_group.addAction(accent_action)
+        accent_menu.addAction(accent_action)
+        qconnect(
+            accent_action.triggered,
+            lambda _checked=False, selected=accent_name: _select_catppuccin_accent(
+                selected
+            ),
+        )
+        _accent_actions[accent_name] = accent_action
+
     mw.form.menuTools.addSeparator()
     mw.form.menuTools.addAction(action)
+    mw.form.menuTools.addMenu(palette_menu)
     _menu_action = action
-    _apply_current_native_theme()
+    _palette_menu = palette_menu
+    _accent_menu = accent_menu
+    _palette_group = palette_group
+    _accent_group = accent_group
+    _sync_menu_actions()
+    _apply_current_theme()
 
 
 def _config_updated(_new_config: Any) -> None:
-    _sync_menu_action()
-    _apply_current_native_theme()
-    _refresh_main_screen()
+    _apply_current_theme()
+
+
+def _theme_did_change() -> None:
+    # Auto follows Anki light/dark; explicit Catppuccin flavors stay fixed.
+    _apply_current_theme()
 
 
 mw.addonManager.setWebExports(
@@ -453,5 +985,5 @@ gui_hooks.add_cards_did_init.append(_style_add_cards)
 gui_hooks.dialog_manager_did_open_dialog.append(_style_managed_dialog)
 gui_hooks.browser_will_show.append(_style_browser)
 gui_hooks.card_layout_will_show.append(_style_card_layout)
-gui_hooks.theme_did_change.append(_apply_current_native_theme)
+gui_hooks.theme_did_change.append(_theme_did_change)
 gui_hooks.main_window_did_init.append(_setup_menu)

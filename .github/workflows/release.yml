@@ -29,13 +29,17 @@ jobs:
           python3 scripts/validate_addon.py
           python3 scripts/smoke_test_addon.py
           python3 scripts/test_native_theme.py
+          python3 scripts/test_catppuccin_palette.py
           node --check addon/web/editor-marker.js
       - name: Install visual test runtime
         run: |
           npm ci
           npx playwright install --with-deps chromium
+          python3 -m pip install playwright==1.60.0
       - name: Run UI regression matrix
-        run: npm run test:ui
+        run: |
+          npm run test:ui
+          python3 scripts/test_catppuccin_web.py
       - name: Match tag to manifest version
         run: |
           manifest_version="$(python3 -c 'import json; print(json.load(open("addon/manifest.json"))["human_version"])')"

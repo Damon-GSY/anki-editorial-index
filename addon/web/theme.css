@@ -36,16 +36,34 @@
 }
 
 :root[data-mistline-context] {
-  color-scheme: light dark;
-  --mist-accent: var(--mist-user-accent, #2f5bbc);
+  /*
+   * Runtime color contract. Python writes these variables inline when a
+   * theme is selected. These declarations keep the original Editorial warm
+   * paper as a complete, usable fallback when that runtime payload is absent.
+   * Raw palette fills and readable foreground/focus roles stay deliberately
+   * separate so pale Catppuccin accents never become low-contrast text.
+   */
+  --mist-user-accent: #2f5bbc;
+  --mist-accent-fill: var(--mist-user-accent);
+  --mist-accent: var(--mist-accent-fill);
+  --mist-focus: var(--mist-accent);
+  --mist-accent-hover: color-mix(in srgb, var(--mist-accent-fill) 88%, #fff);
+  --mist-accent-pressed: color-mix(in srgb, var(--mist-accent-fill) 86%, #000);
+  --mist-accent-soft: color-mix(in srgb, var(--mist-accent-fill) 11%, #f8f5ed);
+  --mist-on-accent: #fff;
   --mist-paper: #f1ede4;
   --mist-paper-light: #f8f5ed;
   --mist-paper-deep: #e7e0d4;
+  --mist-field: #fcfaf4;
   --mist-ink: #1d1d1b;
   --mist-muted: #6f6a62;
   --mist-faint: #989184;
+  --mist-disabled: #8d867b;
   --mist-rule: #d7d0c4;
   --mist-rule-strong: #aaa193;
+  --mist-danger-fill: #b9382f;
+  --mist-danger: #b2352b;
+  --mist-on-danger: #fff;
   --mist-new: var(--mist-accent);
   --mist-learn: #8f5200;
   --mist-due: #b2352b;
@@ -63,25 +81,42 @@
   --mist-action-shadow: 0 3px 10px rgba(54, 45, 32, 0.1), 0 1px 2px rgba(54, 45, 32, 0.1);
   --mist-action-shadow-hover: 0 7px 18px rgba(54, 45, 32, 0.13), 0 2px 4px rgba(54, 45, 32, 0.1);
   --mist-transition: 180ms cubic-bezier(0.22, 0.8, 0.22, 1);
-  font-synthesis: none;
-  font-kerning: normal;
   --mist-paper-field:
     radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, 0.28), transparent 34%),
     radial-gradient(ellipse at 78% 70%, rgba(83, 69, 49, 0.025), transparent 45%),
     repeating-linear-gradient(0deg, rgba(83, 69, 49, 0.012) 0 1px, transparent 1px 6px);
 }
 
+/* Reviewer descendants are user-owned card template content. Keep inherited
+   rendering preferences off that root while retaining them on Anki-owned UI. */
+:root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) {
+  color-scheme: light dark;
+  font-synthesis: none;
+  font-kerning: normal;
+}
+
 :root.night-mode[data-mistline-context],
 :root[data-bs-theme="dark"][data-mistline-context] {
-  --mist-accent: color-mix(in srgb, var(--mist-user-accent, #2f5bbc) 65%, #fff);
+  --mist-accent-fill: color-mix(in srgb, var(--mist-user-accent, #2f5bbc) 65%, #fff);
+  --mist-accent: var(--mist-accent-fill);
+  --mist-focus: var(--mist-accent);
+  --mist-accent-hover: color-mix(in srgb, var(--mist-accent-fill) 86%, #fff);
+  --mist-accent-pressed: color-mix(in srgb, var(--mist-accent-fill) 84%, #000);
+  --mist-accent-soft: color-mix(in srgb, var(--mist-accent-fill) 15%, #221f1a);
+  --mist-on-accent: #1b1916;
   --mist-paper: #1b1916;
   --mist-paper-light: #221f1a;
   --mist-paper-deep: #2b2721;
+  --mist-field: #27231e;
   --mist-ink: #f1eadf;
   --mist-muted: #b3ab9e;
   --mist-faint: #80786d;
+  --mist-disabled: #8f877c;
   --mist-rule: #514a40;
   --mist-rule-strong: #71685b;
+  --mist-danger-fill: #e16d61;
+  --mist-danger: #e4786b;
+  --mist-on-danger: #1b1916;
   --mist-learn: #d49a46;
   --mist-due: #e4786b;
   --mist-good: #69b38b;
@@ -92,6 +127,25 @@
     radial-gradient(ellipse at 18% 8%, rgba(255, 255, 255, 0.035), transparent 34%),
     radial-gradient(ellipse at 78% 70%, rgba(0, 0, 0, 0.1), transparent 45%),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.008) 0 1px, transparent 1px 6px);
+}
+
+/* Explicit Catppuccin flavors can intentionally differ from Anki's current
+   appearance. Let the selected palette tone own native control rendering and
+   elevation as well as the injected colors. */
+:root[data-mistline-context][data-mistline-tone="light"]:where(
+  :not([data-mistline-context="reviewer"], [data-mistline-context="reviewer-bottom-bar"])
+) {
+  color-scheme: light;
+  --mist-action-shadow: 0 3px 10px rgba(54, 45, 32, 0.1), 0 1px 2px rgba(54, 45, 32, 0.1);
+  --mist-action-shadow-hover: 0 7px 18px rgba(54, 45, 32, 0.13), 0 2px 4px rgba(54, 45, 32, 0.1);
+}
+
+:root[data-mistline-context][data-mistline-tone="dark"]:where(
+  :not([data-mistline-context="reviewer"], [data-mistline-context="reviewer-bottom-bar"])
+) {
+  color-scheme: dark;
+  --mist-action-shadow: 0 3px 10px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.32);
+  --mist-action-shadow-hover: 0 7px 18px rgba(0, 0, 0, 0.34), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Map Editorial Index onto Anki-owned semantic variables. */
@@ -108,14 +162,15 @@
   --border: var(--mist-rule);
   --border-subtle: var(--mist-rule);
   --border-strong: var(--mist-rule-strong);
-  --border-focus: var(--mist-accent);
+  --border-focus: var(--mist-focus);
   --button-bg: transparent;
   --button-gradient-start: transparent;
   --button-gradient-end: transparent;
   --button-hover-border: var(--mist-rule-strong);
-  --button-primary-bg: var(--mist-accent);
-  --button-primary-gradient-start: var(--mist-accent);
-  --button-primary-gradient-end: var(--mist-accent);
+  --button-primary-bg: var(--mist-accent-fill);
+  --button-primary-gradient-start: var(--mist-accent-fill);
+  --button-primary-gradient-end: var(--mist-accent-fill);
+  --button-primary-fg: var(--mist-on-accent);
   --selected-bg: var(--mist-paper-deep);
   --highlight-bg: var(--mist-paper-deep);
   --shadow: none;
@@ -160,12 +215,12 @@
 
 :root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) button:focus-visible,
 :root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) .btn:focus-visible {
-  outline: 2px solid var(--mist-accent) !important;
+  outline: 2px solid var(--mist-focus) !important;
   outline-offset: 3px !important;
 }
 
 :root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) a:focus-visible {
-  outline: 2px solid var(--mist-accent) !important;
+  outline: 2px solid var(--mist-focus) !important;
   outline-offset: 3px !important;
 }
 
@@ -178,13 +233,13 @@
 :root[data-mistline-context="stats"],
 :root[data-mistline-context="deck-options"],
 :root[data-mistline-context="native-page"] {
-  --canvas-code: var(--mist-paper-light);
+  --canvas-code: var(--mist-field);
   --button-bg: var(--mist-paper-light);
   --button-gradient-start: var(--mist-paper-light);
   --button-gradient-end: var(--mist-paper-light);
   --shadow: var(--mist-rule);
   --shadow-subtle: var(--mist-rule);
-  --shadow-focus: var(--mist-accent);
+  --shadow-focus: var(--mist-focus);
   --border-radius: 9px;
   --border-radius-medium: 11px;
   --border-radius-large: 14px;
@@ -193,7 +248,7 @@
   --bs-border-color: var(--mist-rule);
   --bs-secondary-bg: var(--mist-paper-deep);
   --bs-tertiary-bg: var(--mist-paper-light);
-  --bs-primary: var(--mist-accent);
+  --bs-primary: var(--mist-accent-fill);
   --bs-link-color: var(--mist-accent);
   color: var(--mist-ink);
   background-color: var(--mist-paper);
@@ -229,7 +284,7 @@
 :root[data-mistline-context="native-page"] button:hover,
 :root[data-mistline-context="native-page"] .btn:hover {
   border-color: var(--mist-accent);
-  background: color-mix(in srgb, var(--mist-paper-light) 86%, var(--mist-accent) 14%);
+  background: color-mix(in srgb, var(--mist-paper-light) 86%, var(--mist-accent-fill) 14%);
   box-shadow: var(--mist-action-shadow-hover);
   transform: translateY(-1px);
 }
@@ -248,9 +303,25 @@
 :root[data-mistline-context="stats"] .btn-primary,
 :root[data-mistline-context="deck-options"] .btn-primary,
 :root[data-mistline-context="native-page"] .btn-primary {
-  border-color: var(--mist-accent);
-  color: var(--mist-paper-light);
-  background: var(--mist-accent);
+  border-color: var(--mist-accent-fill);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-fill);
+}
+
+:root[data-mistline-context="stats"] :is(button.active, .btn-primary):hover,
+:root[data-mistline-context="deck-options"] :is(button.active, .btn-primary):hover,
+:root[data-mistline-context="native-page"] :is(button.active, .btn-primary):hover {
+  border-color: var(--mist-accent-hover);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-hover);
+}
+
+:root[data-mistline-context="stats"] :is(button.active, .btn-primary):active,
+:root[data-mistline-context="deck-options"] :is(button.active, .btn-primary):active,
+:root[data-mistline-context="native-page"] :is(button.active, .btn-primary):active {
+  border-color: var(--mist-accent-pressed);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-pressed);
 }
 
 :root[data-mistline-context="stats"] h1,
@@ -292,7 +363,7 @@
   border: 1px solid var(--mist-rule);
   border-radius: 8px;
   color: var(--mist-ink);
-  background-color: var(--mist-paper-light);
+  background-color: var(--mist-field);
 }
 
 :root[data-mistline-context="stats"] input:focus,
@@ -304,8 +375,8 @@
 :root[data-mistline-context="native-page"] input:focus,
 :root[data-mistline-context="native-page"] select:focus,
 :root[data-mistline-context="native-page"] textarea:focus {
-  border-color: var(--mist-accent);
-  outline: 2px solid color-mix(in srgb, var(--mist-accent) 32%, transparent);
+  border-color: var(--mist-focus);
+  outline: 2px solid color-mix(in srgb, var(--mist-focus) 32%, transparent);
   outline-offset: 2px;
 }
 
@@ -332,7 +403,7 @@
 :root[data-mistline-context="native-page"] .btn:disabled,
 :root[data-mistline-context="native-page"] button[aria-disabled="true"] {
   border-color: var(--mist-rule);
-  color: var(--mist-muted);
+  color: var(--mist-disabled);
   background: var(--mist-paper-deep);
   box-shadow: none;
   cursor: not-allowed;
@@ -344,7 +415,7 @@
 :root[data-mistline-context="deck-options"] :is(input, select, textarea):disabled,
 :root[data-mistline-context="native-page"] :is(input, select, textarea):disabled {
   border-color: var(--mist-rule);
-  color: var(--mist-muted);
+  color: var(--mist-disabled);
   background-color: var(--mist-paper-deep);
   cursor: not-allowed;
   opacity: 0.72 !important;
@@ -412,8 +483,8 @@
 }
 
 :root[data-mistline-context="deck-options"] .spin-box:focus-within {
-  border-color: var(--mist-accent) !important;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mist-accent) 18%, transparent);
+  border-color: var(--mist-focus) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mist-focus) 18%, transparent);
 }
 
 :root[data-mistline-context="deck-options"] .spin-box > input {
@@ -505,13 +576,13 @@
 }
 
 :root[data-mistline-context="deck-options"] .form-switch .form-check-input[type="checkbox"]:checked {
-  border-color: var(--mist-accent);
-  background-color: var(--mist-accent);
-  background-image: radial-gradient(circle at 29px 50%, #fff 0 7px, transparent 7.5px);
+  border-color: var(--mist-accent-fill);
+  background-color: var(--mist-accent-fill);
+  background-image: radial-gradient(circle at 29px 50%, var(--mist-on-accent) 0 7px, transparent 7.5px);
 }
 
 :root[data-mistline-context="deck-options"] .form-switch .form-check-input[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--mist-accent);
+  outline: 2px solid var(--mist-focus);
   outline-offset: 2px;
 }
 
@@ -522,7 +593,7 @@
   border: 1px solid var(--mist-rule);
   border-radius: 9px;
   color: var(--mist-ink);
-  background: var(--mist-paper-light);
+  background: var(--mist-field);
   box-shadow: inset 0 -1px rgba(54, 45, 32, 0.08);
   transition: border-color var(--mist-transition), box-shadow var(--mist-transition);
 }
@@ -533,8 +604,8 @@
 
 :root[data-mistline-context="deck-options"] .select-container[role="combobox"]:focus-visible,
 :root[data-mistline-context="deck-options"] .select-container[role="combobox"][aria-expanded="true"] {
-  border-color: var(--mist-accent);
-  outline: 2px solid color-mix(in srgb, var(--mist-accent) 18%, transparent);
+  border-color: var(--mist-focus);
+  outline: 2px solid color-mix(in srgb, var(--mist-focus) 18%, transparent);
   outline-offset: 1px;
 }
 
@@ -575,10 +646,10 @@
   min-width: 82px;
   min-height: 38px;
   padding: 0 14px;
-  border-color: var(--mist-accent);
+  border-color: var(--mist-accent-fill);
   border-radius: 9px 0 0 9px !important;
-  color: var(--mist-paper-light);
-  background: var(--mist-accent);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-fill);
   box-shadow: var(--mist-action-shadow);
 }
 
@@ -588,12 +659,24 @@
   min-height: 38px;
   height: 38px !important;
   padding: 8px;
-  border-color: var(--mist-accent);
-  border-left-color: color-mix(in srgb, var(--mist-accent) 72%, #fff);
+  border-color: var(--mist-accent-fill);
+  border-left-color: color-mix(in srgb, var(--mist-accent-fill) 72%, var(--mist-on-accent));
   border-radius: 0 9px 9px 0 !important;
-  color: var(--mist-paper-light);
-  background: var(--mist-accent);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-fill);
   box-shadow: var(--mist-action-shadow);
+}
+
+:root[data-mistline-context="deck-options"] .button-bar :is(.label-button.primary, .icon-button.chevron):hover {
+  border-color: var(--mist-accent-hover);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-hover);
+}
+
+:root[data-mistline-context="deck-options"] .button-bar :is(.label-button.primary, .icon-button.chevron):active {
+  border-color: var(--mist-accent-pressed);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-pressed);
 }
 
 :root[data-mistline-context="deck-options"] .floating .popover,
@@ -713,7 +796,7 @@
   border: 1px solid var(--mist-rule);
   border-radius: 9px;
   color: var(--mist-ink);
-  background: var(--mist-paper-light);
+  background: var(--mist-field);
   font: 400 13px / 1.3 var(--mist-sans);
 }
 
@@ -728,7 +811,7 @@
   padding: 0;
   border: 1px solid var(--mist-rule-strong);
   appearance: none;
-  background-color: var(--mist-paper-light);
+  background-color: var(--mist-field);
   box-shadow: inset 0 1px 2px rgba(54, 45, 32, 0.09);
   cursor: pointer;
 }
@@ -739,7 +822,7 @@
 
 :root[data-mistline-context="stats"] input[type="radio"]:checked {
   border-color: var(--mist-accent);
-  background-image: radial-gradient(circle at center, var(--mist-accent) 0 5px, transparent 5.5px);
+  background-image: radial-gradient(circle at center, var(--mist-accent-fill) 0 5px, transparent 5.5px);
 }
 
 :root[data-mistline-context="stats"] input[type="checkbox"] {
@@ -747,14 +830,27 @@
 }
 
 :root[data-mistline-context="stats"] input[type="checkbox"]:checked {
-  border-color: var(--mist-accent);
-  background-color: var(--mist-accent);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m3.5 8.5 3 3 6-7'/%3E%3C/svg%3E");
+  position: relative;
+  display: grid;
+  place-content: center;
+  border-color: var(--mist-accent-fill);
+  color: var(--mist-on-accent);
+  background-color: var(--mist-accent-fill);
+  background-image: none;
+}
+
+:root[data-mistline-context="stats"] input[type="checkbox"]:checked::before {
+  width: 8px;
+  height: 4px;
+  border-bottom: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  content: "";
+  transform: translateY(-1px) rotate(-45deg);
 }
 
 :root[data-mistline-context="stats"] input[type="radio"]:focus-visible,
 :root[data-mistline-context="stats"] input[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--mist-accent);
+  outline: 2px solid var(--mist-focus);
   outline-offset: 2px;
 }
 
@@ -893,12 +989,7 @@
 }
 
 :root[data-mistline-context="deck-browser"] tr.deck:hover > td {
-  background-color: rgba(255, 255, 255, 0.28);
-}
-
-:root.night-mode[data-mistline-context="deck-browser"] tr.deck:hover > td,
-:root[data-bs-theme="dark"][data-mistline-context="deck-browser"] tr.deck:hover > td {
-  background-color: rgba(255, 255, 255, 0.035);
+  background-color: color-mix(in srgb, var(--mist-paper-light) 94%, var(--mist-ink) 6%);
 }
 
 :root[data-mistline-context="deck-browser"] tr.deck.current > td {
@@ -975,7 +1066,7 @@
 }
 
 :root[data-mistline-context="deck-browser"] tr.drag-hover > td {
-  box-shadow: inset 0 0 0 2px var(--mist-accent);
+  box-shadow: inset 0 0 0 2px var(--mist-focus);
 }
 
 /* Overview: a quiet reading sheet between index and review. */
@@ -1098,13 +1189,15 @@
 }
 
 :root[data-mistline-context="overview"] #study:hover {
-  color: var(--mist-paper-light);
-  background: var(--mist-accent);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-hover);
   box-shadow: var(--mist-action-shadow-hover);
   transform: translateY(-1px);
 }
 
 :root[data-mistline-context="overview"] #study:active {
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-pressed);
   box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
   transform: translateY(1px);
 }
@@ -1138,13 +1231,13 @@
   border: 1px solid var(--mist-rule-strong);
   border-radius: 2px;
   color: var(--mist-ink);
-  background: var(--mist-paper-light);
+  background: var(--mist-field);
   font-family: var(--mist-sans);
 }
 
 :root[data-mistline-context="reviewer"] #typeans:focus {
-  border-color: var(--mist-accent);
-  outline: 2px solid var(--mist-accent);
+  border-color: var(--mist-focus);
+  outline: 2px solid var(--mist-focus);
   outline-offset: 2px;
   box-shadow: none;
 }
@@ -1256,7 +1349,7 @@
 :root[data-mistline-context="top-toolbar"] .header .toolbar > #decks {
   border-color: color-mix(in srgb, var(--mist-accent) 58%, var(--mist-rule));
   color: var(--mist-accent);
-  background: color-mix(in srgb, var(--mist-paper-light) 92%, var(--mist-accent) 8%);
+  background: color-mix(in srgb, var(--mist-paper-light) 92%, var(--mist-accent-fill) 8%);
 }
 
 :root[data-mistline-context="top-toolbar"] #sync {
@@ -1351,13 +1444,15 @@
 }
 
 :root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut:hover {
-  color: var(--mist-paper-light);
-  background: var(--mist-accent);
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-hover);
   box-shadow: var(--mist-action-shadow-hover);
   transform: translateY(-1px);
 }
 
 :root[data-mistline-context="reviewer-bottom-bar"] #outer #ansbut:active {
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-pressed);
   box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
   transform: translateY(1px);
 }
@@ -1442,7 +1537,7 @@
 }
 
 :root[data-mistline-context="reviewer-bottom-bar"] #defease {
-  outline: 2px solid var(--mist-accent) !important;
+  outline: 2px solid var(--mist-focus) !important;
   outline-offset: 3px !important;
 }
 

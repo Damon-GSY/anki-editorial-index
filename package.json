@@ -1,6 +1,6 @@
 {
   "name": "anki-editorial-index",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "private": true,
   "description": "Visual regression fixtures for the Editorial Index Anki add-on",
   "scripts": {

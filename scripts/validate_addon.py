@@ -31,11 +31,34 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
     require(bool(manifest["name"]), "manifest name is required")
-    require(manifest["human_version"] == "0.2.4", "manifest version must be 0.2.4")
+    require(manifest["human_version"] == "0.3.0", "manifest version must be 0.3.0")
     require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
     require(isinstance(config["enabled"], bool), "enabled must be boolean")
     require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
     require(config["accent_color"].upper() == "#2F5BBC", "default accent must meet warm-paper contrast")
+    require(config["color_theme"] == "editorial", "upgrades must preserve the Editorial default")
+    require(config["catppuccin_flavor"] == "auto", "default Catppuccin flavor must follow Anki light/dark")
+    require(config["catppuccin_accent"] == "blue", "default Catppuccin accent must be blue")
+
+    catppuccin = json.loads((ADDON / "catppuccin.json").read_text(encoding="utf-8"))
+    require(catppuccin["source_version"] == "1.8.0", "unexpected Catppuccin source version")
+    require(
+        catppuccin["source_commit"] == "07d02aa110ef9eb7e7427afca5c73ba9cf7f8ebd",
+        "unexpected Catppuccin source commit",
+    )
+    require(catppuccin["license"] == "MIT", "Catppuccin palette must retain its MIT notice")
+    require(len(catppuccin["token_order"]) == 26, "Catppuccin token set is incomplete")
+    require(len(catppuccin["accent_order"]) == 14, "Catppuccin accent set is incomplete")
+    require(
+        tuple(catppuccin["flavors"]) == ("latte", "frappe", "macchiato", "mocha"),
+        "Catppuccin flavor set is incomplete",
+    )
+    for flavor_name, flavor in catppuccin["flavors"].items():
+        require(len(flavor["hex"]) == 26, f"Catppuccin {flavor_name} token count mismatch")
+        require(
+            all(re.fullmatch(r"#[0-9A-Fa-f]{6}", color) for color in flavor["hex"]),
+            f"Catppuccin {flavor_name} contains an invalid color",
+        )
 
 
 def check_runtime_scope() -> None:
@@ -107,10 +130,20 @@ def check_runtime_scope() -> None:
     require('.decktd' in css and 'min-width: 0' in css, "compact deck width fallback missing")
     require('table-layout: fixed' in css, "compact table layout fallback missing")
     require('width: calc(25%' not in css, "fragile fixed rating width returned")
-    require("congrats" in source, "Congratulations surface hook missing")
-    require("deck-options/" in source, "Deck Options surface hook missing")
-    require("graphs" in source, "Stats surface hook missing")
-    require("image-occlusion/" in source, "Image Occlusion surface hook missing")
+    require('"congrats": "congrats"' in source, "Congratulations surface hook missing")
+    require(
+        '"deck-options": "deck-options"' in source,
+        "Deck Options surface hook missing",
+    )
+    require('"graphs": "stats"' in source, "Stats surface hook missing")
+    require(
+        '"image-occlusion": "native-page"' in source,
+        "Image Occlusion surface hook missing",
+    )
+    require(
+        "def _is_addon_page" in source and "if _is_addon_page(path):" in source,
+        "third-party add-on WebViews must be excluded from route ownership",
+    )
     require("QApplication" in native_source, "native theme must target QApplication")
     require("QPalette" in native_source, "native theme must synchronize QPalette")
     require('mistlineRole="primary"' in native_source, "native primary action role missing")
@@ -123,6 +156,16 @@ def check_runtime_scope() -> None:
         require(selector in native_source, f"native popup selector missing: {selector}")
     require("mistline-native-theme:start" in native_source, "owned QSS marker missing")
     require("editor.css" in source and "editor-marker.js" in source, "Editor CSP-safe assets missing")
+    require("mw.reset(" not in source, "cosmetic theme switches must never reset Anki state")
+    require(
+        'candidate.href === resolvedHref' in source,
+        "runtime stylesheet ownership must use the exact add-on URL",
+    )
+    require(
+        'href*="/web/theme.css"' not in source
+        and 'href*="/web/editor.css"' not in source,
+        "runtime must not claim another add-on's generic stylesheet path",
+    )
     require(".editor-toolbar" in editor_css, "Editor toolbar style missing")
     require(".editor-field" in editor_css, "Editor field style missing")
     require(".note-editor .field-container" in editor_css, "stable Editor field specificity missing")
@@ -144,6 +187,12 @@ def check_runtime_scope() -> None:
     require("--mist-easy: #346492" in css, "rating Easy hover contrast guard missing")
     require("document.currentScript" in editor_js, "Editor external marker bootstrap missing")
     require("--editorial-user-accent" in editor_js, "Editor dark-safe accent bootstrap missing")
+    require("--ctp-" not in editor_js, "Editor must preserve card-owned Catppuccin variables")
+    require(
+        'data-editorial-motion' not in editor_css
+        and "editorialMotion" not in editor_js,
+        "Editor motion state must use the canonical mistline attribute",
+    )
     require(css.count("{") == css.count("}"), "theme.css brace count mismatch")
     require(editor_css.count("{") == editor_css.count("}"), "editor.css brace count mismatch")
     runtime = "\n".join(
@@ -171,7 +220,11 @@ def check_archive() -> None:
             require(archive.read(relative) == source_path.read_bytes(), f"archive content is stale: {relative}")
     for required in (
         "__init__.py",
+        "CATPPUCCIN_LICENSE",
         "LICENSE",
+        "THIRD_PARTY_NOTICES.md",
+        "catppuccin.json",
+        "color_themes.py",
         "native_theme.py",
         "manifest.json",
         "config.json",

@@ -2,9 +2,23 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+try:
+    from .color_themes import (
+        ColorTokens as _ThemeTokens,
+        _contrast_text,
+        _mix_hex,
+        resolve_color_tokens,
+    )
+except ImportError:  # pragma: no cover - direct-module compatibility for tests
+    from color_themes import (  # type: ignore[no-redef]
+        ColorTokens as _ThemeTokens,
+        _contrast_text,
+        _mix_hex,
+        resolve_color_tokens,
+    )
 
 _native_fonts_registered = False
 _native_font_family = "Inter"
@@ -13,116 +27,24 @@ _QSS_START = "/* mistline-native-theme:start */"
 _QSS_END = "/* mistline-native-theme:end */"
 
 
-@dataclass(frozen=True)
-class _ThemeTokens:
-    """The one color contract shared by Qt's palette and owned QSS."""
-
-    accent: str
-    accent_hover: str
-    accent_pressed: str
-    accent_soft: str
-    canvas: str
-    surface: str
-    raised: str
-    field: str
-    text: str
-    muted: str
-    border: str
-    hover: str
-    selection: str
-    disabled: str
-    danger: str
-    on_accent: str
-    on_danger: str
-
-
 _palette_target: Any | None = None
 _palette_before_theme: Any | None = None
 _palette_owned: Any | None = None
 
 
-def _mix_hex(source: str, target: str, target_weight: float) -> str:
-    """Mix two #RRGGBB colors without depending on a live Qt application."""
-
-    try:
-        source_channels = [int(source[index : index + 2], 16) for index in (1, 3, 5)]
-        target_channels = [int(target[index : index + 2], 16) for index in (1, 3, 5)]
-    except (TypeError, ValueError):
-        return source
-
-    weight = min(1.0, max(0.0, target_weight))
-    mixed = [
-        round(source_channel * (1 - weight) + target_channel * weight)
-        for source_channel, target_channel in zip(source_channels, target_channels)
-    ]
-    return "#" + "".join(f"{channel:02X}" for channel in mixed)
-
-
-def _contrast_text(background: str) -> str:
-    """Choose readable text for a user-supplied accent color."""
-
-    try:
-        channels = [int(background[index : index + 2], 16) / 255 for index in (1, 3, 5)]
-    except (TypeError, ValueError):
-        return "#FFFFFF"
-
-    linear = [
-        channel / 12.92
-        if channel <= 0.04045
-        else ((channel + 0.055) / 1.055) ** 2.4
-        for channel in channels
-    ]
-    luminance = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
-    return "#1D1D1B" if luminance > 0.179 else "#FFFFFF"
-
-
 def _build_tokens(accent: str, dark: bool) -> _ThemeTokens:
-    resolved_accent = _mix_hex(accent, "#FFFFFF", 0.35) if dark else accent
-    if dark:
-        canvas = "#1B1916"
-        surface = "#221F1A"
-        raised = "#2B2721"
-        field = "#27231E"
-        text = "#F1EADF"
-        muted = "#B3AB9E"
-        border = "#514A40"
-        hover = "#302B25"
-        accent_hover = _mix_hex(resolved_accent, "#FFFFFF", 0.14)
-        accent_pressed = _mix_hex(resolved_accent, "#000000", 0.16)
-    else:
-        canvas = "#F1EDE4"
-        surface = "#F8F5ED"
-        raised = "#E7E0D4"
-        field = "#FCFAF4"
-        text = "#1D1D1B"
-        muted = "#77736B"
-        border = "#CFC8BC"
-        hover = "#E7E0D4"
-        accent_hover = _mix_hex(resolved_accent, "#FFFFFF", 0.12)
-        accent_pressed = _mix_hex(resolved_accent, "#000000", 0.14)
+    """Compatibility wrapper for the original Editorial helper API."""
 
-    danger = "#E16D61" if dark else "#B9382F"
-    return _ThemeTokens(
-        accent=resolved_accent,
-        accent_hover=accent_hover,
-        accent_pressed=accent_pressed,
-        accent_soft=_mix_hex(resolved_accent, surface, 0.86),
-        canvas=canvas,
-        surface=surface,
-        raised=raised,
-        field=field,
-        text=text,
-        muted=muted,
-        border=border,
-        hover=hover,
-        selection=_mix_hex(resolved_accent, surface, 0.74),
-        # Disabled controls must still be identifiable; a small surface mix
-        # keeps them quiet without recreating Anki's nearly invisible grey.
-        disabled=_mix_hex(muted, surface, 0.30),
-        danger=danger,
-        on_accent=_contrast_text(resolved_accent),
-        on_danger=_contrast_text(danger),
+    return resolve_color_tokens(
+        {"color_theme": "editorial", "accent_color": accent},
+        dark,
     )
+
+
+def _build_tokens_for_config(config: dict[str, Any], dark: bool) -> _ThemeTokens:
+    """Resolve every native color from the shared cross-surface contract."""
+
+    return resolve_color_tokens(config, dark)
 
 
 def _register_native_fonts() -> str:
@@ -163,8 +85,23 @@ def _theme_is_dark() -> bool:
 
 
 def _build_qss(accent: str, dark: bool, font_family: str = "Inter") -> str:
-    tokens = _build_tokens(accent, dark)
+    """Compatibility wrapper for callers that pass an Editorial accent."""
+
+    return _build_qss_from_tokens(_build_tokens(accent, dark), font_family)
+
+
+def _build_qss_for_config(
+    config: dict[str, Any], dark: bool, font_family: str = "Inter"
+) -> str:
+    return _build_qss_from_tokens(_build_tokens_for_config(config, dark), font_family)
+
+
+def _build_qss_from_tokens(
+    tokens: _ThemeTokens, font_family: str = "Inter"
+) -> str:
     accent = tokens.accent
+    accent_text = tokens.accent_text
+    focus = tokens.focus
     canvas = tokens.canvas
     surface = tokens.surface
     raised = tokens.raised
@@ -179,6 +116,7 @@ def _build_qss(accent: str, dark: bool, font_family: str = "Inter") -> str:
     selection = tokens.selection
     disabled = tokens.disabled
     danger = tokens.danger
+    danger_text = tokens.danger_text
     on_accent = tokens.on_accent
     on_danger = tokens.on_danger
 
@@ -268,7 +206,7 @@ QMenu::item:selected {{
     background-color: {hover};
 }}
 QMenu::item:checked {{
-    color: {accent};
+    color: {accent_text};
     font-weight: 600;
 }}
 QMenu::item:disabled {{
@@ -304,7 +242,7 @@ QPushButton {{
     font-weight: 600;
 }}
 QPushButton:hover {{
-    border-color: {accent};
+    border-color: {focus};
     background-color: {accent_soft};
 }}
 QPushButton:pressed {{
@@ -315,7 +253,7 @@ QPushButton:pressed {{
 }}
 QPushButton:focus {{
     padding: 6px 11px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QPushButton:default {{
     border-color: {accent};
@@ -329,6 +267,9 @@ QPushButton:default:hover {{
 QPushButton:default:pressed {{
     border-color: {accent_pressed};
     background-color: {accent_pressed};
+}}
+QPushButton:default:focus {{
+    border-color: {focus};
 }}
 QPushButton:disabled {{
     border-color: {border};
@@ -351,7 +292,7 @@ QPushButton[mistlineRole="primary"]:pressed {{
 }}
 QPushButton[mistlineRole="primary"]:focus {{
     padding: 6px 11px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QPushButton[mistlineRole="primary"]:disabled {{
     border-color: {border};
@@ -359,12 +300,12 @@ QPushButton[mistlineRole="primary"]:disabled {{
     background-color: {raised};
 }}
 QPushButton[mistlineRole="secondary"] {{
-    border-color: {accent};
-    color: {accent};
+    border-color: {focus};
+    color: {accent_text};
     background-color: {surface};
 }}
 QPushButton[mistlineRole="secondary"]:hover {{
-    border-color: {accent};
+    border-color: {focus};
     background-color: {accent_soft};
 }}
 QPushButton[mistlineRole="secondary"]:pressed {{
@@ -373,7 +314,7 @@ QPushButton[mistlineRole="secondary"]:pressed {{
 }}
 QPushButton[mistlineRole="secondary"]:focus {{
     padding: 6px 11px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QPushButton[mistlineRole="secondary"]:disabled {{
     border-color: {border};
@@ -381,8 +322,8 @@ QPushButton[mistlineRole="secondary"]:disabled {{
     background-color: {raised};
 }}
 QPushButton[mistlineRole="destructive"] {{
-    border-color: {danger};
-    color: {danger};
+    border-color: {danger_text};
+    color: {danger_text};
     background-color: {surface};
 }}
 QPushButton[mistlineRole="destructive"]:hover {{
@@ -397,7 +338,7 @@ QPushButton[mistlineRole="destructive"]:pressed {{
 }}
 QPushButton[mistlineRole="destructive"]:focus {{
     padding: 6px 11px;
-    border: 2px solid {danger};
+    border: 2px solid {danger_text};
 }}
 QPushButton[mistlineRole="destructive"]:disabled {{
     border-color: {border};
@@ -422,7 +363,7 @@ QPushButton[mistlineRole="quiet"]:pressed {{
 }}
 QPushButton[mistlineRole="quiet"]:focus {{
     padding: 6px 11px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QPushButton[mistlineRole="quiet"]:disabled {{
     border-color: transparent;
@@ -439,7 +380,7 @@ QPushButton[mistlineRole="chooser"] {{
     text-align: left;
 }}
 QPushButton[mistlineRole="chooser"]:hover {{
-    border-color: {accent};
+    border-color: {focus};
     background-color: {accent_soft};
 }}
 QPushButton[mistlineRole="chooser"]:pressed {{
@@ -448,7 +389,7 @@ QPushButton[mistlineRole="chooser"]:pressed {{
 }}
 QPushButton[mistlineRole="chooser"]:focus {{
     padding: 6px 11px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QPushButton[mistlineRole="chooser"]:disabled {{
     border-color: {border};
@@ -496,7 +437,7 @@ QToolButton {{
     background: transparent;
 }}
 QToolButton:hover {{
-    border-color: {accent};
+    border-color: {focus};
     background-color: {accent_soft};
 }}
 QToolButton:pressed {{
@@ -505,11 +446,11 @@ QToolButton:pressed {{
 }}
 QToolButton:focus {{
     padding: 4px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QToolButton:checked {{
-    border-color: {accent};
-    color: {accent};
+    border-color: {focus};
+    color: {accent_text};
     background-color: {accent_soft};
 }}
 QToolButton:disabled {{
@@ -547,7 +488,7 @@ QTimeEdit:focus,
 QDateTimeEdit:focus,
 QKeySequenceEdit:focus {{
     padding: 4px 8px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QLineEdit:disabled,
 QTextEdit:disabled,
@@ -702,13 +643,13 @@ QTabBar::tab {{
     background-color: {surface};
 }}
 QTabBar::tab:hover {{
-    border-color: {accent};
+    border-color: {focus};
     color: {text};
     background-color: {accent_soft};
 }}
 QTabBar::tab:selected {{
-    border-color: {accent};
-    color: {accent};
+    border-color: {focus};
+    color: {accent_text};
     background-color: {accent_soft};
     font-weight: 600;
 }}
@@ -740,7 +681,7 @@ QSlider::sub-page:horizontal {{
 QSlider::handle:horizontal {{
     width: 16px;
     margin: -6px 0;
-    border: 1px solid {accent};
+    border: 1px solid {focus};
     border-radius: 8px;
     background-color: {surface};
 }}
@@ -759,7 +700,7 @@ QSlider::sub-page:vertical {{
 QSlider::handle:vertical {{
     height: 16px;
     margin: 0 -6px;
-    border: 1px solid {accent};
+    border: 1px solid {focus};
     border-radius: 8px;
     background-color: {surface};
 }}
@@ -837,8 +778,8 @@ QDialog#Preferences QPushButton#resetWindowSizes:default {{
     background-color: {field};
 }}
 QDialog#Preferences QPushButton#resetWindowSizes:hover {{
-    border-color: {accent};
-    color: {accent};
+    border-color: {focus};
+    color: {accent_text};
     background-color: {accent_soft};
 }}
 QDialog#Preferences QPushButton#resetWindowSizes:pressed {{
@@ -848,7 +789,7 @@ QDialog#Preferences QPushButton#resetWindowSizes:pressed {{
 }}
 QDialog#Preferences QPushButton#resetWindowSizes:focus {{
     padding: 6px 11px;
-    border: 2px solid {accent};
+    border: 2px solid {focus};
 }}
 QDialog#Preferences QDialogButtonBox {{
     padding-top: 8px;
@@ -882,9 +823,8 @@ def extend_native_style(style: str, config: dict[str, Any]) -> str:
     if not should_apply:
         return base
 
-    accent = str(config.get("accent_color", "#2F5BBC"))
     font_family = _register_native_fonts()
-    owned = _build_qss(accent, _theme_is_dark(), font_family).strip()
+    owned = _build_qss_for_config(config, _theme_is_dark(), font_family).strip()
     return f"{base}\n{owned}" if base else owned
 
 
@@ -948,8 +888,8 @@ def _palette_from_tokens(base_palette: Any, tokens: _ThemeTokens) -> Any | None:
         "BrightText": tokens.on_accent,
         "Highlight": tokens.accent,
         "HighlightedText": tokens.on_accent,
-        "Link": tokens.accent,
-        "LinkVisited": tokens.accent_hover,
+        "Link": tokens.accent_text,
+        "LinkVisited": tokens.accent_text,
         "PlaceholderText": tokens.muted,
         "Light": tokens.raised,
         "Midlight": tokens.raised,
@@ -1060,10 +1000,9 @@ def apply_native_theme(main_window: Any, config: dict[str, Any]) -> None:
         config.get("style_native_chrome")
     )
     if should_apply:
-        accent = str(config.get("accent_color", "#2F5BBC"))
         _apply_application_palette(
             target,
-            _build_tokens(accent, _theme_is_dark()),
+            _build_tokens_for_config(config, _theme_is_dark()),
         )
     else:
         _restore_application_palette(target)

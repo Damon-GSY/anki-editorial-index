@@ -2,6 +2,28 @@
 
 本项目使用语义化版本号。面向普通用户的重要变化会记录在这里。
 
+## 0.3.0 · 2026-08-30
+
+### 新增
+
+- 加入 Catppuccin Latte、Frappé、Macchiato 与 Mocha 四种 flavor，以及 Rosewater、Flamingo、Pink、Mauve、Red、Maroon、Peach、Yellow、Green、Teal、Sky、Sapphire、Blue、Lavender 全部 14 种强调色
+- 新增「工具 → Editorial Index 配色」切换器，可直接选择暖纸默认、Catppuccin 自动或固定 flavor，无需编辑 JSON 或重启 Anki
+- Catppuccin 自动模式会跟随 Anki 日间 / 夜间设置，分别使用 Latte 与 Mocha
+
+### 调整
+
+- 让配色切换同步到 Qt 原生窗口、Anki WebView、复习页与 Add / Browse Editor；已打开的 Editor 不需要重载，不会丢失未保存内容
+- 配色与总开关不再调用 Anki 的全局重置；Reviewer 当前卡片、答案面、计时，以及 Add / Browse 的焦点、光标和滚动状态会保持原位
+- 运行时只管理本插件的精确样式地址和语义颜色变量，不会接管其他插件的同名 CSS，也不会覆盖卡片模板自定义的 `--ctp-*` 变量
+- 已打开的 Add、原生弹窗与 Card Layout 会在总开关切换时原地应用或恢复语义角色和间距；Browser 侧栏会重建 Anki 自己的 palette 样式但不改写控件名，第三方插件之后修改的值也不会被回滚
+- 新安装和从 0.2.x 升级仍使用 Editorial Index 暖纸配色；原有 `accent_color` 配置保留，只有用户主动选择才会切换到 Catppuccin
+- 原始 Catppuccin token 按官方 Palette v1.8.0 精确保留；小字、键盘焦点与按钮前景色会在需要时使用高对比度派生色，避免浅色强调色不可读
+- 色板快照、版本、commit 与 MIT 许可声明随插件打包，运行时不会访问网络；本项目是独立集成，不是 Catppuccin 官方 port
+
+### 验证
+
+- 新增 4 种 flavor × 14 种强调色的完整数据、语义 token 与对比度回归，并将 Catppuccin 契约测试接入 Validate 与 Release CI
+
 ## 0.2.4 · 2026-08-30
 
 ### 修复

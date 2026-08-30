@@ -17,7 +17,11 @@ OUTPUT = DIST_DIR / "Editorial-Index.ankiaddon"
 CHECKSUMS = DIST_DIR / "SHA256SUMS"
 REQUIRED = {
     "__init__.py",
+    "CATPPUCCIN_LICENSE",
     "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "catppuccin.json",
+    "color_themes.py",
     "native_theme.py",
     "manifest.json",
     "config.json",

@@ -20,7 +20,13 @@
 6. 点击「从文件安装」，选中下载的安装包。
 7. 安装完成后关闭并重新打开 Anki。
 
-重新进入牌组页以后，应当看到暖纸色背景和新的 Deck Home 标题。「工具」菜单中也会出现「Editorial Index 主题」。这两处都出现，说明插件已经正常加载。
+重新进入牌组页以后，应当看到暖纸色背景和新的 Deck Home 标题。「工具」菜单中也会出现「Editorial Index 主题」和「Editorial Index 配色」。这两处都出现，说明插件已经正常加载。
+
+### 快速验收配色切换
+
+1. 打开「工具 > Editorial Index 配色」，确认可选择 Editorial Index、Catppuccin Auto、Latte、Frappé、Macchiato 和 Mocha。
+2. 打开其中的强调色子菜单，确认包含 Rosewater、Flamingo、Pink、Mauve、Red、Maroon、Peach、Yellow、Green、Teal、Sky、Sapphire、Blue 和 Lavender，共 14 种。
+3. 先切换到任一 Catppuccin 风味并更换一次强调色，确认当前界面立即更新；再选择 Editorial Index，确认暖纸色主题正常恢复。
 
 Anki 官方说明确认 `.ankiaddon` 是桌面插件的分发格式，安装包内部不应再包一层顶级文件夹。Editorial Index 的发行包按照这项规则生成。相关说明见 [Anki 插件分享文档](https://addon-docs.ankiweb.net/sharing.html)。
 
@@ -35,7 +41,7 @@ Anki 官方说明确认 `.ankiaddon` 是桌面插件的分发格式，安装包�
 
 ## 临时停用
 
-打开「工具」菜单，取消勾选「Editorial Index 主题」。界面会刷新，插件文件和配置仍会保留。需要恢复时重新勾选即可。
+打开「工具」菜单，取消勾选「Editorial Index 主题」。界面会立即恢复，插件文件和配置仍会保留；已打开的 Add、Browse 和 Card Layout 也会原地还原，不会重载正在编辑的内容。需要恢复时重新勾选即可。
 
 也可以进入「工具 > 插件」，选中 Editorial Index，再点击「切换启用」。这种方式通常需要重启 Anki。
 
