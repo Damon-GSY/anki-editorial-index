@@ -1,0 +1,145 @@
+/* Editorial Index editor chrome. This file never modifies saved field HTML. */
+
+:root {
+  --editorial-accent: #315fc4;
+  --editorial-paper: #f1ede4;
+  --editorial-surface: #f8f5ed;
+  --editorial-raised: #e7e0d4;
+  --editorial-ink: #1d1d1b;
+  --editorial-muted: #6f6a62;
+  --editorial-rule: #d7d0c4;
+  --editorial-rule-strong: #aaa193;
+  --editorial-shadow: 0 3px 10px rgba(54, 45, 32, 0.1), 0 1px 2px rgba(54, 45, 32, 0.1);
+
+  /* Remap Anki's chrome tokens, while leaving font and line-height alone. */
+  --canvas: var(--editorial-paper);
+  --canvas-elevated: var(--editorial-surface);
+  --canvas-inset: var(--editorial-raised);
+  --canvas-overlay: var(--editorial-surface);
+  --canvas-code: var(--editorial-surface);
+  --fg: var(--editorial-ink);
+  --fg-subtle: var(--editorial-muted);
+  --border: var(--editorial-rule);
+  --border-subtle: var(--editorial-rule);
+  --border-strong: var(--editorial-rule-strong);
+  --border-focus: var(--editorial-accent);
+  --button-bg: var(--editorial-surface);
+  --button-gradient-start: var(--editorial-surface);
+  --button-gradient-end: var(--editorial-raised);
+  --button-primary-bg: var(--editorial-accent);
+  --button-primary-gradient-start: var(--editorial-accent);
+  --button-primary-gradient-end: var(--editorial-accent);
+  --shadow: var(--editorial-rule-strong);
+  --shadow-subtle: var(--editorial-rule);
+  --shadow-focus: var(--editorial-accent);
+  --border-radius: 8px;
+  --border-radius-medium: 10px;
+  --border-radius-large: 12px;
+}
+
+:root.night-mode {
+  --editorial-paper: #1b1916;
+  --editorial-surface: #221f1a;
+  --editorial-raised: #2b2721;
+  --editorial-ink: #f1eadf;
+  --editorial-muted: #b3ab9e;
+  --editorial-rule: #514a40;
+  --editorial-rule-strong: #71685b;
+  --editorial-shadow: 0 3px 10px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.32);
+}
+
+body,
+.note-editor {
+  background: var(--editorial-paper);
+}
+
+.editor-toolbar {
+  padding: 7px 8px 9px;
+  border-bottom-color: var(--editorial-rule-strong);
+  background: var(--editorial-paper);
+}
+
+.editor-toolbar button,
+.editor-toolbar .linkb,
+.tag-editor button {
+  border-color: var(--editorial-rule) !important;
+  border-radius: 7px !important;
+  background: var(--editorial-surface) !important;
+  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.1);
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+
+.editor-toolbar button:hover,
+.editor-toolbar .linkb:hover,
+.tag-editor button:hover {
+  border-color: var(--editorial-accent) !important;
+  background: color-mix(in srgb, var(--editorial-surface) 88%, var(--editorial-accent) 12%) !important;
+  transform: translateY(-1px);
+}
+
+.editor-toolbar button:active,
+.editor-toolbar .linkb:active,
+.tag-editor button:active {
+  background: var(--editorial-raised) !important;
+  transform: translateY(1px);
+}
+
+.editor-toolbar button.active,
+.editor-toolbar .linkb.active {
+  border-color: var(--editorial-accent) !important;
+  color: #fff !important;
+  background: var(--editorial-accent) !important;
+}
+
+.fields {
+  gap: 10px;
+  margin-top: 8px;
+  padding: 0 6px 12px;
+}
+
+.field-container {
+  border-radius: 11px;
+  background: transparent;
+}
+
+.editor-field {
+  margin: 3px 0;
+  border-color: var(--editorial-rule);
+  border-radius: 10px;
+  background: var(--editorial-surface);
+  box-shadow: var(--editorial-shadow);
+}
+
+.editor-field:focus-within {
+  border-color: var(--editorial-accent);
+  outline: 2px solid var(--editorial-accent);
+  outline-offset: 2px;
+}
+
+.rich-text-input,
+.plain-text-input {
+  min-height: 44px;
+  background: var(--editorial-surface);
+}
+
+.tag-editor {
+  margin: 12px 6px 6px;
+}
+
+:root[data-editorial-motion="off"] *,
+:root[data-editorial-motion="off"] *::before,
+:root[data-editorial-motion="off"] *::after {
+  scroll-behavior: auto !important;
+  transition-duration: 0.001ms !important;
+  animation-duration: 0.001ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}

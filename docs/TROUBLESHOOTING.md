@@ -14,7 +14,7 @@
 
 打开插件配置，确认 `style_native_chrome` 与 `style_reviewer` 都是 `true`。保存以后重新打开当前窗口。
 
-Anki 的浏览器、统计和设置窗口由不同的原生控件组成。Editorial Index 当前重点覆盖主窗口、牌组、概览和复习流程，少数辅助窗口会保留 Anki 原来的布局。
+Add、Browse、Stats、Deck Options 和 Preferences 都需要在插件加载后新建才能完整获取主题。如果它们在更新前已经打开，关闭该窗口后重新打开；编辑器区域仍无变化时，完整重启一次 Anki。
 
 ## 卡片正面或背面的字体没有改变
 

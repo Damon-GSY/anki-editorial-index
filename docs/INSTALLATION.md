@@ -1,6 +1,6 @@
 # Editorial Index 安装指南
 
-安装完成后，Anki 的牌组页、复习外层界面、顶部导航和桌面菜单会使用 Editorial Index 主题。你的牌组、卡片、学习记录和调度设置不会改变。
+安装完成后，Anki 的牌组页、复习外层界面、顶部导航、桌面菜单以及 Add / Browse / Stats / Deck Options / Preferences 窗口会使用 Editorial Index 主题。你的牌组、卡片、学习记录和调度设置不会改变。
 
 ## 安装前准备
 

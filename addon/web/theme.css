@@ -173,6 +173,154 @@
   transform: translateY(1px);
 }
 
+/* Standalone windows: graphs, deck options, imports, and utility pages. */
+:root[data-mistline-context="stats"],
+:root[data-mistline-context="deck-options"],
+:root[data-mistline-context="native-page"] {
+  --canvas-code: var(--mist-paper-light);
+  --button-bg: var(--mist-paper-light);
+  --button-gradient-start: var(--mist-paper-light);
+  --button-gradient-end: var(--mist-paper-light);
+  --shadow: var(--mist-rule);
+  --shadow-subtle: var(--mist-rule);
+  --shadow-focus: var(--mist-accent);
+  --border-radius: 9px;
+  --border-radius-medium: 11px;
+  --border-radius-large: 14px;
+  --bs-body-bg: var(--mist-paper);
+  --bs-body-color: var(--mist-ink);
+  --bs-border-color: var(--mist-rule);
+  --bs-secondary-bg: var(--mist-paper-deep);
+  --bs-tertiary-bg: var(--mist-paper-light);
+  --bs-primary: var(--mist-accent);
+  --bs-link-color: var(--mist-accent);
+  color: var(--mist-ink);
+  background-color: var(--mist-paper);
+}
+
+:root[data-mistline-context="stats"] body,
+:root[data-mistline-context="deck-options"] body,
+:root[data-mistline-context="native-page"] body {
+  min-height: 100%;
+  margin: 0;
+  color: var(--mist-ink);
+  background-color: var(--mist-paper);
+  background-image: none;
+}
+
+:root[data-mistline-context="stats"] button,
+:root[data-mistline-context="stats"] .btn,
+:root[data-mistline-context="deck-options"] button,
+:root[data-mistline-context="deck-options"] .btn,
+:root[data-mistline-context="native-page"] button,
+:root[data-mistline-context="native-page"] .btn {
+  border: 1px solid var(--mist-rule);
+  border-radius: 8px !important;
+  color: var(--mist-ink);
+  background: var(--mist-paper-light);
+  box-shadow: var(--mist-action-shadow);
+}
+
+:root[data-mistline-context="stats"] button:hover,
+:root[data-mistline-context="stats"] .btn:hover,
+:root[data-mistline-context="deck-options"] button:hover,
+:root[data-mistline-context="deck-options"] .btn:hover,
+:root[data-mistline-context="native-page"] button:hover,
+:root[data-mistline-context="native-page"] .btn:hover {
+  border-color: var(--mist-accent);
+  background: color-mix(in srgb, var(--mist-paper-light) 86%, var(--mist-accent) 14%);
+  box-shadow: var(--mist-action-shadow-hover);
+  transform: translateY(-1px);
+}
+
+:root[data-mistline-context="stats"] button:active,
+:root[data-mistline-context="deck-options"] button:active,
+:root[data-mistline-context="native-page"] button:active {
+  background: var(--mist-paper-deep);
+  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.14);
+  transform: translateY(1px);
+}
+
+:root[data-mistline-context="stats"] button.active,
+:root[data-mistline-context="deck-options"] button.active,
+:root[data-mistline-context="native-page"] button.active,
+:root[data-mistline-context="stats"] .btn-primary,
+:root[data-mistline-context="deck-options"] .btn-primary,
+:root[data-mistline-context="native-page"] .btn-primary {
+  border-color: var(--mist-accent);
+  color: var(--mist-paper-light);
+  background: var(--mist-accent);
+}
+
+:root[data-mistline-context="stats"] h1,
+:root[data-mistline-context="stats"] h2,
+:root[data-mistline-context="stats"] h3 {
+  color: var(--mist-ink);
+  font-family: var(--mist-serif);
+  letter-spacing: -0.015em;
+}
+
+:root[data-mistline-context="stats"] table,
+:root[data-mistline-context="native-page"] table {
+  border-color: var(--mist-rule);
+  color: var(--mist-ink);
+}
+
+:root[data-mistline-context="stats"] hr,
+:root[data-mistline-context="deck-options"] hr,
+:root[data-mistline-context="native-page"] hr {
+  border-color: var(--mist-rule);
+  opacity: 1;
+}
+
+:root[data-mistline-context="stats"] input,
+:root[data-mistline-context="stats"] select,
+:root[data-mistline-context="stats"] textarea,
+:root[data-mistline-context="deck-options"] input,
+:root[data-mistline-context="deck-options"] select,
+:root[data-mistline-context="deck-options"] textarea,
+:root[data-mistline-context="native-page"] input,
+:root[data-mistline-context="native-page"] select,
+:root[data-mistline-context="native-page"] textarea,
+:root[data-mistline-context="stats"] .form-control,
+:root[data-mistline-context="deck-options"] .form-control,
+:root[data-mistline-context="native-page"] .form-control,
+:root[data-mistline-context="stats"] .form-select,
+:root[data-mistline-context="deck-options"] .form-select,
+:root[data-mistline-context="native-page"] .form-select {
+  border: 1px solid var(--mist-rule);
+  border-radius: 8px;
+  color: var(--mist-ink);
+  background-color: var(--mist-paper-light);
+}
+
+:root[data-mistline-context="stats"] input:focus,
+:root[data-mistline-context="stats"] select:focus,
+:root[data-mistline-context="stats"] textarea:focus,
+:root[data-mistline-context="deck-options"] input:focus,
+:root[data-mistline-context="deck-options"] select:focus,
+:root[data-mistline-context="deck-options"] textarea:focus,
+:root[data-mistline-context="native-page"] input:focus,
+:root[data-mistline-context="native-page"] select:focus,
+:root[data-mistline-context="native-page"] textarea:focus {
+  border-color: var(--mist-accent);
+  outline: 2px solid color-mix(in srgb, var(--mist-accent) 32%, transparent);
+  outline-offset: 2px;
+}
+
+:root[data-mistline-context="stats"] .card,
+:root[data-mistline-context="deck-options"] .card,
+:root[data-mistline-context="native-page"] .card,
+:root[data-mistline-context="stats"] dialog,
+:root[data-mistline-context="deck-options"] dialog,
+:root[data-mistline-context="native-page"] dialog {
+  border: 1px solid var(--mist-rule);
+  border-radius: 12px;
+  color: var(--mist-ink);
+  background: var(--mist-paper-light);
+  box-shadow: var(--mist-action-shadow);
+}
+
 /* Deck Browser: a quiet ledger with one scanning typeface and fixed count axes. */
 :root[data-mistline-context="deck-browser"] body {
   width: min(100%, 1160px);

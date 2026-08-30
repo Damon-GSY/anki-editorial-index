@@ -4,7 +4,7 @@
 
 - `enabled`：总开关。也可以在「工具 → Editorial Index 主题」中快速切换。
 - `accent_color`：主强调色，只接受 `#RRGGBB` 格式。
-- `style_native_chrome`：美化 Anki 主窗口的原生菜单栏与状态栏。
+- `style_native_chrome`：美化 Add、Browse、Stats、Deck Options、Preferences、原生对话框及其内嵌 Anki 页面。
 - `style_reviewer`：将复习区域改为 Editorial Index 阅读页。不会用通用选择器修改 `#qa` 内部字段元素。
 - `animations`：启用短促的悬停与出现动画。
 

@@ -53,6 +53,24 @@ class FakeFontDatabase:
         return ["Inter"]
 
 
+class FakeApplication:
+    _instance = None
+
+    def __init__(self) -> None:
+        self._style = "existing-application-style"
+        FakeApplication._instance = self
+
+    @classmethod
+    def instance(cls):
+        return cls._instance
+
+    def styleSheet(self) -> str:
+        return self._style
+
+    def setStyleSheet(self, style: str) -> None:
+        self._style = style
+
+
 class FakeMenu:
     def __init__(self) -> None:
         self.actions = []
@@ -96,6 +114,7 @@ class FakeAddonManager:
 
 class FakeMainWindow:
     def __init__(self) -> None:
+        self.app = FakeApplication()
         self.addonManager = FakeAddonManager()
         self.form = types.SimpleNamespace(menuTools=FakeMenu())
         self.col = object()
@@ -115,15 +134,20 @@ class FakeMainWindow:
 class FakeWebContent:
     def __init__(self) -> None:
         self.css = []
+        self.js = []
         self.head = ""
 
 
 class FakeWebView:
-    def __init__(self) -> None:
+    def __init__(
+        self, path: str = "/_anki/pages/congrats", kind: str | None = None
+    ) -> None:
         self.script = ""
+        self.path = path
+        self.kind = types.SimpleNamespace(name=kind) if kind else None
 
     def url(self):
-        return types.SimpleNamespace(path=lambda: "/_anki/pages/congrats")
+        return types.SimpleNamespace(path=lambda: self.path)
 
     def eval(self, script: str) -> None:
         self.script = script
@@ -134,6 +158,7 @@ def install_fake_aqt() -> tuple[FakeMainWindow, types.SimpleNamespace]:
         webview_will_set_content=HookList(),
         deck_browser_will_render_content=HookList(),
         webview_did_inject_style_into_page=HookList(),
+        style_did_init=HookList(),
         main_window_did_init=HookList(),
         theme_did_change=HookList(),
     )
@@ -145,6 +170,7 @@ def install_fake_aqt() -> tuple[FakeMainWindow, types.SimpleNamespace]:
 
     qt = types.ModuleType("aqt.qt")
     qt.QAction = FakeAction
+    qt.QApplication = FakeApplication
     qt.QFontDatabase = FakeFontDatabase
     qt.qconnect = lambda signal, callback: signal.connect(callback)
 
@@ -175,14 +201,27 @@ def main() -> None:
     assert module._get_config()["accent_color"] == "#123456"
     fake_mw.addonManager.config["accent_color"] = "#315FC4"
 
-    assert fake_mw.addonManager.export_pattern == r"^web/(?:theme\.css|fonts/.*\.(?:woff2|ttf|txt|md))$"
+    assert fake_mw.addonManager.export_pattern == (
+        r"^web/(?:theme\.css|editor\.css|editor-marker\.js|fonts/.*\.(?:woff2|ttf|txt|md))$"
+    )
     assert len(hooks.webview_will_set_content) == 1
     assert len(hooks.deck_browser_will_render_content) == 1
+    assert len(hooks.style_did_init) == 1
     assert len(hooks.main_window_did_init) == 1
 
+    filtered_style = hooks.style_did_init[0]("anki-base-style")
+    assert filtered_style.startswith("anki-base-style")
+    assert filtered_style.count("mistline-native-theme:start") == 1
+    assert hooks.style_did_init[0](filtered_style).count("mistline-native-theme:start") == 1
+
     hooks.main_window_did_init[0]()
-    assert "mistline-native-theme:start" in fake_mw.styleSheet()
-    assert 'font-family: "Inter"' in fake_mw.styleSheet()
+    assert "mistline-native-theme:start" in fake_mw.app.styleSheet()
+    assert 'font-family: "Inter"' in fake_mw.app.styleSheet()
+    assert "QDialog" in fake_mw.app.styleSheet()
+    assert "QPushButton:default" in fake_mw.app.styleSheet()
+    assert "QAbstractItemView" in fake_mw.app.styleSheet()
+    assert "QLineEdit" in fake_mw.app.styleSheet()
+    assert fake_mw.styleSheet() == "existing-addon-style"
     assert len(FakeFontDatabase.registered_paths) == 2
     assert fake_mw.form.menuTools.actions[-1].label == "Editorial Index 主题"
 
@@ -194,6 +233,21 @@ def main() -> None:
     assert 'mistlineFonts = "loading"' in content.head
     assert 'mistlineFonts = sans.length && serif.length ? "ready" : "fallback"' in content.head
     assert '"deck-browser"' in content.head
+
+    editor_content = FakeWebContent()
+    editor = type("Editor", (), {})()
+    hooks.webview_will_set_content[0](editor_content, editor)
+    assert editor_content.css == ["/_addons/mistline_ui/web/editor.css"]
+    assert editor_content.js == [
+        "/_addons/mistline_ui/web/editor-marker.js?accent=315FC4&motion=on"
+    ]
+    assert not editor_content.head
+
+    stats_content = FakeWebContent()
+    stats = type("NewDeckStats", (), {})()
+    hooks.webview_will_set_content[0](stats_content, stats)
+    assert stats_content.css == ["/_addons/mistline_ui/web/theme.css"]
+    assert '"stats"' in stats_content.head
 
     deck_content = types.SimpleNamespace(tree="<table>decks</table>")
     hooks.deck_browser_will_render_content[0](deck_browser, deck_content)
@@ -207,13 +261,53 @@ def main() -> None:
     external = FakeWebView()
     hooks.webview_did_inject_style_into_page[0](external)
     assert "mistline-external-theme" in external.script
+    assert 'settings.context' in external.script
+
+    deck_options = FakeWebView("/future-route", "DECK_OPTIONS")
+    hooks.webview_did_inject_style_into_page[0](deck_options)
+    assert '"context": "deck-options"' in deck_options.script
+
+    graphs = FakeWebView("/graphs")
+    hooks.webview_did_inject_style_into_page[0](graphs)
+    assert '"context": "stats"' in graphs.script
+
+    image_occlusion = FakeWebView("/image-occlusion/123")
+    hooks.webview_did_inject_style_into_page[0](image_occlusion)
+    assert '"context": "native-page"' in image_occlusion.script
+
+    unrelated_external = FakeWebView("/some-unowned-page")
+    hooks.webview_did_inject_style_into_page[0](unrelated_external)
+    assert unrelated_external.script == ""
+
+    fake_mw.addonManager.config["style_native_chrome"] = False
+    chrome_disabled_editor = FakeWebContent()
+    hooks.webview_will_set_content[0](chrome_disabled_editor, editor)
+    assert not chrome_disabled_editor.css and not chrome_disabled_editor.js
+    chrome_disabled_options = FakeWebView("/deck-options/123", "DECK_OPTIONS")
+    hooks.webview_did_inject_style_into_page[0](chrome_disabled_options)
+    assert chrome_disabled_options.script == ""
+    chrome_disabled_congrats = FakeWebView("/_anki/pages/congrats")
+    hooks.webview_did_inject_style_into_page[0](chrome_disabled_congrats)
+    assert "mistline-external-theme" in chrome_disabled_congrats.script
+    fake_mw.addonManager.config["style_native_chrome"] = True
 
     action = fake_mw.form.menuTools.actions[-1]
     assert action.triggered.callback
     action.triggered.callback(False)
     assert fake_mw.addonManager.config["enabled"] is False
-    assert "mistline-native-theme:start" not in fake_mw.styleSheet()
+    assert "mistline-native-theme:start" not in fake_mw.app.styleSheet()
+    assert fake_mw.app.styleSheet() == "existing-application-style"
     assert fake_mw.reset_count == 1
+
+    native_style_disabled = hooks.style_did_init[0]("anki-base-style")
+    assert native_style_disabled == "anki-base-style"
+
+    disabled_editor = FakeWebContent()
+    hooks.webview_will_set_content[0](disabled_editor, editor)
+    assert not disabled_editor.css and not disabled_editor.js and not disabled_editor.head
+
+    native_theme = sys.modules["mistline_ui.native_theme"]
+    assert native_theme._mix_hex("#000000", "#FFFFFF", 0.5) == "#808080"
 
     print("Editorial Index hook smoke test passed")
 

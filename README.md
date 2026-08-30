@@ -14,7 +14,7 @@
 
 ![Editorial Index 牌组页面](./screenshots/deck-browser.png)
 
-Editorial Index 会把 Anki 的牌组页、复习外层界面和桌面菜单整理成克制的编辑索引风格。安装以后仍然使用原来的牌组、卡片和快捷键，也不会改动学习进度与调度算法。
+Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / Stats / Deck Options 等独立窗口与桌面菜单整理成克制的编辑索引风格。安装以后仍然使用原来的牌组、卡片和快捷键，也不会改动学习进度与调度算法。
 
 ## 下载与安装
 
@@ -34,7 +34,8 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面和桌面菜单整�
 - 牌组概览与「现在学习」按钮
 - 顶部导航、普通底栏和复习评分区
 - 复习卡片外层的阅读区域
-- Anki 主窗口的菜单栏、菜单和状态栏
+- Add、Browse、Stats、Deck Options、Preferences 与其他 Anki 原生对话框
+- 原生菜单栏、菜单、状态栏、输入框、列表和标签页
 - 日间模式与夜间模式
 
 插件不会修改 Anki 数据库、牌组、笔记、卡片模板或 FSRS 调度。禁用或卸载后，Anki 会恢复原来的界面。
@@ -49,7 +50,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面和桌面菜单整�
 | --- | --- | --- |
 | `enabled` | `true` | 控制整个主题是否启用 |
 | `accent_color` | `#315FC4` | 设置按钮、选中状态和焦点的强调色 |
-| `style_native_chrome` | `true` | 美化桌面菜单栏、菜单和状态栏 |
+| `style_native_chrome` | `true` | 美化独立窗口、对话框、原生控件及其内嵌 Anki 页面 |
 | `style_reviewer` | `true` | 美化复习卡片外层和评分区 |
 | `animations` | `true` | 启用短促的出现与悬停动画 |
 

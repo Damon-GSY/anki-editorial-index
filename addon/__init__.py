@@ -9,7 +9,7 @@ from typing import Any
 from aqt import gui_hooks, mw
 from aqt.qt import QAction, qconnect
 
-from .native_theme import apply_native_theme
+from .native_theme import apply_native_theme, extend_native_style
 
 
 DEFAULT_CONFIG: dict[str, Any] = {
@@ -31,7 +31,40 @@ CONTEXT_NAMES = {
     "DeckBrowserBottomBar": "standard-bottom-bar",
     "OverviewBottomBar": "standard-bottom-bar",
     "ReviewerBottomBar": "reviewer-bottom-bar",
+    "Editor": "editor",
+    "NewDeckStats": "stats",
+    "DeckStats": "stats",
+    "FindDuplicatesDialog": "native-page",
+    "EmptyCards": "native-page",
 }
+
+EXTERNAL_PAGE_CONTEXTS = (
+    ("deck-options/", "deck-options"),
+    ("graphs", "stats"),
+    ("card-info/", "native-page"),
+    ("change-notetype/", "native-page"),
+    ("import-page/", "native-page"),
+    ("import-csv/", "native-page"),
+    ("import-anki-package/", "native-page"),
+    ("image-occlusion/", "native-page"),
+    ("congrats", "congrats"),
+)
+
+WEBVIEW_KIND_CONTEXTS = {
+    "DECK_OPTIONS": "deck-options",
+    "DECK_STATS": "stats",
+    "LEGACY_DECK_STATS": "stats",
+    "CHANGE_NOTETYPE": "native-page",
+    "BROWSER_CARD_INFO": "native-page",
+    "IMPORT_CSV": "native-page",
+    "IMPORT_ANKI_PACKAGE": "native-page",
+    "IMPORT_LOG": "native-page",
+    "EMPTY_CARDS": "native-page",
+    "FIND_DUPLICATES": "native-page",
+    "FIELDS": "native-page",
+}
+
+STANDALONE_WEB_CONTEXTS = {"editor", "stats", "deck-options", "native-page"}
 
 _HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _menu_action: QAction | None = None
@@ -73,10 +106,27 @@ def _inject_theme(web_content: Any, context: object | None) -> None:
     context_name = _context_name(context)
     if context_name is None:
         return
+    if (
+        context_name in STANDALONE_WEB_CONTEXTS
+        and not config["style_native_chrome"]
+    ):
+        return
     if context_name in {"reviewer", "reviewer-bottom-bar"} and not config["style_reviewer"]:
         return
 
     package = mw.addonManager.addon_from_module(__name__)
+    if context_name == "editor":
+        # Editor pages enforce a CSP that blocks inline marker scripts. Keep
+        # their chrome in a dedicated stylesheet and pass only validated,
+        # cosmetic settings to a local external script.
+        web_content.css.append(f"/_addons/{package}/web/editor.css")
+        accent = config["accent_color"].lstrip("#")
+        motion = "on" if config["animations"] else "off"
+        web_content.js.append(
+            f"/_addons/{package}/web/editor-marker.js?accent={accent}&motion={motion}"
+        )
+        return
+
     web_content.css.append(f"/_addons/{package}/web/theme.css")
 
     settings = {
@@ -142,18 +192,41 @@ def _refresh_main_screen() -> None:
         pass
 
 
+def _external_page_context(path: str) -> str | None:
+    for fragment, context_name in EXTERNAL_PAGE_CONTEXTS:
+        if fragment in path:
+            return context_name
+    return None
+
+
+def _webview_kind_context(webview: Any) -> str | None:
+    kind = getattr(webview, "kind", None)
+    kind_name = getattr(kind, "name", None)
+    if isinstance(kind_name, str):
+        return WEBVIEW_KIND_CONTEXTS.get(kind_name)
+    return None
+
+
 def _inject_external_style(webview: Any) -> None:
-    """Apply a light, DOM-agnostic layer to Anki's Congratulations page."""
+    """Theme Anki-owned Svelte pages that live in standalone windows."""
 
     config = _get_config()
     if not config["enabled"]:
         return
 
+    context_name = _webview_kind_context(webview)
     try:
         path = webview.url().path().lower()
     except Exception:
+        path = ""
+    if context_name is None:
+        context_name = _external_page_context(path)
+    if context_name is None:
         return
-    if "congrats" not in path:
+    if (
+        context_name in STANDALONE_WEB_CONTEXTS
+        and not config["style_native_chrome"]
+    ):
         return
 
     package = mw.addonManager.addon_from_module(__name__)
@@ -162,6 +235,7 @@ def _inject_external_style(webview: Any) -> None:
         "href": href,
         "accent": config["accent_color"],
         "motion": "on" if config["animations"] else "off",
+        "context": context_name,
     }
     payload_json = json.dumps(payload, ensure_ascii=True)
     webview.eval(
@@ -169,7 +243,7 @@ def _inject_external_style(webview: Any) -> None:
 (() => {{
   const settings = {payload_json};
   const root = document.documentElement;
-  root.dataset.mistlineContext = "congrats";
+  root.dataset.mistlineContext = settings.context;
   root.dataset.mistlineMotion = settings.motion;
   root.style.setProperty("--mist-user-accent", settings.accent);
   if (!document.getElementById("mistline-external-theme")) {{
@@ -191,6 +265,12 @@ def _sync_menu_action() -> None:
 
 def _apply_current_native_theme() -> None:
     apply_native_theme(mw, _get_config())
+
+
+def _extend_anki_style(style: str) -> str:
+    """Official Anki style filter used after theme/widget-style changes."""
+
+    return extend_native_style(style, _get_config())
 
 
 def _toggle_theme(checked: bool) -> None:
@@ -222,11 +302,14 @@ def _config_updated(_new_config: Any) -> None:
     _refresh_main_screen()
 
 
-mw.addonManager.setWebExports(__name__, r"^web/(?:theme\.css|fonts/.*\.(?:woff2|ttf|txt|md))$")
+mw.addonManager.setWebExports(
+    __name__,
+    r"^web/(?:theme\.css|editor\.css|editor-marker\.js|fonts/.*\.(?:woff2|ttf|txt|md))$",
+)
 mw.addonManager.setConfigUpdatedAction(__name__, _config_updated)
 
 gui_hooks.webview_will_set_content.append(_inject_theme)
 gui_hooks.deck_browser_will_render_content.append(_decorate_deck_browser)
 gui_hooks.webview_did_inject_style_into_page.append(_inject_external_style)
+gui_hooks.style_did_init.append(_extend_anki_style)
 gui_hooks.main_window_did_init.append(_setup_menu)
-gui_hooks.theme_did_change.append(_apply_current_native_theme)

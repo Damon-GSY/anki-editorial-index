@@ -14,7 +14,7 @@ An editorial, warm-paper desktop theme for Anki
 
 ![Editorial Index deck browser](./screenshots/deck-browser.png)
 
-Editorial Index restyles Anki Desktop's deck browser, reviewer shell, navigation, and native window chrome. It leaves your collection, scheduling, shortcuts, and card templates intact.
+Editorial Index restyles Anki Desktop's deck browser, reviewer shell, navigation, and standalone Add, Browse, Stats, Deck Options, and Preferences windows. It leaves your collection, scheduling, shortcuts, and card templates intact.
 
 ## Install
 
@@ -32,7 +32,8 @@ The Tools menu will now contain an Editorial Index theme toggle. See the [instal
 - Deck overview and Study Now action
 - Top navigation and bottom toolbars
 - Reviewer shell and answer controls
-- Native menus and status bar
+- Add, Browse, Stats, Deck Options, Preferences, and native dialogs
+- Native menus, fields, lists, tabs, and the status bar
 - Light and dark modes
 
 The add-on does not modify your collection, notes, card templates, FSRS settings, or scheduling data. Disabling or removing it restores Anki's standard interface.
@@ -47,7 +48,7 @@ Open Tools > Add-ons, select Editorial Index, and choose Config.
 | --- | --- | --- |
 | `enabled` | `true` | Enable the complete theme |
 | `accent_color` | `#315FC4` | Set the accent used for actions and focus states |
-| `style_native_chrome` | `true` | Style native menus and the status bar |
+| `style_native_chrome` | `true` | Style standalone windows, dialogs, native controls, and their Anki-owned embedded pages |
 | `style_reviewer` | `true` | Style the reviewer shell and rating controls |
 | `animations` | `true` | Enable brief entrance and hover motion |
 

@@ -2,6 +2,16 @@
 
 本项目使用语义化版本号。面向普通用户的重要变化会记录在这里。
 
+## 0.2.3 · 2026-08-30
+
+### 修复
+
+- 将 Qt 主题从 Anki 主窗口提升到全应用范围，Add、Browse、Stats、Deck Options、Preferences 以及后续打开的选择器/对话框不再退回原生灰色外观
+- 接入 Anki 官方 `style_did_init` 过滤器，切换明暗模式或 Widget Style 后仍会保留弹窗主题
+- 补全原生按钮、输入框、下拉选择、表格/列表、标签页、滚动条和分割条的圆角、层级与焦点状态
+- 为 Add 和 Browse 中的 EditorWebView 增加 CSP 兼容的本地专用样式，统一工具栏、字段卡片与标签区，不会写入或修改卡片字段内容
+- 给 Stats、Deck Options、Card Info、导入页和 Image Occlusion 等 Anki Svelte 页面注入同一套暖纸视觉变量
+
 ## 0.2.2 · 2026-08-30
 
 ### 调整

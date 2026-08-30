@@ -22,7 +22,7 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 | --- | --- | --- | --- |
 | `enabled` | 布尔值 | `true` | 控制整个主题。关闭后恢复 Anki 原有界面 |
 | `accent_color` | 字符串 | `#315FC4` | 改变按钮、选中状态、链接和键盘焦点的颜色 |
-| `style_native_chrome` | 布尔值 | `true` | 控制主窗口菜单栏、菜单和状态栏 |
+| `style_native_chrome` | 布尔值 | `true` | 控制 Add、Browse、Stats、Deck Options、Preferences、原生对话框及其内嵌 Anki 页面 |
 | `style_reviewer` | 布尔值 | `true` | 控制复习卡片外层、显示答案按钮和评分按钮 |
 | `animations` | 布尔值 | `true` | 控制牌组进入、悬停和按下时的短动画 |
 
@@ -51,9 +51,9 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 }
 ```
 
-## 保留系统菜单外观
+## 保留系统窗口外观
 
-如果只希望改变 Anki 的网页区域，可以关闭原生窗口样式。
+如果只希望改变主界面与复习网页区域，可以关闭原生窗口样式。Add / Browse 编辑器和 Stats / Deck Options 内嵌页面也会一起恢复 Anki 默认外观。
 
 ```json
 {

@@ -31,7 +31,7 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
     require(bool(manifest["name"]), "manifest name is required")
-    require(manifest["human_version"] == "0.2.2", "manifest version must be 0.2.2")
+    require(manifest["human_version"] == "0.2.3", "manifest version must be 0.2.3")
     require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
     require(isinstance(config["enabled"], bool), "enabled must be boolean")
     require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
@@ -39,12 +39,15 @@ def check_json() -> None:
 
 def check_runtime_scope() -> None:
     source = (ADDON / "__init__.py").read_text(encoding="utf-8")
+    native_source = (ADDON / "native_theme.py").read_text(encoding="utf-8")
     css = (ADDON / "web" / "theme.css").read_text(encoding="utf-8")
+    editor_css = (ADDON / "web" / "editor.css").read_text(encoding="utf-8")
+    editor_js = (ADDON / "web" / "editor-marker.js").read_text(encoding="utf-8")
     for hook in (
         "webview_will_set_content",
         "deck_browser_will_render_content",
         "main_window_did_init",
-        "theme_did_change",
+        "style_did_init",
         "webview_did_inject_style_into_page",
     ):
         require(hook in source, f"missing Anki hook: {hook}")
@@ -54,6 +57,9 @@ def check_runtime_scope() -> None:
         "Reviewer",
         "TopToolbar",
         "ReviewerBottomBar",
+        "Editor",
+        "NewDeckStats",
+        "DeckStats",
     ):
         require(context in source, f"missing UI context: {context}")
     require("#qa *" not in css, "reviewer content must not be globally restyled")
@@ -65,7 +71,19 @@ def check_runtime_scope() -> None:
     require('table-layout: fixed' in css, "compact table layout fallback missing")
     require('width: calc(25%' not in css, "fragile fixed rating width returned")
     require("congrats" in source, "Congratulations surface hook missing")
+    require("deck-options/" in source, "Deck Options surface hook missing")
+    require("graphs" in source, "Stats surface hook missing")
+    require("image-occlusion/" in source, "Image Occlusion surface hook missing")
+    require("QApplication" in native_source, "native theme must target QApplication")
+    for selector in ("QDialog", "QPushButton", "QLineEdit", "QAbstractItemView"):
+        require(selector in native_source, f"native popup selector missing: {selector}")
+    require("mistline-native-theme:start" in native_source, "owned QSS marker missing")
+    require("editor.css" in source and "editor-marker.js" in source, "Editor CSP-safe assets missing")
+    require(".editor-toolbar" in editor_css, "Editor toolbar style missing")
+    require(".editor-field" in editor_css, "Editor field style missing")
+    require("document.currentScript" in editor_js, "Editor external marker bootstrap missing")
     require(css.count("{") == css.count("}"), "theme.css brace count mismatch")
+    require(editor_css.count("{") == editor_css.count("}"), "editor.css brace count mismatch")
     runtime = "\n".join(
         path.read_text(encoding="utf-8", errors="ignore")
         for path in ADDON.rglob("*")
@@ -97,6 +115,8 @@ def check_archive() -> None:
         "config.json",
         "config.md",
         "web/theme.css",
+        "web/editor.css",
+        "web/editor-marker.js",
         "web/fonts/inter-regular.woff2",
         "web/fonts/inter-semibold.woff2",
         "web/fonts/inter-regular.ttf",

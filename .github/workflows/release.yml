@@ -23,6 +23,7 @@ jobs:
           python3 scripts/package_addon.py
           python3 scripts/validate_addon.py
           python3 scripts/smoke_test_addon.py
+          node --check addon/web/editor-marker.js
       - name: Match tag to manifest version
         run: |
           manifest_version="$(python3 -c 'import json; print(json.load(open("addon/manifest.json"))["human_version"])')"

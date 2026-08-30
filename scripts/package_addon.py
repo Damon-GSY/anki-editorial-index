@@ -23,6 +23,8 @@ REQUIRED = {
     "config.json",
     "config.md",
     "web/theme.css",
+    "web/editor.css",
+    "web/editor-marker.js",
     "web/fonts/inter-regular.woff2",
     "web/fonts/inter-semibold.woff2",
     "web/fonts/inter-regular.ttf",
