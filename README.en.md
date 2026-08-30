@@ -47,7 +47,7 @@ Version 0.3.0 adds the complete Catppuccin palette system: Latte, Frappé, Macch
 
 New installations and upgrades continue to use Editorial Index's warm-paper palette by default, so the update never opts an existing setup into Catppuccin. Select Tools > Editorial Index 配色 (Palette) to opt in. The main window, reviewer, Add and Browse editors, and native dialogs update together without a restart or a reload of unsaved editor content.
 
-The add-on bundles a pinned snapshot of the official [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json); switching colors never requires a network request. Raw palette values remain exact. Where a light raw accent cannot serve as readable small text or a visible keyboard focus indicator, Editorial Index derives a higher-contrast interaction color from that accent.
+The add-on bundles a pinned snapshot of the official [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json), with semantic relationships based on the [official Catppuccin Style Guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md); switching never requires a network request. Every flavor switches its Base / Mantle / Crust, Surface, Overlay, and type hierarchy together. Links stay Blue, focus stays Lavender, the caret stays Rosewater, and status colors retain their own roles instead of all following the selected accent. See the complete [semantic mapping](./docs/CATPPUCCIN_MAPPING.md).
 
 ### Editorial warm paper
 
@@ -59,7 +59,7 @@ Editorial keeps the warmth of paper and the hierarchy of an editorial index, fol
 
 ### Four Catppuccin flavors
 
-All four interface captures use the Blue accent so you can compare each flavor's hierarchy, contrast, and atmosphere directly.
+All four interface captures use the Blue accent so you can compare each flavor's complete neutral layers, type hierarchy, functional colors, contrast, and atmosphere directly.
 
 | Latte · Light | Frappé · Dark |
 | --- | --- |
@@ -72,6 +72,12 @@ All four interface captures use the Blue accent so you can compare each flavor's
 The four flavors and 14 accents can be combined freely, giving 56 Catppuccin choices. The matrix below shows every exact upstream swatch. In the interface, small text and focus outlines may use a derived higher-contrast color when the raw swatch is not readable enough.
 
 ![All 14 Catppuccin accents across four flavors](./screenshots/themes/catppuccin-accent-matrix.png)
+
+### Complete semantic combination for every flavor
+
+This sheet shows how every flavor combines Base, Mantle, Crust, Surface, type, link, focus, caret, and status roles. Values are the colors used by the running add-on; light Latte roles used for small text retain their source hue while being adjusted to meet the readability contract.
+
+![Complete semantic color roles across all four Catppuccin flavors](./screenshots/themes/catppuccin-semantic-roles.png)
 
 ## Configure
 

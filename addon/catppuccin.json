@@ -2,6 +2,8 @@
   "source": "https://github.com/catppuccin/palette/blob/v1.8.0/palette.json",
   "source_version": "1.8.0",
   "source_commit": "07d02aa110ef9eb7e7427afca5c73ba9cf7f8ebd",
+  "style_guide": "https://github.com/catppuccin/catppuccin/blob/d09787dd98ca6fba08af5ef2ae94a7e09f17daca/docs/style-guide.md",
+  "style_guide_commit": "d09787dd98ca6fba08af5ef2ae94a7e09f17daca",
   "license": "MIT",
   "token_order": [
     "rosewater",

@@ -214,6 +214,21 @@ def main() -> None:
         assert blue_tokens.canvas == base
         assert blue_tokens.accent == blue
         assert blue_tokens.accent_raw == blue
+        assert blue_tokens.surface == blue_tokens.palette["mantle"]
+        assert blue_tokens.crust == blue_tokens.palette["crust"]
+        assert blue_tokens.raised == blue_tokens.palette["surface0"]
+        assert blue_tokens.field == blue_tokens.palette["surface0"]
+        assert blue_tokens.link == colors._chromatic_text(
+            blue_tokens.palette["blue"],
+            (
+                blue_tokens.canvas,
+                blue_tokens.surface,
+                blue_tokens.raised,
+                blue_tokens.field,
+            ),
+            4.5,
+            blue_tokens.dark,
+        )
         assert blue_tokens.dark is is_dark
 
         for accent_name in colors.CATPPUCCIN_ACCENTS:
@@ -339,11 +354,15 @@ def main() -> None:
     assert "mistline-native-theme:start" in app.styleSheet()
     assert app.palette() != original_palette
     assert app.palette().colors[("All", FakePalette.ColorRole.Window)] == tokens.canvas
-    assert app.palette().colors[("All", FakePalette.ColorRole.Highlight)] == tokens.accent
+    assert app.palette().colors[("All", FakePalette.ColorRole.Highlight)] == tokens.selection
 
     enabled["accent_color"] = "#A4502A"
     native.apply_native_theme(object(), enabled)
-    assert app.palette().colors[("All", FakePalette.ColorRole.Highlight)] == "#A4502A"
+    custom_tokens = native._build_tokens("#A4502A", False)
+    assert (
+        app.palette().colors[("All", FakePalette.ColorRole.Highlight)]
+        == custom_tokens.selection
+    )
 
     disabled = {**enabled, "enabled": False}
     native.apply_native_theme(object(), disabled)
@@ -366,9 +385,9 @@ def main() -> None:
     native.apply_native_theme(object(), disabled)
     assert app.palette() == external_palette
 
-    # QPalette mirrors the same semantic split: official accent for selection
-    # fill, a derived on-accent for selected text, and readable accent text for
-    # links. This catches regressions that QSS-only fixtures cannot see.
+    # QPalette mirrors the upstream semantic split: Overlay 2 tint for
+    # selection, normal Text on that tint, and Blue for links. This catches
+    # regressions that QSS-only fixtures cannot see.
     catppuccin_enabled = {
         **latte_yellow_config,
         "enabled": True,
@@ -379,15 +398,15 @@ def main() -> None:
     assert cat_palette[("All", FakePalette.ColorRole.Window)] == latte_yellow.canvas
     assert (
         cat_palette[("All", FakePalette.ColorRole.Highlight)]
-        == latte_yellow.accent
+        == latte_yellow.selection
     )
     assert (
         cat_palette[("All", FakePalette.ColorRole.HighlightedText)]
-        == latte_yellow.on_accent
+        == latte_yellow.text
     )
     assert (
         cat_palette[("All", FakePalette.ColorRole.Link)]
-        == latte_yellow.accent_text
+        == latte_yellow.link
     )
     native.apply_native_theme(object(), {**catppuccin_enabled, "enabled": False})
     assert app.palette() == external_palette

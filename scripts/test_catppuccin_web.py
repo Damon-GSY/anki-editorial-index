@@ -79,6 +79,12 @@ COLOR_PAIRS = (
     *( ("focus", "--mist-focus", surface, 3.0) for surface in (
         "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
     )),
+    *( ("link", "--mist-link", surface, 4.5) for surface in (
+        "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
+    )),
+    *( ("cursor", "--mist-cursor", surface, 3.0) for surface in (
+        "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
+    )),
     *( ("disabled", "--mist-disabled", surface, 3.0) for surface in (
         "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
     )),
@@ -102,6 +108,7 @@ COLOR_PAIRS = (
     # The selected deck row uses the accent-soft surface, so its text roles
     # must remain readable there as well as on the four neutral surfaces.
     ("ink-on-soft", "--mist-ink", "--mist-accent-soft", 4.5),
+    ("ink-on-selection", "--mist-ink", "--mist-selection", 4.5),
     *( (f"{role.removeprefix('--mist-')}-on-soft", role,
         "--mist-accent-soft", 4.5)
        for role in (
@@ -197,6 +204,12 @@ CORE_AUDIT_JS = """
     Object.keys(payload.variables).map(name => [name, root.style.getPropertyValue(name).trim()])
   );
   const bodyStyle = getComputedStyle(document.body);
+  const linkProbe = document.createElement("a");
+  linkProbe.href = "#catppuccin-link-probe";
+  linkProbe.textContent = "Catppuccin link probe";
+  document.body.appendChild(linkProbe);
+  const linkColor = getComputedStyle(linkProbe).color;
+  linkProbe.remove();
   return {
     datasets: {
       family: root.dataset.mistlineFamily,
@@ -213,6 +226,7 @@ CORE_AUDIT_JS = """
       background: bodyStyle.backgroundColor,
       backgroundImage: bodyStyle.backgroundImage,
     },
+    linkColor,
     contrasts,
   };
 }
@@ -371,6 +385,12 @@ def audit_core(
             audit["inline"].get(name) == expected,
             f"{label}: {name} is {audit['inline'].get(name)!r}, expected {expected!r}",
             "exact-runtime-variables",
+        )
+    if context not in {"editor", "reviewer", "reviewer-bottom-bar"}:
+        checks.require(
+            audit["linkColor"] == rgb_from_hex(payload["variables"]["--mist-link"]),
+            f"{label}: generic link did not consume the Catppuccin Blue role",
+            "semantic-link",
         )
     checks.require(
         audit["inline"]["--mist-accent-fill"] == payload["accentRaw"],
@@ -689,12 +709,12 @@ def audit_deck(
                 )
             hierarchy = semantic["hierarchy"]
             expected_hierarchy = {
-                "heading": "--mist-accent",
+                "heading": "--mist-ink",
                 "parent": "--mist-ink",
                 "leaf": "--mist-muted",
                 "current": "--mist-accent",
                 "collapse": "--mist-accent",
-                "headerDeck": "--mist-ink",
+                "headerDeck": "--mist-label",
                 "headerNew": "--mist-new",
                 "headerLearn": "--mist-learn",
                 "headerDue": "--mist-due",
@@ -947,6 +967,8 @@ def audit_editor(
                   const selection = getSelection();
                   const editorStyle = getComputedStyle(document.querySelector(".note-editor"));
                   const activeStyle = getComputedStyle(document.querySelector('[aria-label="Bold"]'));
+                  const fieldStyle = getComputedStyle(field);
+                  const selectedTagStyle = getComputedStyle(document.querySelector(".tag.selected"));
                   return {
                     html: field.innerHTML,
                     sameField: window.__editorFieldIdentity === field,
@@ -961,6 +983,9 @@ def audit_editor(
                     color: editorStyle.color,
                     activeBackground: activeStyle.backgroundColor,
                     activeColor: activeStyle.color,
+                    caretColor: fieldStyle.caretColor,
+                    selectedTagColor: selectedTagStyle.color,
+                    selectedTagBorder: selectedTagStyle.borderColor,
                   };
                 }
                 """
@@ -999,6 +1024,17 @@ def audit_editor(
                 and state["activeColor"] == rgb_from_hex(payload["variables"]["--editorial-on-accent"]),
                 f"{label}: active Editor action did not consume fill/on-fill roles {state}",
                 "editor-colors",
+            )
+            checks.require(
+                state["caretColor"] == rgb_from_hex(payload["variables"]["--editorial-cursor"]),
+                f"{label}: Editor caret did not consume the Rosewater cursor role {state}",
+                "editor-semantic-colors",
+            )
+            checks.require(
+                state["selectedTagColor"] == rgb_from_hex(payload["variables"]["--editorial-link"])
+                and state["selectedTagBorder"] == rgb_from_hex(payload["variables"]["--editorial-link"]),
+                f"{label}: Editor selected tag did not consume the Blue link/tag role {state}",
+                "editor-semantic-colors",
             )
         checks.require(not errors, f"editor browser errors: {errors}", "browser-errors")
     finally:

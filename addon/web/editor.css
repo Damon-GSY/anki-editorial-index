@@ -21,18 +21,23 @@
   --editorial-accent-fill: var(--editorial-user-accent);
   --editorial-accent: var(--editorial-accent-fill);
   --editorial-focus: var(--editorial-accent);
+  --editorial-link: var(--editorial-accent);
+  --editorial-cursor: var(--editorial-focus);
   --editorial-accent-hover: color-mix(in srgb, var(--editorial-accent-fill) 88%, #fff);
   --editorial-accent-pressed: color-mix(in srgb, var(--editorial-accent-fill) 86%, #000);
   --editorial-on-accent: #fff;
   --editorial-paper: #f1ede4;
   --editorial-surface: #f8f5ed;
+  --editorial-crust: #e7e0d4;
   --editorial-field: #fcfaf4;
   --editorial-raised: #e7e0d4;
   --editorial-ink: #1d1d1b;
+  --editorial-label: #6f6a62;
   --editorial-muted: #6f6a62;
   --editorial-disabled: #8d867b;
   --editorial-rule: #d7d0c4;
   --editorial-rule-strong: #aaa193;
+  --editorial-selection: #e7e0d4;
   --editorial-soft-accent: #e8eaf0;
   --editorial-soft-accent: color-mix(in srgb, var(--editorial-accent) 11%, var(--editorial-surface));
   --editorial-shadow: 0 8px 22px rgba(54, 45, 32, 0.07), 0 1px 3px rgba(54, 45, 32, 0.11);
@@ -44,18 +49,23 @@
   --editorial-accent-fill: color-mix(in srgb, var(--editorial-user-accent) 65%, #fff);
   --editorial-accent: var(--editorial-accent-fill);
   --editorial-focus: var(--editorial-accent);
+  --editorial-link: var(--editorial-accent);
+  --editorial-cursor: var(--editorial-focus);
   --editorial-accent-hover: color-mix(in srgb, var(--editorial-accent-fill) 86%, #fff);
   --editorial-accent-pressed: color-mix(in srgb, var(--editorial-accent-fill) 84%, #000);
   --editorial-on-accent: #1b1916;
   --editorial-paper: #1b1916;
   --editorial-surface: #221f1a;
+  --editorial-crust: #2b2721;
   --editorial-field: #27231e;
   --editorial-raised: #2b2721;
   --editorial-ink: #f1eadf;
+  --editorial-label: #b3ab9e;
   --editorial-muted: #b3ab9e;
   --editorial-disabled: #8f877c;
   --editorial-rule: #514a40;
   --editorial-rule-strong: #71685b;
+  --editorial-selection: #2b2721;
   --editorial-soft-accent: #262b36;
   --editorial-soft-accent: color-mix(in srgb, var(--editorial-accent) 15%, var(--editorial-surface));
   --editorial-shadow: 0 9px 24px rgba(0, 0, 0, 0.24), 0 1px 3px rgba(0, 0, 0, 0.34);
@@ -82,6 +92,15 @@ body,
 
 .note-editor {
   color: var(--editorial-ink);
+}
+
+.note-editor ::selection {
+  color: var(--editorial-ink);
+  background: var(--editorial-selection);
+}
+
+.note-editor :is(.rich-text-editable, .CodeMirror-code, .tag-input, input, textarea) {
+  caret-color: var(--editorial-cursor);
 }
 
 /* The command shelf is one surface; controls group by editing function. */
@@ -261,7 +280,7 @@ body,
   min-height: 44px;
   padding: 5px 8px;
   border-bottom: 1px solid var(--editorial-rule);
-  color: var(--editorial-ink);
+  color: var(--editorial-label);
   background: var(--editorial-raised);
   background: color-mix(in srgb, var(--editorial-raised) 54%, var(--editorial-surface));
   font-family: var(--editorial-ui-font);
@@ -432,11 +451,11 @@ body,
   font-family: var(--editorial-ui-font);
 }
 
-.note-editor .tag:hover,
-.note-editor .tag.selected {
-  border-color: var(--editorial-accent) !important;
-  color: var(--editorial-accent);
-  background: var(--editorial-soft-accent);
+.note-editor .tag-editor .tag:hover,
+.note-editor .tag-editor .tag.selected {
+  border-color: var(--editorial-link) !important;
+  color: var(--editorial-link) !important;
+  background: color-mix(in srgb, var(--editorial-link) 12%, var(--editorial-surface)) !important;
 }
 
 .note-editor .tag.selected {

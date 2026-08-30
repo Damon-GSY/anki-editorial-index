@@ -171,14 +171,18 @@ class ColorTokens:
     accent: str
     accent_text: str
     focus: str
+    link: str
+    cursor: str
     accent_hover: str
     accent_pressed: str
     accent_soft: str
     canvas: str
     surface: str
+    crust: str
     raised: str
     field: str
     text: str
+    label: str
     muted: str
     faint: str
     border: str
@@ -287,14 +291,18 @@ def _editorial_tokens(accent_value: object, system_dark: bool) -> ColorTokens:
         accent=accent,
         accent_text=accent_text,
         focus=focus,
+        link=accent_text,
+        cursor=focus,
         accent_hover=accent_hover,
         accent_pressed=accent_pressed,
         accent_soft=_mix_hex(accent, surface, 0.86),
         canvas=canvas,
         surface=surface,
+        crust=raised,
         raised=raised,
         field=field,
         text=text,
+        label=muted,
         muted=muted,
         faint=faint,
         border=border,
@@ -321,21 +329,24 @@ def _catppuccin_tokens(flavor: str, accent_name: str) -> ColorTokens:
     accent = palette[accent_name]
     canvas = palette["base"]
     surface = palette["mantle"]
+    crust = palette["crust"]
     raised = palette["surface0"]
-    field = palette["base"]
+    field = palette["surface0"]
     text = palette["text"]
-    # Keep semantic text roles valid on every native surface.  ``field`` is
-    # currently the same color as ``canvas`` for Catppuccin, but naming it in
-    # the contract prevents a future field-token change from silently making
-    # disabled Qt controls unreadable.  Native QSS renders disabled text on
-    # transparent canvas/surface controls and explicitly on ``raised`` inputs
-    # and buttons.
+    # Catppuccin's upstream style guide owns the semantic split: Base is the
+    # background pane; Mantle/Crust are secondary panes; Surface 0-2 are
+    # components; Text/Subtext/Overlay form the type hierarchy; Blue, Green,
+    # Yellow, Red, Rosewater, and Lavender keep their functional identities.
+    # Readable derivatives preserve those source hues when a raw swatch falls
+    # short on one of Anki's actual surfaces.
     text_backgrounds = (canvas, surface, raised, field)
 
     accent_hover = _mix_hex(accent, text, 0.10)
     accent_pressed = _mix_hex(accent, text, 0.18)
     accent_text = _chromatic_text(accent, text_backgrounds, 4.5, dark)
-    focus = _chromatic_text(accent, text_backgrounds, 3.0, dark)
+    link = _chromatic_text(palette["blue"], text_backgrounds, 4.5, dark)
+    focus = _chromatic_text(palette["lavender"], text_backgrounds, 3.0, dark)
+    cursor = _chromatic_text(palette["rosewater"], text_backgrounds, 3.0, dark)
     danger = palette["red"]
     neutral_candidates = (
         palette["crust"],
@@ -358,20 +369,24 @@ def _catppuccin_tokens(flavor: str, accent_name: str) -> ColorTokens:
         accent=accent,
         accent_text=accent_text,
         focus=focus,
+        link=link,
+        cursor=cursor,
         accent_hover=accent_hover,
         accent_pressed=accent_pressed,
         accent_soft=_mix_hex(accent, surface, 0.86),
         canvas=canvas,
         surface=surface,
+        crust=crust,
         raised=raised,
         field=field,
         text=text,
-        muted=palette["subtext1"],
-        faint=palette["overlay2"],
+        label=palette["subtext1"],
+        muted=palette["subtext0"],
+        faint=palette["overlay1"],
         border=palette["surface1"],
         border_strong=palette["surface2"],
         hover=palette["surface1"],
-        selection=palette["surface0"],
+        selection=_mix_hex(palette["overlay2"], canvas, 0.75),
         disabled=_ensure_contrast(
             palette["overlay1"], text_backgrounds, 3.0, text
         ),
@@ -379,7 +394,7 @@ def _catppuccin_tokens(flavor: str, accent_name: str) -> ColorTokens:
         danger_text=_chromatic_text(danger, text_backgrounds, 4.5, dark),
         on_accent=on_accent,
         on_danger=on_danger,
-        new=_chromatic_text(palette["sky"], text_backgrounds, 4.5, dark),
+        new=_chromatic_text(palette["teal"], text_backgrounds, 4.5, dark),
         learn=_chromatic_text(palette["yellow"], text_backgrounds, 4.5, dark),
         due=_chromatic_text(palette["red"], text_backgrounds, 4.5, dark),
         good=_chromatic_text(palette["green"], text_backgrounds, 4.5, dark),
@@ -429,20 +444,25 @@ def web_color_variables(tokens: ColorTokens) -> dict[str, str]:
         "--mist-accent-fill": tokens.accent,
         "--mist-accent": tokens.accent_text,
         "--mist-focus": tokens.focus,
+        "--mist-link": tokens.link,
+        "--mist-cursor": tokens.cursor,
         "--mist-accent-hover": tokens.accent_hover,
         "--mist-accent-pressed": tokens.accent_pressed,
         "--mist-accent-soft": tokens.accent_soft,
         "--mist-on-accent": tokens.on_accent,
         "--mist-paper": tokens.canvas,
         "--mist-paper-light": tokens.surface,
+        "--mist-crust": tokens.crust,
         "--mist-paper-deep": tokens.raised,
         "--mist-field": tokens.field,
         "--mist-ink": tokens.text,
+        "--mist-label": tokens.label,
         "--mist-muted": tokens.muted,
         "--mist-faint": tokens.faint,
         "--mist-zero": zero_text,
         "--mist-rule": tokens.border,
         "--mist-rule-strong": tokens.border_strong,
+        "--mist-selection": tokens.selection,
         "--mist-disabled": tokens.disabled,
         "--mist-danger-fill": tokens.danger,
         "--mist-danger": tokens.danger_text,
@@ -456,19 +476,24 @@ def web_color_variables(tokens: ColorTokens) -> dict[str, str]:
         "--editorial-accent-fill": tokens.accent,
         "--editorial-accent": tokens.accent_text,
         "--editorial-focus": tokens.focus,
+        "--editorial-link": tokens.link,
+        "--editorial-cursor": tokens.cursor,
         "--editorial-accent-hover": tokens.accent_hover,
         "--editorial-accent-pressed": tokens.accent_pressed,
         "--editorial-soft-accent": tokens.accent_soft,
         "--editorial-on-accent": tokens.on_accent,
         "--editorial-paper": tokens.canvas,
         "--editorial-surface": tokens.surface,
+        "--editorial-crust": tokens.crust,
         "--editorial-field": tokens.field,
         "--editorial-raised": tokens.raised,
         "--editorial-ink": tokens.text,
+        "--editorial-label": tokens.label,
         "--editorial-muted": tokens.muted,
         "--editorial-disabled": tokens.disabled,
         "--editorial-rule": tokens.border,
         "--editorial-rule-strong": tokens.border_strong,
+        "--editorial-selection": tokens.selection,
     }
     variables.update(
         {

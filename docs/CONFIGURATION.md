@@ -102,7 +102,9 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 }
 ```
 
-插件内置的是 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 26 色 token 快照。原始色值保持不变；为了保证浅色强调色上的小字、键盘焦点和状态文字可读，Editorial Index 会从原色推导高对比度的交互前景色。色板在安装包内本地读取，不会为配色下载或发送任何网络请求。
+插件内置的是 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 26 色 token 快照，并按 [官方 Style Guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md) 分配语义角色。四种 flavor 会完整切换中性层、文字层与功能色；`catppuccin_accent` 只控制主操作、当前牌组和历史热力图，不会取代固定的 Blue 链接、Lavender 焦点、Rosewater 光标和状态色。完整表格见 [Catppuccin 语义配色映射](./CATPPUCCIN_MAPPING.md)。
+
+原始色值保持不变；为了保证浅色小字、键盘焦点和状态文字可读，Editorial Index 会沿原色相推导高对比度交互前景色。色板在安装包内本地读取，不会为配色下载或发送任何网络请求。
 
 ## Review Heatmap 配色
 

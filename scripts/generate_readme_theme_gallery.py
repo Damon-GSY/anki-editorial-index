@@ -276,6 +276,133 @@ def render_palette_matrix(browser, base_url: str) -> None:
     page.close()
 
 
+def semantic_markup(module) -> str:
+    roles = (
+        ("Main pane", "Base", "canvas"),
+        ("Secondary pane", "Mantle", "surface"),
+        ("Chrome", "Crust", "crust"),
+        ("Control", "Surface 0", "raised"),
+        ("Hover", "Surface 1", "hover"),
+        ("Strong border", "Surface 2", "border_strong"),
+        ("Body / headline", "Text", "text"),
+        ("Label", "Subtext 1", "label"),
+        ("Secondary text", "Subtext 0", "muted"),
+        ("Subtle", "Overlay 1", "faint"),
+        ("Selection", "Overlay 2 · 25%", "selection"),
+        ("Link / Easy", "Blue", "link"),
+        ("Focus", "Lavender", "focus"),
+        ("Caret", "Rosewater", "cursor"),
+        ("New", "Teal", "new"),
+        ("Learn", "Yellow", "learn"),
+        ("Due", "Red", "due"),
+        ("Good", "Green", "good"),
+        ("Primary", "Selected accent · Blue", "accent"),
+        ("Primary soft", "Selected accent + Mantle", "accent_soft"),
+    )
+    panels: list[str] = []
+    for flavor in ("latte", "frappe", "macchiato", "mocha"):
+        tokens = module.resolve_color_tokens(
+            {
+                "color_theme": "catppuccin",
+                "catppuccin_flavor": flavor,
+                "catppuccin_accent": "blue",
+            },
+            system_dark=flavor != "latte",
+        )
+        cards = "".join(
+            f"""
+              <div class="role">
+                <div class="role-color" style="background:{getattr(tokens, attribute)}"></div>
+                <strong>{label}</strong>
+                <span>{source}</span>
+                <code>{getattr(tokens, attribute)}</code>
+              </div>
+            """
+            for label, source, attribute in roles
+        )
+        panels.append(
+            f"""
+              <section class="semantic-panel" style="
+                --base:{tokens.canvas};
+                --mantle:{tokens.surface};
+                --surface:{tokens.raised};
+                --border:{tokens.border_strong};
+                --text:{tokens.text};
+                --muted:{tokens.muted};
+                --accent:{tokens.accent};
+              ">
+                <header>
+                  <div><p>CATPPUCCIN</p><h2>{flavor.capitalize()}</h2></div>
+                  <span>{'Dark' if tokens.dark else 'Light'} · Blue accent</span>
+                </header>
+                <div class="roles">{cards}</div>
+              </section>
+            """
+        )
+    return f"""<!doctype html>
+      <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <style>
+            @font-face {{
+              font-family: Inter;
+              src: url('/addon/web/fonts/inter-regular.woff2') format('woff2');
+              font-weight: 400;
+            }}
+            @font-face {{
+              font-family: Inter;
+              src: url('/addon/web/fonts/inter-semibold.woff2') format('woff2');
+              font-weight: 600;
+            }}
+            * {{ box-sizing: border-box; }}
+            html, body {{ margin: 0; min-height: 100%; }}
+            body {{
+              width: 1800px;
+              padding: 64px;
+              color: #252521;
+              background: #f4f1ea;
+              font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+            }}
+            .intro {{ display:flex; align-items:end; justify-content:space-between; margin-bottom:32px; }}
+            .intro p {{ margin:0 0 8px; color:#68655e; font-size:18px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }}
+            .intro h1 {{ margin:0; font-size:46px; letter-spacing:-.04em; }}
+            .intro > span {{ max-width:520px; color:#68655e; font-size:18px; line-height:1.45; text-align:right; }}
+            .gallery {{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }}
+            .semantic-panel {{ padding:28px; border:1px solid var(--border); border-radius:22px; color:var(--text); background:var(--base); box-shadow:0 12px 28px color-mix(in srgb, var(--mantle) 72%, transparent); }}
+            .semantic-panel header {{ display:flex; align-items:end; justify-content:space-between; margin-bottom:22px; }}
+            .semantic-panel header p {{ margin:0 0 5px; color:var(--accent); font-size:12px; font-weight:600; letter-spacing:.14em; }}
+            .semantic-panel h2 {{ margin:0; font-size:30px; letter-spacing:-.03em; }}
+            .semantic-panel header > span {{ color:var(--muted); font-size:15px; }}
+            .roles {{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }}
+            .role {{ min-width:0; padding:8px; border:1px solid var(--border); border-radius:12px; background:var(--mantle); }}
+            .role-color {{ height:42px; margin-bottom:8px; border:1px solid color-mix(in srgb, var(--border) 65%, transparent); border-radius:7px; }}
+            .role strong, .role span, .role code {{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+            .role strong {{ font-size:12px; line-height:1.35; }}
+            .role span {{ margin-top:2px; color:var(--muted); font-size:10px; }}
+            .role code {{ margin-top:4px; color:var(--muted); font-family:Inter, sans-serif; font-size:9px; }}
+          </style>
+        </head>
+        <body>
+          <div class="intro">
+            <div><p>Editorial Index semantic map</p><h1>Every flavor · every interface role</h1></div>
+            <span>Official Catppuccin role relationships, with contrast-safe runtime values where small text requires them.</span>
+          </div>
+          <main class="gallery">{''.join(panels)}</main>
+        </body>
+      </html>"""
+
+
+def render_semantic_matrix(browser, module, base_url: str) -> None:
+    page = browser.new_page(viewport={"width": 1800, "height": 1200})
+    page.goto(base_url, wait_until="domcontentloaded")
+    page.set_content(semantic_markup(module), wait_until="networkidle")
+    page.evaluate("document.fonts.ready")
+    page.screenshot(
+        path=str(OUTPUT / "catppuccin-semantic-roles.png"), full_page=True
+    )
+    page.close()
+
+
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     module = load_color_module()
@@ -288,6 +415,7 @@ def main() -> None:
             with local_server() as base_url:
                 render_interface_gallery(browser, module, base_url)
                 render_palette_matrix(browser, base_url)
+                render_semantic_matrix(browser, module, base_url)
         finally:
             browser.close()
 

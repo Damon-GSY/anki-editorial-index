@@ -31,7 +31,7 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
     require(bool(manifest["name"]), "manifest name is required")
-    require(manifest["human_version"] == "0.3.3", "manifest version must be 0.3.3")
+    require(manifest["human_version"] == "0.3.4", "manifest version must be 0.3.4")
     require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
     require(isinstance(config["enabled"], bool), "enabled must be boolean")
     require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
@@ -45,6 +45,14 @@ def check_json() -> None:
     require(
         catppuccin["source_commit"] == "07d02aa110ef9eb7e7427afca5c73ba9cf7f8ebd",
         "unexpected Catppuccin source commit",
+    )
+    require(
+        catppuccin["style_guide_commit"] == "d09787dd98ca6fba08af5ef2ae94a7e09f17daca",
+        "unexpected Catppuccin style guide commit",
+    )
+    require(
+        catppuccin["style_guide"].endswith("/docs/style-guide.md"),
+        "Catppuccin style guide reference is missing",
     )
     require(catppuccin["license"] == "MIT", "Catppuccin palette must retain its MIT notice")
     require(len(catppuccin["token_order"]) == 26, "Catppuccin token set is incomplete")

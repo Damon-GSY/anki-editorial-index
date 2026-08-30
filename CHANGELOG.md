@@ -2,6 +2,21 @@
 
 本项目使用语义化版本号。面向普通用户的重要变化会记录在这里。
 
+## 0.3.4 · 2026-08-30
+
+### 调整
+
+- 依据 Catppuccin 官方 Style Guide 重做完整语义映射：Base / Mantle / Crust、Surface、Overlay、Text 与 Subtext 在四种 flavor 中分别承担对应界面层级
+- Blue 负责链接与 Editor 标签，Lavender 负责键盘焦点，Rosewater 负责文本光标；Teal / Yellow / Red / Green / Blue 分别承担 New / Learn / Due / Good / Easy，不再由所选 accent 覆盖所有功能色
+- 用户选择的 14 种 accent 继续控制主操作、当前牌组、当前标记与 Review Heatmap 历史活动，保留个性化但不破坏功能语义
+- Deck Browser 主标题回归 Text，表头标签使用 Subtext 1；原生 Qt 的链接、选择区、状态栏和字段标签同步使用同一套语义 token
+- README 四种 flavor 截图和 56 组合矩阵按新映射重新生成，并增加可审计的 Catppuccin 语义映射文档
+
+### 验证
+
+- 56 种配色逐一验证原始 palette、语义 token、链接、焦点、光标、状态文字、选择区与各界面消费关系
+- WebView 原位切换继续保留 Editor 未保存内容、焦点、光标和滚动位置；原生 Qt 与打包安装回归保持通过
+
 ## 0.3.3 · 2026-08-30
 
 ### 调整

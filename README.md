@@ -49,7 +49,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 
 新安装和从旧版升级都依然默认使用 Editorial Index 暖纸配色，不会自动切换到 Catppuccin。在「工具 → Editorial Index 配色」选择 Catppuccin 后，主界面、复习页、Add / Browse Editor 和原生窗口会同步更新，无需重启，也不会重载正在编辑的内容。
 
-色板是随插件打包的 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 token 快照，切换时不会联网。原始色值保持不变；对于过浅的原色，按钮文字、小字和键盘焦点会使用由原色推导的高对比度交互色。
+色板是随插件打包的 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 token 快照，语义关系参考 [Catppuccin 官方 Style Guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md)，切换时不会联网。四种 flavor 会同时切换 Base / Mantle / Crust、Surface、Overlay 和文字层级；链接固定使用 Blue、焦点使用 Lavender、光标使用 Rosewater，状态色也各自保留，不再全部跟随所选 accent。完整对应关系见 [Catppuccin 语义配色映射](./docs/CATPPUCCIN_MAPPING.md)。
 
 ### Editorial 暖纸
 
@@ -61,7 +61,7 @@ Editorial 保留纸张的温度和编辑排版感，会跟随 Anki 的日间与�
 
 ### Catppuccin 四种 flavor
 
-下面四张实际界面统一使用 Blue 强调色，便于直接比较 flavor 本身的层次、对比和氛围。
+下面四张实际界面统一使用 Blue 强调色，便于直接比较 flavor 本身完整的中性层、文字层级、功能色、对比和氛围。
 
 | Latte · Light | Frappé · Dark |
 | --- | --- |
@@ -74,6 +74,12 @@ Editorial 保留纸张的温度和编辑排版感，会跟随 Anki 的日间与�
 4 种 flavor 与 14 种强调色可任意组合，共 56 种 Catppuccin 选择。下图展示每个原始官方色值；在真实界面中，小字和焦点边框会在必要时自动使用可读性更高的派生色。
 
 ![Catppuccin 四种 flavor 与全部 14 种强调色](./screenshots/themes/catppuccin-accent-matrix.png)
+
+### 每种 flavor 的完整语义组合
+
+这张表展示四种 flavor 如何分别组合 Base、Mantle、Crust、Surface、文字层、链接、焦点、光标与状态色。这里显示的是插件实际使用的运行时颜色；Latte 中需要承担小字的浅色会保留原色相并自动满足可读性要求。
+
+![Catppuccin 四种 flavor 的完整界面语义配色](./screenshots/themes/catppuccin-semantic-roles.png)
 
 ## 配置
 

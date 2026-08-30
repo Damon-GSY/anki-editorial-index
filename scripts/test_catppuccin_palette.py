@@ -141,7 +141,10 @@ CSS_VARIABLE = re.compile(r"^--[a-z0-9-]+$")
 
 LATTE_READABLE_ROLES = {
     "accent_text": "#1851C2",
-    "new": "#026085",
+    "link": "#1851C2",
+    "focus": "#5C6DCD",
+    "cursor": "#A16558",
+    "new": "#106368",
     "learn": "#7B4E10",
     "due": "#B20D30",
     "good": "#29661C",
@@ -189,6 +192,13 @@ def test_official_snapshot(module) -> None:
     )
     assert data["source_version"] == "1.8.0"
     assert data["source_commit"] == "07d02aa110ef9eb7e7427afca5c73ba9cf7f8ebd"
+    assert data["style_guide"] == (
+        "https://github.com/catppuccin/catppuccin/blob/"
+        "d09787dd98ca6fba08af5ef2ae94a7e09f17daca/docs/style-guide.md"
+    )
+    assert data["style_guide_commit"] == (
+        "d09787dd98ca6fba08af5ef2ae94a7e09f17daca"
+    )
     assert data["license"] == "MIT"
     assert module.CATPPUCCIN_TOKEN_ORDER == OFFICIAL_TOKEN_ORDER
     assert module.CATPPUCCIN_ACCENTS == OFFICIAL_ACCENT_ORDER
@@ -254,11 +264,29 @@ def test_every_selectable_combination(module) -> None:
             assert tokens.accent_raw == raw_accent, label
             assert tokens.accent == raw_accent, label
             assert tokens.palette[accent_name] == raw_accent, label
+            assert tokens.canvas == tokens.palette["base"], label
+            assert tokens.surface == tokens.palette["mantle"], label
+            assert tokens.crust == tokens.palette["crust"], label
+            assert tokens.raised == tokens.palette["surface0"], label
+            assert tokens.field == tokens.palette["surface0"], label
+            assert tokens.text == tokens.palette["text"], label
+            assert tokens.label == tokens.palette["subtext1"], label
+            assert tokens.muted == tokens.palette["subtext0"], label
+            assert tokens.faint == tokens.palette["overlay1"], label
+            assert tokens.border == tokens.palette["surface1"], label
+            assert tokens.border_strong == tokens.palette["surface2"], label
+            assert tokens.hover == tokens.palette["surface1"], label
+            assert tokens.selection == module._mix_hex(
+                tokens.palette["overlay2"], tokens.palette["base"], 0.75
+            ), label
 
             source_roles = {
                 "accent_text": raw_accent,
+                "link": tokens.palette["blue"],
+                "focus": tokens.palette["lavender"],
+                "cursor": tokens.palette["rosewater"],
                 "danger_text": tokens.palette["red"],
-                "new": tokens.palette["sky"],
+                "new": tokens.palette["teal"],
                 "learn": tokens.palette["yellow"],
                 "due": tokens.palette["red"],
                 "good": tokens.palette["green"],
@@ -282,6 +310,8 @@ def test_every_selectable_combination(module) -> None:
                 module, f"{label} accent text", tokens.accent_text, surfaces, 4.5
             )
             assert_contrast(module, f"{label} focus", tokens.focus, surfaces, 3.0)
+            assert_contrast(module, f"{label} link", tokens.link, surfaces, 4.5)
+            assert_contrast(module, f"{label} cursor", tokens.cursor, surfaces, 3.0)
             assert_contrast(
                 module, f"{label} disabled", tokens.disabled, surfaces, 3.0
             )
@@ -316,6 +346,11 @@ def test_every_selectable_combination(module) -> None:
             assert variables["--mist-accent-fill"] == raw_accent
             assert variables["--mist-accent"] == tokens.accent_text
             assert variables["--mist-focus"] == tokens.focus
+            assert variables["--mist-link"] == tokens.link
+            assert variables["--mist-cursor"] == tokens.cursor
+            assert variables["--mist-crust"] == tokens.crust
+            assert variables["--mist-label"] == tokens.label
+            assert variables["--mist-selection"] == tokens.selection
             assert variables["--mist-zero"] == module._ensure_contrast(
                 tokens.faint, surfaces, 4.5, tokens.text
             )
@@ -331,6 +366,11 @@ def test_every_selectable_combination(module) -> None:
             assert variables["--editorial-accent-fill"] == raw_accent
             assert variables["--editorial-accent"] == tokens.accent_text
             assert variables["--editorial-focus"] == tokens.focus
+            assert variables["--editorial-link"] == tokens.link
+            assert variables["--editorial-cursor"] == tokens.cursor
+            assert variables["--editorial-crust"] == tokens.crust
+            assert variables["--editorial-label"] == tokens.label
+            assert variables["--editorial-selection"] == tokens.selection
             assert variables["--editorial-on-accent"] == tokens.on_accent
             heatmap_fills = {
                 "empty": tokens.raised,

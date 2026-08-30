@@ -47,21 +47,26 @@
   --mist-accent-fill: var(--mist-user-accent);
   --mist-accent: var(--mist-accent-fill);
   --mist-focus: var(--mist-accent);
+  --mist-link: var(--mist-accent);
+  --mist-cursor: var(--mist-focus);
   --mist-accent-hover: color-mix(in srgb, var(--mist-accent-fill) 88%, #fff);
   --mist-accent-pressed: color-mix(in srgb, var(--mist-accent-fill) 86%, #000);
   --mist-accent-soft: color-mix(in srgb, var(--mist-accent-fill) 11%, #f8f5ed);
   --mist-on-accent: #fff;
   --mist-paper: #f1ede4;
   --mist-paper-light: #f8f5ed;
+  --mist-crust: #e7e0d4;
   --mist-paper-deep: #e7e0d4;
   --mist-field: #fcfaf4;
   --mist-ink: #1d1d1b;
+  --mist-label: #6f6a62;
   --mist-muted: #6f6a62;
   --mist-faint: #989184;
   --mist-zero: var(--mist-faint);
   --mist-disabled: #8d867b;
   --mist-rule: #d7d0c4;
   --mist-rule-strong: #aaa193;
+  --mist-selection: #e7e0d4;
   --mist-danger-fill: #b9382f;
   --mist-danger: #b2352b;
   --mist-on-danger: #fff;
@@ -121,20 +126,25 @@
   --mist-accent-fill: color-mix(in srgb, var(--mist-user-accent, #2f5bbc) 65%, #fff);
   --mist-accent: var(--mist-accent-fill);
   --mist-focus: var(--mist-accent);
+  --mist-link: var(--mist-accent);
+  --mist-cursor: var(--mist-focus);
   --mist-accent-hover: color-mix(in srgb, var(--mist-accent-fill) 86%, #fff);
   --mist-accent-pressed: color-mix(in srgb, var(--mist-accent-fill) 84%, #000);
   --mist-accent-soft: color-mix(in srgb, var(--mist-accent-fill) 15%, #221f1a);
   --mist-on-accent: #1b1916;
   --mist-paper: #1b1916;
   --mist-paper-light: #221f1a;
+  --mist-crust: #2b2721;
   --mist-paper-deep: #2b2721;
   --mist-field: #27231e;
   --mist-ink: #f1eadf;
+  --mist-label: #b3ab9e;
   --mist-muted: #b3ab9e;
   --mist-faint: #80786d;
   --mist-disabled: #8f877c;
   --mist-rule: #514a40;
   --mist-rule-strong: #71685b;
+  --mist-selection: #2b2721;
   --mist-danger-fill: #e16d61;
   --mist-danger: #e4786b;
   --mist-on-danger: #1b1916;
@@ -173,13 +183,13 @@
 :root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) {
   --canvas: var(--mist-paper);
   --canvas-elevated: var(--mist-paper-light);
-  --canvas-inset: var(--mist-paper-deep);
+  --canvas-inset: var(--mist-crust);
   --canvas-overlay: var(--mist-paper-light);
   --canvas-glass: var(--mist-paper-light);
   --fg: var(--mist-ink);
   --fg-subtle: var(--mist-muted);
   --fg-faint: var(--mist-faint);
-  --fg-link: var(--mist-accent);
+  --fg-link: var(--mist-link);
   --border: var(--mist-rule);
   --border-subtle: var(--mist-rule);
   --border-strong: var(--mist-rule-strong);
@@ -192,8 +202,8 @@
   --button-primary-gradient-start: var(--mist-accent-fill);
   --button-primary-gradient-end: var(--mist-accent-fill);
   --button-primary-fg: var(--mist-on-accent);
-  --selected-bg: var(--mist-paper-deep);
-  --highlight-bg: var(--mist-paper-deep);
+  --selected-bg: var(--mist-selection);
+  --highlight-bg: var(--mist-selection);
   --shadow: none;
   --shadow-subtle: none;
   --border-radius: 2px;
@@ -214,9 +224,22 @@
 }
 
 :root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) a {
-  color: var(--mist-accent);
+  color: var(--mist-link);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
+}
+
+:root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) ::selection {
+  color: var(--mist-ink);
+  background: var(--mist-selection);
+}
+
+:root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) :is(
+  input,
+  textarea,
+  [contenteditable="true"]
+) {
+  caret-color: var(--mist-cursor);
 }
 
 :root[data-mistline-context]:where(:not([data-mistline-context="reviewer"])) button,
@@ -1093,7 +1116,7 @@
    hierarchy. Neutral fills carry structure; chroma is reserved for page
    identity, scheduling meaning, interaction, and the current selection. */
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .mistline-deck-heading h1 {
-  color: var(--mist-accent);
+  color: var(--mist-ink);
 }
 
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .mistline-deck-heading p {
@@ -1109,7 +1132,7 @@
 
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:first-child {
   padding-inline-start: 10px;
-  color: var(--mist-ink);
+  color: var(--mist-label);
 }
 
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:nth-last-child(4) {

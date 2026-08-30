@@ -104,9 +104,11 @@ def _build_qss_from_tokens(
     focus = tokens.focus
     canvas = tokens.canvas
     surface = tokens.surface
+    crust = tokens.crust
     raised = tokens.raised
     field = tokens.field
     text = tokens.text
+    label = tokens.label
     muted = tokens.muted
     border = tokens.border
     hover = tokens.hover
@@ -169,7 +171,7 @@ QGroupBox::title {{
     subcontrol-origin: margin;
     left: 12px;
     padding: 0 5px;
-    color: {muted};
+    color: {label};
     background-color: {canvas};
 }}
 QMenuBar {{
@@ -221,7 +223,7 @@ QMenu::separator {{
 QStatusBar {{
     border-top: 1px solid {border};
     color: {muted};
-    background-color: {surface};
+    background-color: {crust};
 }}
 QStatusBar::item {{ border: 0; }}
 QToolTip {{
@@ -397,14 +399,14 @@ QPushButton[mistlineRole="chooser"]:disabled {{
     background-color: {raised};
 }}
 QLabel[mistlineRole="fieldLabel"] {{
-    color: {muted};
+    color: {label};
     font-weight: 600;
 }}
 QWidget[mistlineRole="actionbar"] {{
     margin-top: 2px;
     padding-top: 10px;
     border-top: 1px solid {border};
-    background-color: {surface};
+    background-color: {crust};
 }}
 QWidget[mistlineRole="actionbar"] QPushButton {{
     min-height: 20px;
@@ -618,7 +620,7 @@ QHeaderView::section {{
     border: 0;
     border-right: 1px solid {border};
     border-bottom: 1px solid {border};
-    color: {muted};
+    color: {label};
     background-color: {raised};
     font-weight: 600;
 }}
@@ -886,10 +888,10 @@ def _palette_from_tokens(base_palette: Any, tokens: _ThemeTokens) -> Any | None:
         "Button": tokens.surface,
         "ButtonText": tokens.text,
         "BrightText": tokens.on_accent,
-        "Highlight": tokens.accent,
-        "HighlightedText": tokens.on_accent,
-        "Link": tokens.accent_text,
-        "LinkVisited": tokens.accent_text,
+        "Highlight": tokens.selection,
+        "HighlightedText": tokens.text,
+        "Link": tokens.link,
+        "LinkVisited": tokens.link,
         "PlaceholderText": tokens.muted,
         "Light": tokens.raised,
         "Midlight": tokens.raised,
