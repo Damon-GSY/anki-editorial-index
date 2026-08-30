@@ -455,17 +455,32 @@ def audit_deck(
             () => {
               window.__deckRootIdentity = document.querySelector("body > center");
               window.__deckRuntimeIdentity = crypto.randomUUID();
+              window.__heatmapNodeIdentity = [
+                ...document.querySelectorAll(
+                  ".cal-heatmap-container rect[data-heatmap-role]"
+                )
+              ];
+              window.__heatmapRoleIdentity = window.__heatmapNodeIdentity
+                .map(node => node.dataset.heatmapRole);
             }
             """
         )
-        heatmap_before = page.locator(".heatmap .day").evaluate_all(
-            "nodes => nodes.map(node => getComputedStyle(node).backgroundColor)"
+        heatmap_ramps: set[tuple[str, ...]] = set()
+        checks.require(
+            page.locator(
+                ".cal-heatmap-container rect[data-heatmap-role]"
+            ).count()
+            == 12,
+            "deck: real SVG Review Heatmap fixture missing",
+            "deck",
         )
-        checks.require(len(heatmap_before) == 3, "deck: Review Heatmap fixture missing", "deck")
 
         for payload in payloads:
             label = f"deck/{payload['label']}"
             audit = audit_core(page, payload, "deck-browser", checks)
+            # Heatmap fills intentionally ease between palettes; assert the
+            # settled color contract rather than sampling the 180 ms blend.
+            page.wait_for_timeout(220)
             checks.require(
                 audit["body"]["background"] == rgb_from_hex(payload["variables"]["--mist-paper"]),
                 f"{label}: rendered canvas mismatch {audit['body']['background']}",
@@ -484,8 +499,58 @@ def audit_deck(
                   dueColor: getComputedStyle(document.querySelector("tr.deck .review-count")).color,
                   sameDeckNode: window.__deckRootIdentity === document.querySelector("body > center"),
                   runtimeIdentity: window.__deckRuntimeIdentity,
-                  heatmap: [...document.querySelectorAll(".heatmap .day")]
-                    .map(node => getComputedStyle(node).backgroundColor),
+                  heatmap: (() => {
+                    const resolveSvg = (property, variable) => {
+                      const probe = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                      probe.style.setProperty(property, `var(${variable})`);
+                      document.body.append(probe);
+                      const resolved = getComputedStyle(probe).getPropertyValue(property);
+                      probe.remove();
+                      return resolved;
+                    };
+                    const expectedTokens = {
+                      empty: "--mist-heatmap-empty",
+                      "future-empty": "--mist-paper-light",
+                      "future-1": "--mist-heatmap-future-1",
+                      "future-2": "--mist-heatmap-future-2",
+                      "future-3": "--mist-heatmap-future-3",
+                      "future-4": "--mist-heatmap-future-4",
+                      "today-empty": "--mist-heatmap-empty",
+                      "history-1": "--mist-heatmap-history-1",
+                      "history-2": "--mist-heatmap-history-2",
+                      "history-3": "--mist-heatmap-history-3",
+                      "history-4": "--mist-heatmap-history-4",
+                      selected: "--mist-heatmap-history-4",
+                    };
+                    const nodes = [
+                      ...document.querySelectorAll(
+                        ".cal-heatmap-container rect[data-heatmap-role]"
+                      )
+                    ];
+                    const cells = nodes.map(node => {
+                      const role = node.dataset.heatmapRole;
+                      const style = getComputedStyle(node);
+                      return {
+                        role,
+                        fill: style.fill,
+                        expected: resolveSvg("fill", expectedTokens[role]),
+                        stroke: style.stroke,
+                        strokeWidth: Number.parseFloat(style.strokeWidth),
+                      };
+                    });
+                    return {
+                      cells,
+                      sameNodes: nodes.every(
+                        (node, index) => node === window.__heatmapNodeIdentity[index]
+                      ),
+                      sameRoles: nodes.map(node => node.dataset.heatmapRole)
+                        .every(
+                          (role, index) => role === window.__heatmapRoleIdentity[index]
+                        ),
+                      currentStroke: resolveSvg("stroke", "--mist-ink"),
+                      selectedStroke: resolveSvg("stroke", "--mist-focus"),
+                    };
+                  })(),
                 })
                 """
             )
@@ -504,11 +569,48 @@ def audit_deck(
                 f"{label}: Deck DOM was replaced during switch",
                 "in-place-switch",
             )
+            heatmap_cells = semantic["heatmap"]["cells"]
             checks.require(
-                semantic["heatmap"] == heatmap_before,
-                f"{label}: Review Heatmap cell fills changed {semantic['heatmap']}",
-                "heatmap-ownership",
+                semantic["heatmap"]["sameNodes"]
+                and semantic["heatmap"]["sameRoles"],
+                f"{label}: Review Heatmap DOM/data changed during palette switch",
+                "heatmap-in-place-switch",
             )
+            checks.require(
+                all(cell["fill"] == cell["expected"] for cell in heatmap_cells),
+                f"{label}: Review Heatmap palette linkage mismatch {heatmap_cells}",
+                "heatmap-theme-linkage",
+            )
+            current = next(
+                cell for cell in heatmap_cells if cell["role"] == "today-empty"
+            )
+            selected = next(
+                cell for cell in heatmap_cells if cell["role"] == "selected"
+            )
+            checks.require(
+                current["stroke"] == semantic["heatmap"]["currentStroke"]
+                and current["strokeWidth"] >= 1,
+                f"{label}: Review Heatmap today outline mismatch {current}",
+                "heatmap-focus",
+            )
+            checks.require(
+                selected["stroke"] == semantic["heatmap"]["selectedStroke"]
+                and selected["strokeWidth"] >= 2,
+                f"{label}: Review Heatmap selected outline mismatch {selected}",
+                "heatmap-focus",
+            )
+            heatmap_ramps.add(
+                tuple(
+                    cell["fill"]
+                    for cell in heatmap_cells
+                    if cell["role"].startswith("history-")
+                )
+            )
+        checks.require(
+            len(heatmap_ramps) >= len(ACCENTS),
+            f"deck: Review Heatmap did not switch with Catppuccin palettes ({len(heatmap_ramps)})",
+            "heatmap-theme-linkage",
+        )
         checks.require(not errors, f"deck browser errors: {errors}", "browser-errors")
     finally:
         page.close()

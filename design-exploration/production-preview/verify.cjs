@@ -86,7 +86,12 @@ function check(condition, message) {
     });
     check(stylesheetOrder.theme >= 0 && stylesheetOrder.heatmap > stylesheetOrder.theme, `${label}: late Review Heatmap stylesheet not reproduced ${JSON.stringify(stylesheetOrder)}`);
     const streakStats = await page.locator(".streak .sstats").evaluateAll(nodes => {
-      const channels = value => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+      const channels = value => {
+        const parsed = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        return value.startsWith("color(srgb")
+          ? parsed.map(channel => channel * 255)
+          : parsed;
+      };
       const luminance = value => channels(value)
         .map(channel => channel / 255)
         .map(channel => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4)
@@ -129,12 +134,68 @@ function check(condition, message) {
     check(streakStats.length === 4, `${label}: streak summary missing ${JSON.stringify(streakStats)}`);
     check(streakStats.every(item => item.visible && !item.overlaps), `${label}: streak visibility/overlap regression ${JSON.stringify(streakStats)}`);
     check(streakStats.every(item => item.contrast >= 4.5), `${label}: streak contrast regression ${JSON.stringify(streakStats)}`);
-    const calendarCells = await page.locator(".heatmap .day").evaluateAll(nodes => nodes.map(node => ({
-      expected: node.dataset.expectedBackground,
-      actual: getComputedStyle(node).backgroundColor,
-    })));
-    check(calendarCells.length === 3, `${label}: Review Heatmap calendar fixture missing ${JSON.stringify(calendarCells)}`);
-    check(calendarCells.every(cell => cell.actual === cell.expected), `${label}: Review Heatmap calendar palette changed ${JSON.stringify(calendarCells)}`);
+    const calendar = await page.evaluate(() => {
+      const root = document.documentElement;
+      const resolveSvg = (property, variable) => {
+        const probe = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        probe.style.setProperty(property, `var(${variable})`);
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).getPropertyValue(property);
+        probe.remove();
+        return resolved;
+      };
+      const expectedTokens = {
+        empty: "--mist-heatmap-empty",
+        "future-empty": "--mist-paper-light",
+        "future-1": "--mist-heatmap-future-1",
+        "future-2": "--mist-heatmap-future-2",
+        "future-3": "--mist-heatmap-future-3",
+        "future-4": "--mist-heatmap-future-4",
+        "today-empty": "--mist-heatmap-empty",
+        "history-1": "--mist-heatmap-history-1",
+        "history-2": "--mist-heatmap-history-2",
+        "history-3": "--mist-heatmap-history-3",
+        "history-4": "--mist-heatmap-history-4",
+        selected: "--mist-heatmap-history-4",
+      };
+      const cells = [...document.querySelectorAll(".cal-heatmap-container rect[data-heatmap-role]")]
+        .map(node => {
+          const role = node.dataset.heatmapRole;
+          const style = getComputedStyle(node);
+          return {
+            role,
+            fill: style.fill,
+            expectedFill: resolveSvg("fill", expectedTokens[role]),
+            stroke: style.stroke,
+            strokeWidth: Number.parseFloat(style.strokeWidth),
+          };
+        });
+      const current = cells.find(cell => cell.role === "today-empty");
+      const selected = cells.find(cell => cell.role === "selected");
+      const control = getComputedStyle(document.querySelector(".rh-container .hm-btn"));
+      const labelStyle = getComputedStyle(document.querySelector(".cal-heatmap-container .graph-label"));
+      return {
+        cells,
+        current,
+        selected,
+        currentStroke: resolveSvg("stroke", "--mist-ink"),
+        selectedStroke: resolveSvg("stroke", "--mist-focus"),
+        controlBackground: control.backgroundColor,
+        oldControlBackground: control.backgroundColor === "rgb(230, 230, 230)",
+        labelFill: labelStyle.fill,
+        expectedLabelFill: resolveSvg("fill", "--mist-muted"),
+        rootIdentity: root.dataset.mistlineEnabled,
+      };
+    });
+    check(calendar.cells.length === 12, `${label}: real SVG Review Heatmap fixture missing ${JSON.stringify(calendar.cells)}`);
+    check(calendar.cells.every(cell => cell.fill === cell.expectedFill), `${label}: selected-palette heatmap ramp mismatch ${JSON.stringify(calendar.cells)}`);
+    check(new Set(calendar.cells.filter(cell => cell.role.startsWith("future-") && cell.role !== "future-empty").map(cell => cell.fill)).size === 4, `${label}: forecast hierarchy collapsed ${JSON.stringify(calendar.cells)}`);
+    check(new Set(calendar.cells.filter(cell => cell.role.startsWith("history-")).map(cell => cell.fill)).size === 4, `${label}: history hierarchy collapsed ${JSON.stringify(calendar.cells)}`);
+    check(calendar.current?.stroke === calendar.currentStroke && calendar.current.strokeWidth >= 1, `${label}: today outline mismatch ${JSON.stringify(calendar.current)}`);
+    check(calendar.selected?.stroke === calendar.selectedStroke && calendar.selected.strokeWidth >= 2, `${label}: selected-day outline mismatch ${JSON.stringify(calendar.selected)}`);
+    check(!calendar.oldControlBackground && calendar.controlBackground, `${label}: Review Heatmap controls kept third-party gray ${JSON.stringify(calendar)}`);
+    check(calendar.labelFill === calendar.expectedLabelFill, `${label}: Review Heatmap label color mismatch ${JSON.stringify(calendar)}`);
+    check(calendar.rootIdentity === "on", `${label}: theme ownership marker missing`);
   }
 
   async function auditTextContrast(selector, label) {
@@ -173,6 +234,40 @@ function check(condition, message) {
     });
     check(samples.length > 0, `${label}: contrast targets missing`);
     check(samples.every(sample => sample.contrast >= 4.5), `${label}: text contrast below 4.5 ${JSON.stringify(samples)}`);
+  }
+
+  async function auditReviewerInheritanceBoundary(label) {
+    const inheritance = await page.evaluate(() => {
+      const root = document.documentElement;
+      const selectors = ["#qa", ".user-card-inheritance-probe", ".user-card-button"];
+      const read = () => Object.fromEntries(selectors.map(selector => {
+        const style = getComputedStyle(document.querySelector(selector));
+        return [selector, {
+          colorScheme: style.getPropertyValue("color-scheme"),
+          fontSynthesis: style.getPropertyValue("font-synthesis"),
+          fontKerning: style.getPropertyValue("font-kerning"),
+        }];
+      }));
+      const context = root.getAttribute("data-mistline-context");
+      const active = read();
+      root.removeAttribute("data-mistline-context");
+      const unmanaged = read();
+      root.setAttribute("data-mistline-context", context);
+      const restored = read();
+      return { active, unmanaged, restored };
+    });
+    check(
+      Object.values(inheritance.unmanaged).every(sample => Object.values(sample).every(Boolean)),
+      `${label}: computed inheritance audit returned an empty property ${JSON.stringify(inheritance)}`,
+    );
+    check(
+      JSON.stringify(inheritance.active) === JSON.stringify(inheritance.unmanaged),
+      `${label}: inherited card rendering preferences were restyled ${JSON.stringify(inheritance)}`,
+    );
+    check(
+      JSON.stringify(inheritance.restored) === JSON.stringify(inheritance.active),
+      `${label}: reviewer inheritance audit did not restore its context ${JSON.stringify(inheritance)}`,
+    );
   }
 
   const views = [
@@ -280,6 +375,7 @@ function check(condition, message) {
       }
     }
     if (context === "reviewer") {
+      await auditReviewerInheritanceBoundary(filename);
       const background = await page.locator("#qa").evaluate(node => getComputedStyle(node).backgroundColor);
       check(background === "rgba(0, 0, 0, 0)", `#qa became an opaque card: ${background}`);
       const inherited = await page.locator(".user-card-inheritance-probe").evaluate(node => {

@@ -33,6 +33,7 @@ The Tools menu will now contain an Editorial Index theme toggle and an Editorial
 - Top navigation and bottom toolbars
 - Reviewer shell and answer controls
 - Add, Browse, Stats, Deck Options, Preferences, and native dialogs
+- Review Heatmap history, forecast, empty-day, navigation, and tooltip colors when that add-on is installed
 - Native menus, fields, lists, tabs, and the status bar
 - Light and dark modes
 
@@ -72,6 +73,7 @@ Open Tools > Add-ons, select Editorial Index, and choose Config.
 - Windows and Linux use the same add-on interfaces; device reports are welcome
 - Not available on AnkiMobile, AnkiDroid, or AnkiWeb
 - Full-interface themes may conflict with each other
+- Review Heatmap 1.0.1's SVG `q1–q20` contract is covered; no Heatmap UI or behavior is added when that add-on is absent
 
 ## Privacy
 

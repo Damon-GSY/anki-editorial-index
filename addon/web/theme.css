@@ -69,6 +69,17 @@
   --mist-due: #b2352b;
   --mist-good: #28704f;
   --mist-easy: #346492;
+  /* Review Heatmap keeps forecast and history semantically distinct while
+     inheriting the active Editorial/Catppuccin palette. */
+  --mist-heatmap-empty: var(--mist-paper-deep);
+  --mist-heatmap-future-1: color-mix(in srgb, var(--mist-faint) 68%, var(--mist-paper-deep));
+  --mist-heatmap-future-2: color-mix(in srgb, var(--mist-faint) 50%, var(--mist-paper-deep));
+  --mist-heatmap-future-3: color-mix(in srgb, var(--mist-faint) 34%, var(--mist-paper-deep));
+  --mist-heatmap-future-4: color-mix(in srgb, var(--mist-faint) 20%, var(--mist-paper-deep));
+  --mist-heatmap-history-1: color-mix(in srgb, var(--mist-accent-fill) 28%, var(--mist-paper-deep));
+  --mist-heatmap-history-2: color-mix(in srgb, var(--mist-accent-fill) 50%, var(--mist-paper-deep));
+  --mist-heatmap-history-3: color-mix(in srgb, var(--mist-accent-fill) 72%, var(--mist-paper-deep));
+  --mist-heatmap-history-4: var(--mist-accent-fill);
   --mist-serif: "Mist Source Serif", "Source Serif Pro", "Noto Serif CJK SC", "Noto Serif CJK JP", "Songti SC", STSong, serif;
   --mist-sans: "Mist Inter", Inter, "Segoe UI Variable", "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC", sans-serif;
   --mist-space-1: 8px;
@@ -1123,8 +1134,156 @@
 :root[data-mistline-context="overview"] .learn-count { color: var(--mist-learn); }
 :root[data-mistline-context="overview"] .review-count { color: var(--mist-due); }
 
-/* Review Heatmap compatibility: keep streak text readable on warm paper in
- * both Deck Browser and Overview. Calendar cells retain the user's palette. */
+/* Review Heatmap compatibility. The third-party add-on renders SVG cells and
+ * injects its palette after Anki's page styles. This deliberately scoped
+ * bridge gives that one component the selected Editorial/Catppuccin palette;
+ * its DOM, data, navigation, and quantization remain third-party-owned. */
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container :is(.graph-rect, rect[class*="q"]) {
+  transition:
+    fill var(--mist-transition),
+    stroke var(--mist-transition);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container :is(.graph-label, .day-name-text, .subdomain-text) {
+  fill: var(--mist-muted);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container .graph-rect {
+  fill: var(--mist-heatmap-empty);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container .graph-rect.future {
+  fill: var(--mist-paper-light);
+  stroke: color-mix(in srgb, var(--mist-rule) 35%, transparent);
+}
+
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q1, .q2) { fill: var(--mist-heatmap-future-1); }
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q3, .q4, .q5) { fill: var(--mist-heatmap-future-2); }
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q6, .q7, .q8) { fill: var(--mist-heatmap-future-3); }
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q9, .q10) { fill: var(--mist-heatmap-future-4); }
+
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q11, .q12) { fill: var(--mist-heatmap-history-1); }
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q13, .q14, .q15) { fill: var(--mist-heatmap-history-2); }
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q16, .q17, .q18) { fill: var(--mist-heatmap-history-3); }
+:root[data-mistline-enabled="on"]:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"], [data-mistline-context="stats"]) .rh-container .cal-heatmap-container :is(.q19, .q20) { fill: var(--mist-heatmap-history-4); }
+
+/* q0 is emitted in addition to the threshold class for a true zero day. Keep
+ * this rule after q1-q20 so zero always resolves to the empty-cell token. */
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container .q0 {
+  fill: var(--mist-heatmap-empty);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container rect:is(.highlight-now, .now) {
+  stroke: var(--mist-ink);
+  stroke-width: 1.25px;
+  vector-effect: non-scaling-stroke;
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container rect.highlight:not(.highlight-now) {
+  stroke: var(--mist-focus);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 1px var(--mist-paper));
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .cal-heatmap-container .graph-subdomain-group rect:hover {
+  stroke: var(--mist-ink);
+  stroke-width: 1px;
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .hm-btn {
+  color: var(--mist-muted);
+  background: var(--mist-heatmap-empty);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mist-rule) 72%, transparent);
+  transition:
+    color var(--mist-transition),
+    background-color var(--mist-transition),
+    box-shadow var(--mist-transition),
+    transform var(--mist-transition);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .hm-btn:hover {
+  color: var(--mist-accent);
+  background: var(--mist-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--mist-focus);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .hm-btn:active {
+  color: var(--mist-on-accent);
+  background: var(--mist-accent-fill);
+  transform: translateY(1px);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container :is(.ch-tooltip, .hm-sel) {
+  border-color: var(--mist-rule);
+  color: var(--mist-ink);
+  background-color: var(--mist-paper-deep);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .ch-tooltip::after {
+  border-top-color: var(--mist-paper-deep);
+}
+
+:root[data-mistline-enabled="on"]:is(
+  [data-mistline-context="deck-browser"],
+  [data-mistline-context="overview"],
+  [data-mistline-context="stats"]
+) .rh-container .linkspan {
+  color: var(--mist-accent);
+}
+
 :root:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"]) .rh-container .streak {
   display: grid;
   grid-template-columns: repeat(4, max-content max-content);
@@ -1144,7 +1303,7 @@
 }
 
 :root:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"]) .rh-container .streak .sstats {
-  color: var(--mist-good) !important;
+  color: var(--mist-accent) !important;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   white-space: nowrap;

@@ -31,7 +31,7 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
     require(bool(manifest["name"]), "manifest name is required")
-    require(manifest["human_version"] == "0.3.0", "manifest version must be 0.3.0")
+    require(manifest["human_version"] == "0.3.1", "manifest version must be 0.3.1")
     require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
     require(isinstance(config["enabled"], bool), "enabled must be boolean")
     require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
@@ -179,6 +179,26 @@ def check_runtime_scope() -> None:
         ':root:is([data-mistline-context="deck-browser"], [data-mistline-context="overview"]) .rh-container .streak .sstats'
         in css,
         "scoped Review Heatmap contrast guard missing",
+    )
+    for variable in (
+        "--mist-heatmap-empty",
+        "--mist-heatmap-future-1",
+        "--mist-heatmap-future-2",
+        "--mist-heatmap-future-3",
+        "--mist-heatmap-future-4",
+        "--mist-heatmap-history-1",
+        "--mist-heatmap-history-2",
+        "--mist-heatmap-history-3",
+        "--mist-heatmap-history-4",
+    ):
+        require(variable in css, f"Review Heatmap palette token missing: {variable}")
+    for level in range(1, 21):
+        require(f".q{level}" in css, f"Review Heatmap q{level} bridge missing")
+    require(
+        'data-mistline-enabled="on"' in css
+        and ".cal-heatmap-container" in css
+        and "rect.highlight:not(.highlight-now)" in css,
+        "scoped Review Heatmap SVG ownership guard missing",
     )
     require("grid-template-columns: repeat(4, max-content max-content)" in css, "Review Heatmap desktop rhythm guard missing")
     require("grid-template-columns: max-content max-content" in css, "Review Heatmap compact rhythm guard missing")

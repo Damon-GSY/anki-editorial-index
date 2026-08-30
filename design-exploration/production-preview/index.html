@@ -95,6 +95,7 @@
     : { decks: "Decks", add: "Add", browse: "Browse", stats: "Stats", sync: "Sync" };
   document.documentElement.dataset.mistlineContext = context;
   document.documentElement.dataset.mistlineMotion = motion;
+  document.documentElement.dataset.mistlineEnabled = "on";
   document.documentElement.classList.toggle("night-mode", darkMode);
   document.documentElement.dataset.fixtureVariant = standardVariant;
   document.documentElement.dataset.fixtureRatings = String(ratingCount);
@@ -111,10 +112,26 @@
     <tr class="deck"><td class="decktd" colspan="5">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="collapse"></span><a class="deck" href="#">Typography</a></td><td align="end"><span class="new-count">21</span></td><td align="end"><span class="learn-count">8</span></td><td align="end"><span class="review-count">29</span></td><td class="opts" align="center"><span class="gears">⚙</span></td></tr>`;
 
   const heatmapView = context === "deck-browser" ? "rh-view-deckbrowser" : "rh-view-overview";
-  const heatmapCellColors = darkMode
-    ? ["rgb(92, 174, 76)", "rgb(116, 186, 88)", "rgb(214, 230, 133)"]
-    : ["rgb(116, 186, 88)", "rgb(92, 174, 76)", "rgb(30, 104, 35)"];
-  const heatmapStats = `<div class="rh-container rh-theme-lime ${heatmapView}"><div class="heatmap" aria-label="Review calendar"><span class="day rh-col15" data-expected-background="${heatmapCellColors[0]}"></span><span class="day rh-col16" data-expected-background="${heatmapCellColors[1]}"></span><span class="day rh-col20" data-expected-background="${heatmapCellColors[2]}"></span></div><div class="streak"><span class="streak-info">Daily average:</span> <span class="sstats rh-col15">55 cards</span><span class="streak-info">Days learned:</span> <span class="sstats rh-col16">83%</span><span class="streak-info">Longest streak:</span> <span class="sstats rh-col20">293 days</span><span class="streak-info">Current streak:</span> <span class="sstats rh-col0">0 day</span></div></div>`;
+  const heatmapSamples = [
+    ["graph-rect", "empty"],
+    ["graph-rect future", "future-empty"],
+    ["q1 future", "future-1"],
+    ["q3 future", "future-2"],
+    ["q6 future", "future-3"],
+    ["q9 future", "future-4"],
+    ["q10 q0 highlight-now now", "today-empty"],
+    ["q11", "history-1"],
+    ["q13", "history-2"],
+    ["q16", "history-3"],
+    ["q19", "history-4"],
+    ["q20 highlight", "selected"],
+  ];
+  const heatmapRects = heatmapSamples.map(([className, role], index) => {
+    const x = 2 + index * 16;
+    const y = 2;
+    return `<g transform="translate(${x}, ${y})"><rect width="13" height="13" rx="1" ry="1" class="${className}" data-heatmap-role="${role}"></rect></g>`;
+  }).join("");
+  const heatmapStats = `<div class="rh-container rh-theme-lime ${heatmapView}"><div class="heatmap" aria-label="Review calendar"><div class="heatmap-controls"><div class="alignleft"><span>&nbsp;</span></div><div class="aligncenter"><div class="hm-btn" role="button" tabindex="0" aria-label="Previous year">‹</div><div class="hm-btn" role="button" tabindex="0" aria-label="Today">○</div><div class="hm-btn" role="button" tabindex="0" aria-label="Next year">›</div></div><div class="alignright"><div class="hm-btn opts-btn" role="button" tabindex="0" aria-label="Heatmap options">☷</div><div class="hm-btn opts-btn" role="button" tabindex="0" aria-label="Support Review Heatmap">♥</div></div><div style="clear: both">&nbsp;</div></div><div id="cal-heatmap"><svg class="cal-heatmap-container" width="100%" height="50" viewBox="0 0 194 50" role="img" aria-label="Review activity"><svg class="graph"><text class="graph-label" x="97" y="42" text-anchor="middle">2026</text><svg class="graph-domain"><svg class="graph-subdomain-group">${heatmapRects}</svg></svg></svg></svg><div class="ch-tooltip">Review activity</div></div></div><div class="streak"><span class="streak-info">Daily average:</span> <span class="sstats rh-col15">55 cards</span><span class="streak-info">Days learned:</span> <span class="sstats rh-col16">83%</span><span class="streak-info">Longest streak:</span> <span class="sstats rh-col20">293 days</span><span class="streak-info">Current streak:</span> <span class="sstats rh-col0">0 day</span></div></div>`;
   const deck = `<center><section class="mistline-deck-heading" data-mistline-owned="deck-heading"><h1>Deck Home</h1><p>Memory index</p></section><table cellspacing="0" cellpadding="3"><thead><tr><th colspan="5" align="start">Deck</th><th class="count">New</th><th class="count">Learn</th><th class="count">Due</th><th class="optscol"></th></tr></thead><tbody>${deckRows}</tbody></table><div id="studiedToday">126 cards studied today · 24 minutes</div>${heatmapStats}</center>`;
   const toolbar = `<div class="header"><div class="left-tray"></div><nav class="toolbar"><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.decks}" title="${toolbarLabels.decks}" id="decks" href="#">${toolbarLabels.decks}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.add}" title="${toolbarLabels.add}" id="add" href="#">${toolbarLabels.add}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.browse}" title="${toolbarLabels.browse}" id="browse" href="#">${toolbarLabels.browse}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.stats}" title="${toolbarLabels.stats}" id="stats" href="#">${toolbarLabels.stats}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.sync}" title="${toolbarLabels.sync}" id="sync" href="#">${toolbarLabels.sync}<img id="sync-spinner" class="${syncActive ? "spin" : ""}" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23808080' d='M18 13.5h10.75V2.67zM24.9 19.78a8.9 8.9 0 0 1-8.32 5.49 9.13 9.13 0 1 1 6.51-15.6l2.6-3.05a13 13 0 1 0 2.74 13.16z'/%3E%3C/svg%3E"></a></nav><div class="right-tray"></div></div>`;
   const overview = `<center><h3>Anatomy</h3><div class="descfont descmid description"><p><span class="new-count">28 new</span> · <span class="learn-count">14 learning</span> · <span class="review-count">57 due</span></p><p>126 cards studied today · 24 minutes</p></div><table width="400" cellpadding="5"><tr><td align="center" valign="top"><table cellspacing="5"><tr><td>New:</td><td><b><span class="new-count">28</span></b></td></tr><tr><td>Learning:</td><td><b><span class="learn-count">14</span></b></td></tr><tr><td>To Review:</td><td><b><span class="review-count">57</span></b></td></tr></table></td><td align="center"><button id="study" autofocus>Study Now</button></td></tr></table>${heatmapStats}</center>`;
@@ -144,27 +161,39 @@
   document.body.insertAdjacentHTML("beforeend", `<span class="fixture-label">${context} · ${fixtureState}</span>`);
 
   // Review Heatmap injects its stylesheet after Anki and add-on styles. Keep
-  // this fixture late and deliberately forceful so the compatibility contract
-  // is tested against the real load order without recoloring calendar cells.
+  // this fixture late and deliberately forceful so the scoped theme bridge is
+  // tested against the real SVG/q-class contract and real stylesheet order.
   if (context === "deck-browser" || context === "overview") {
     const reviewHeatmapStyle = document.createElement("style");
     reviewHeatmapStyle.id = "review-heatmap-late-style";
+    const thirdPartyFuture = ["#525252", "#616161", "#707070", "#7f7f7f", "#8e8e8e", "#9d9d9d", "#acacac", "#bbbbbb", "#cacaca", "#d9d9d9"];
+    const thirdPartyHistory = ["#d6e685", "#bddb7a", "#a4d06f", "#8cc665", "#74ba58", "#5cae4c", "#44a340", "#378f36", "#2a7b2c", "#1e6823"];
+    const thirdPartyCells = [...thirdPartyFuture, ...thirdPartyHistory]
+      .map((color, index) => `.rh-theme-lime .cal-heatmap-container .q${index + 1} { fill: ${color}; }`)
+      .join("\n");
     reviewHeatmapStyle.textContent = `
-      .rh-container .heatmap { display: flex; justify-content: center; gap: 4px; margin-top: 12px; }
-      .rh-container .day { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+      .rh-container { margin-top: 1em; }
+      .rh-container .heatmap { display: inline-block; width: min(360px, 100%); margin-top: 12px; }
+      .cal-heatmap-container { display: block; }
+      .cal-heatmap-container .graph-rect { fill: #eaeaea; }
+      .cal-heatmap-container .graph-label { fill: #808080; }
+      .cal-heatmap-container rect.highlight-now { stroke: #000; stroke-width: 1px; }
+      .cal-heatmap-container rect.highlight { stroke: #e9002e; stroke-width: 1px; }
+      ${thirdPartyCells}
+      .hm-btn { display: inline-block; padding: 2px 8px; margin-left: 2px; color: #808080; background: #e6e6e6; border-radius: 3px; }
+      .alignleft, .aligncenter, .alignright { float: left; width: 33.333%; }
+      .alignleft { text-align: left; }
+      .aligncenter { text-align: center; }
+      .alignright { text-align: right; }
+      .opts-btn { padding: 2px 4px; }
+      .ch-tooltip { display: none; color: #f0f0f0; background: #222; }
       .sstats { color: #e6e6e6 !important; font-weight: bold; }
       .rh-theme-lime .rh-col15 { color: #74ba58 !important; }
       .rh-theme-lime .rh-col16 { color: #5cae4c !important; }
       .rh-theme-lime .rh-col20 { color: #1e6823 !important; }
-      .rh-theme-lime .day.rh-col15 { background-color: #74ba58 !important; }
-      .rh-theme-lime .day.rh-col16 { background-color: #5cae4c !important; }
-      .rh-theme-lime .day.rh-col20 { background-color: #1e6823 !important; }
       .night-mode .rh-theme-lime .rh-col15 { color: #5cae4c !important; }
       .night-mode .rh-theme-lime .rh-col16 { color: #74ba58 !important; }
       .night-mode .rh-theme-lime .rh-col20 { color: #d6e685 !important; }
-      .night-mode .rh-theme-lime .day.rh-col15 { background-color: #5cae4c !important; }
-      .night-mode .rh-theme-lime .day.rh-col16 { background-color: #74ba58 !important; }
-      .night-mode .rh-theme-lime .day.rh-col20 { background-color: #d6e685 !important; }
     `;
     document.head.append(reviewHeatmapStyle);
   }

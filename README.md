@@ -35,6 +35,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 - 顶部导航、普通底栏和复习评分区
 - 复习卡片外层的阅读区域
 - Add、Browse、Stats、Deck Options、Preferences 与其他 Anki 原生对话框
+- Review Heatmap（如果已安装）的历史活动、未来到期、空白日、导航和提示颜色
 - 原生菜单栏、菜单、状态栏、输入框、列表和标签页
 - 日间模式与夜间模式
 
@@ -82,6 +83,7 @@ Editorial Index 只处理 Anki 官方界面拥有的区域。已有卡片模板�
 - Windows 与 Linux 使用相同的 Anki 插件接口，欢迎提交实际设备反馈
 - 不适用于 AnkiMobile、AnkiDroid 或 AnkiWeb
 - 其他界面主题可能覆盖同一组样式，建议一次只启用一个完整 UI 主题
+- 已针对 Review Heatmap 1.0.1 的 SVG `q1–q20` 结构完成兼容；未安装该插件时不会产生额外界面或功能
 
 Anki 更新有时会改变插件接口或页面结构。如果更新 Anki 后出现异常，请先查看 [问题排查](./docs/TROUBLESHOOTING.md)，再提交 [Issue](https://github.com/Damon-GSY/anki-editorial-index/issues/new/choose)。
 

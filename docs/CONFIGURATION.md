@@ -104,6 +104,16 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 
 插件内置的是 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 26 色 token 快照。原始色值保持不变；为了保证浅色强调色上的小字、键盘焦点和状态文字可读，Editorial Index 会从原色推导高对比度的交互前景色。色板在安装包内本地读取，不会为配色下载或发送任何网络请求。
 
+## Review Heatmap 配色
+
+如果安装了 Review Heatmap，Editorial Index 会让它在牌组页、牌组概览和统计页自动跟随当前配色，无需增加配置字段：
+
+- 历史复习活动使用当前强调色的四档强度
+- 未来到期预测使用中性的四档强度，不会和已经完成的活动混在一起
+- 空白日、年份标签、导航按钮、提示框、今日与选中日期边框使用同一套界面 token
+
+这里只接管 Review Heatmap 的显示颜色，不会重建热力图，也不会修改它的数据、日期导航或自身设置。关闭「Editorial Index 主题」后会恢复 Review Heatmap 原来的配色。
+
 ## 只美化牌组页
 
 如果希望卡片复习区保持原样，可以使用下面的配置。
