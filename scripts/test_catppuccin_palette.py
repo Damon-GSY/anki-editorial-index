@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import colorsys
 import hashlib
 import importlib.util
 from pathlib import Path
@@ -138,6 +139,15 @@ OFFICIAL_ACCENTS = {
 HEX = re.compile(r"^#[0-9A-F]{6}$")
 CSS_VARIABLE = re.compile(r"^--[a-z0-9-]+$")
 
+LATTE_READABLE_ROLES = {
+    "accent_text": "#1851C2",
+    "new": "#026085",
+    "learn": "#7B4E10",
+    "due": "#B20D30",
+    "good": "#29661C",
+    "easy": "#1851C2",
+}
+
 
 def load_module():
     spec = importlib.util.spec_from_file_location(
@@ -158,6 +168,18 @@ def assert_contrast(module, label: str, color: str, backgrounds, minimum: float)
             f"{label}: {color} on {background} is {ratio:.3f}:1; "
             f"expected at least {minimum:.1f}:1"
         )
+
+
+def hue_degrees(color: str) -> float:
+    red, green, blue = (
+        int(color[index : index + 2], 16) / 255 for index in (1, 3, 5)
+    )
+    return colorsys.rgb_to_hsv(red, green, blue)[0] * 360
+
+
+def hue_distance(first: str, second: str) -> float:
+    distance = abs(hue_degrees(first) - hue_degrees(second))
+    return min(distance, 360 - distance)
 
 
 def test_official_snapshot(module) -> None:
@@ -233,6 +255,22 @@ def test_every_selectable_combination(module) -> None:
             assert tokens.accent == raw_accent, label
             assert tokens.palette[accent_name] == raw_accent, label
 
+            source_roles = {
+                "accent_text": raw_accent,
+                "danger_text": tokens.palette["red"],
+                "new": tokens.palette["sky"],
+                "learn": tokens.palette["yellow"],
+                "due": tokens.palette["red"],
+                "good": tokens.palette["green"],
+                "easy": tokens.palette["blue"],
+            }
+            for role, source_color in source_roles.items():
+                derived = getattr(tokens, role)
+                assert hue_distance(source_color, derived) <= 3.0, (
+                    f"{label} {role}: readable derivative {derived} rotated away "
+                    f"from source hue {source_color}"
+                )
+
             surfaces = (
                 tokens.canvas,
                 tokens.surface,
@@ -278,6 +316,16 @@ def test_every_selectable_combination(module) -> None:
             assert variables["--mist-accent-fill"] == raw_accent
             assert variables["--mist-accent"] == tokens.accent_text
             assert variables["--mist-focus"] == tokens.focus
+            assert variables["--mist-zero"] == module._ensure_contrast(
+                tokens.faint, surfaces, 4.5, tokens.text
+            )
+            assert_contrast(
+                module,
+                f"{label} zero text",
+                variables["--mist-zero"],
+                surfaces,
+                4.5,
+            )
             assert variables["--mist-on-accent"] == tokens.on_accent
             assert variables["--editorial-user-accent"] == raw_accent
             assert variables["--editorial-accent-fill"] == raw_accent
@@ -306,6 +354,19 @@ def test_every_selectable_combination(module) -> None:
             )
 
     assert checked == 4 * 14 == 56
+
+    latte_blue = module.resolve_color_tokens(
+        {
+            "color_theme": "catppuccin",
+            "catppuccin_flavor": "latte",
+            "catppuccin_accent": "blue",
+        },
+        system_dark=False,
+    )
+    for role, expected in LATTE_READABLE_ROLES.items():
+        assert getattr(latte_blue, role) == expected, (
+            f"latte/blue {role} regressed from the hue-preserving readable value"
+        )
     assert len(module.MANAGED_COLOR_VARIABLES) == len(
         set(module.MANAGED_COLOR_VARIABLES)
     )

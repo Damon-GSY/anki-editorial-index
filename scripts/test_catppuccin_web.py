@@ -72,6 +72,10 @@ COLOR_PAIRS = (
     *( ("accent-text", "--mist-accent", surface, 4.5) for surface in (
         "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
     )),
+    ("accent-on-soft", "--mist-accent", "--mist-accent-soft", 4.5),
+    *( ("zero", "--mist-zero", surface, 4.5) for surface in (
+        "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
+    )),
     *( ("focus", "--mist-focus", surface, 3.0) for surface in (
         "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
     )),
@@ -94,6 +98,15 @@ COLOR_PAIRS = (
        )
        for surface in (
            "--mist-paper", "--mist-paper-light", "--mist-paper-deep", "--mist-field"
+       ) ),
+    # The selected deck row uses the accent-soft surface, so its text roles
+    # must remain readable there as well as on the four neutral surfaces.
+    ("ink-on-soft", "--mist-ink", "--mist-accent-soft", 4.5),
+    *( (f"{role.removeprefix('--mist-')}-on-soft", role,
+        "--mist-accent-soft", 4.5)
+       for role in (
+           "--mist-new", "--mist-learn", "--mist-due",
+           "--mist-good", "--mist-easy",
        ) ),
 )
 
@@ -513,6 +526,44 @@ def audit_deck(
                   newColor: getComputedStyle(document.querySelector("tr.deck .new-count")).color,
                   learnColor: getComputedStyle(document.querySelector("tr.deck .learn-count")).color,
                   dueColor: getComputedStyle(document.querySelector("tr.deck .review-count")).color,
+                  hierarchy: (() => {
+                    const read = (selector, pseudo = null) =>
+                      getComputedStyle(document.querySelector(selector), pseudo);
+                    const header = "center > table:first-of-type > tbody > tr:first-child";
+                    const currentCell = read("tr.deck.current > td:first-child");
+                    const zero = read("tr.deck:not(.current) .zero-count");
+                    const currentZero = read("tr.deck.current .zero-count");
+                    const currentGear = read("tr.deck.current .opts > a", "::after");
+                    const sourceGear = document.querySelector("tr.deck.current .gears");
+                    return {
+                      heading: read(".mistline-deck-heading h1").color,
+                      parent: read("tr.deck:has(a.collapse) a.deck").color,
+                      leaf: read("tr.deck:not(:has(a.collapse)):not(.current) a.deck").color,
+                      current: read("tr.deck.current a.deck").color,
+                      collapse: read("tr.deck a.collapse").color,
+                      headerDeck: read(`${header} > th:first-child`).color,
+                      headerNew: read(`${header} > th:nth-last-child(4)`).color,
+                      headerLearn: read(`${header} > th:nth-last-child(3)`).color,
+                      headerDue: read(`${header} > th:nth-last-child(2)`).color,
+                      headerBackground: read(`${header} > th:first-child`).backgroundColor,
+                      headerContainer: document.querySelector(header)?.parentElement?.tagName,
+                      theadCount: document.querySelectorAll("thead").length,
+                      zero: zero.color,
+                      zeroWeight: zero.fontWeight,
+                      currentZero: currentZero.color,
+                      currentBackground: currentCell.backgroundColor,
+                      currentMarker: currentCell.boxShadow,
+                      currentGear: currentGear.backgroundColor,
+                      currentGearOpacity: currentGear.opacity,
+                      currentGearContent: currentGear.content,
+                      currentGearMask: currentGear.webkitMaskImage || currentGear.maskImage,
+                      currentGearWidth: currentGear.width,
+                      currentGearHeight: currentGear.height,
+                      sourceGearTag: sourceGear?.tagName,
+                      sourceGearOpacity: sourceGear ? read("tr.deck.current .gears").opacity : null,
+                      sourceGearPointerEvents: sourceGear ? read("tr.deck.current .gears").pointerEvents : null,
+                    };
+                  })(),
                   sameDeckNode: window.__deckRootIdentity === document.querySelector("body > center"),
                   runtimeIdentity: window.__deckRuntimeIdentity,
                   heatmap: (() => {
@@ -636,6 +687,71 @@ def audit_deck(
                     f"{label}: rendered {role} mismatch {semantic[role]}",
                     "deck-semantic-colors",
                 )
+            hierarchy = semantic["hierarchy"]
+            expected_hierarchy = {
+                "heading": "--mist-accent",
+                "parent": "--mist-ink",
+                "leaf": "--mist-muted",
+                "current": "--mist-accent",
+                "collapse": "--mist-accent",
+                "headerDeck": "--mist-ink",
+                "headerNew": "--mist-new",
+                "headerLearn": "--mist-learn",
+                "headerDue": "--mist-due",
+                "headerBackground": "--mist-paper-light",
+                "zero": "--mist-zero",
+                "currentZero": "--mist-ink",
+                "currentBackground": "--mist-accent-soft",
+                "currentGear": "--mist-accent",
+            }
+            for role, css_name in expected_hierarchy.items():
+                checks.require(
+                    hierarchy[role] == rgb_from_hex(payload["variables"][css_name]),
+                    f"{label}: {role} hierarchy mismatch {hierarchy[role]}",
+                    "deck-text-hierarchy",
+                )
+            checks.require(
+                hierarchy["zeroWeight"] == "400",
+                f"{label}: zero count retained active-count weight {hierarchy['zeroWeight']}",
+                "deck-text-hierarchy",
+            )
+            checks.require(
+                hierarchy["headerContainer"] == "TBODY"
+                and hierarchy["theadCount"] == 0,
+                f"{label}: Deck fixture no longer matches Anki's tbody header DOM {hierarchy}",
+                "deck-real-dom",
+            )
+            checks.require(
+                hierarchy["sourceGearTag"] == "IMG"
+                and float(hierarchy["sourceGearOpacity"]) == 0
+                and hierarchy["sourceGearPointerEvents"] == "none"
+                and float(hierarchy["currentGearOpacity"]) >= 0.8
+                and hierarchy["currentGearContent"] not in ("", "none", "normal")
+                and hierarchy["currentGearMask"] != "none"
+                and float(hierarchy["currentGearWidth"].removesuffix("px")) > 0
+                and float(hierarchy["currentGearHeight"].removesuffix("px")) > 0,
+                f"{label}: current gear replacement is not visibly accentable {hierarchy}",
+                "deck-real-dom",
+            )
+            checks.require(
+                rgb_from_hex(payload["variables"]["--mist-accent"])
+                in hierarchy["currentMarker"],
+                f"{label}: current marker does not follow accent {hierarchy['currentMarker']}",
+                "deck-selection",
+            )
+            hover_target = page.locator(
+                "tr.deck:not(.current):not(:has(a.collapse)) a.deck"
+            ).first
+            hover_target.hover()
+            hover_color = hover_target.evaluate(
+                "node => getComputedStyle(node).color"
+            )
+            checks.require(
+                hover_color == rgb_from_hex(payload["variables"]["--mist-accent"]),
+                f"{label}: hover title does not follow accent {hover_color}",
+                "deck-selection",
+            )
+            page.mouse.move(0, 0)
             checks.require(
                 semantic["sameDeckNode"] and bool(semantic["runtimeIdentity"]),
                 f"{label}: Deck DOM was replaced during switch",

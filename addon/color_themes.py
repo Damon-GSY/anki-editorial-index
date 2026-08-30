@@ -202,6 +202,29 @@ def _semantic_text(color: str, tokens: tuple[str, ...], text: str) -> str:
     return _ensure_contrast(color, tokens, 4.5, text)
 
 
+def _chromatic_text(
+    color: str,
+    backgrounds: tuple[str, ...],
+    target: float,
+    dark: bool,
+) -> str:
+    """Make a Catppuccin swatch readable without washing it into blue-grey.
+
+    Catppuccin's ``text`` token is deliberately purple-grey. Mixing a pale
+    Latte accent toward it can rotate the accent hue by more than 90 degrees
+    and collapse its saturation. Black/white are neutral endpoints, so this
+    adjustment preserves the source hue while meeting the product contrast
+    contract. Raw palette values remain untouched in ``tokens.palette``.
+    """
+
+    return _ensure_contrast(
+        color,
+        backgrounds,
+        target,
+        "#FFFFFF" if dark else "#000000",
+    )
+
+
 def _editorial_tokens(accent_value: object, system_dark: bool) -> ColorTokens:
     user_accent = _normalized_hex(accent_value, "#2F5BBC")
     accent = _mix_hex(user_accent, "#FFFFFF", 0.35) if system_dark else user_accent
@@ -311,8 +334,8 @@ def _catppuccin_tokens(flavor: str, accent_name: str) -> ColorTokens:
 
     accent_hover = _mix_hex(accent, text, 0.10)
     accent_pressed = _mix_hex(accent, text, 0.18)
-    accent_text = _ensure_contrast(accent, text_backgrounds, 4.5, text)
-    focus = _ensure_contrast(accent, (canvas, surface, raised, field), 3.0, text)
+    accent_text = _chromatic_text(accent, text_backgrounds, 4.5, dark)
+    focus = _chromatic_text(accent, text_backgrounds, 3.0, dark)
     danger = palette["red"]
     neutral_candidates = (
         palette["crust"],
@@ -353,14 +376,14 @@ def _catppuccin_tokens(flavor: str, accent_name: str) -> ColorTokens:
             palette["overlay1"], text_backgrounds, 3.0, text
         ),
         danger=danger,
-        danger_text=_ensure_contrast(danger, text_backgrounds, 4.5, text),
+        danger_text=_chromatic_text(danger, text_backgrounds, 4.5, dark),
         on_accent=on_accent,
         on_danger=on_danger,
-        new=_semantic_text(palette["sky"], text_backgrounds, text),
-        learn=_semantic_text(palette["yellow"], text_backgrounds, text),
-        due=_semantic_text(palette["red"], text_backgrounds, text),
-        good=_semantic_text(palette["green"], text_backgrounds, text),
-        easy=_semantic_text(palette["blue"], text_backgrounds, text),
+        new=_chromatic_text(palette["sky"], text_backgrounds, 4.5, dark),
+        learn=_chromatic_text(palette["yellow"], text_backgrounds, 4.5, dark),
+        due=_chromatic_text(palette["red"], text_backgrounds, 4.5, dark),
+        good=_chromatic_text(palette["green"], text_backgrounds, 4.5, dark),
+        easy=_chromatic_text(palette["blue"], text_backgrounds, 4.5, dark),
         palette=palette,
     )
 
@@ -382,6 +405,8 @@ def resolve_color_tokens(config: Mapping[str, Any], system_dark: bool) -> ColorT
 
 
 def web_color_variables(tokens: ColorTokens) -> dict[str, str]:
+    text_backgrounds = (tokens.canvas, tokens.surface, tokens.raised, tokens.field)
+    zero_text = _ensure_contrast(tokens.faint, text_backgrounds, 4.5, tokens.text)
     heatmap_fills = {
         "empty": tokens.raised,
         "future-1": _mix_hex(tokens.faint, tokens.raised, 0.32),
@@ -415,6 +440,7 @@ def web_color_variables(tokens: ColorTokens) -> dict[str, str]:
         "--mist-ink": tokens.text,
         "--mist-muted": tokens.muted,
         "--mist-faint": tokens.faint,
+        "--mist-zero": zero_text,
         "--mist-rule": tokens.border,
         "--mist-rule-strong": tokens.border_strong,
         "--mist-disabled": tokens.disabled,

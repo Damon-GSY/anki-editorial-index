@@ -58,6 +58,7 @@
   --mist-ink: #1d1d1b;
   --mist-muted: #6f6a62;
   --mist-faint: #989184;
+  --mist-zero: var(--mist-faint);
   --mist-disabled: #8d867b;
   --mist-rule: #d7d0c4;
   --mist-rule-strong: #aaa193;
@@ -990,8 +991,7 @@
   border-collapse: collapse;
 }
 
-:root[data-mistline-context="deck-browser"] thead td,
-:root[data-mistline-context="deck-browser"] thead th {
+:root[data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > :is(td, th) {
   height: 36px;
   color: var(--mist-muted);
   font-family: var(--mist-sans);
@@ -1087,6 +1087,114 @@
 
 :root[data-mistline-context="deck-browser"] tr.drag-hover > td {
   box-shadow: inset 0 0 0 2px var(--mist-focus);
+}
+
+/* Catppuccin: keep the quiet ledger, but restore the palette's semantic
+   hierarchy. Neutral fills carry structure; chroma is reserved for page
+   identity, scheduling meaning, interaction, and the current selection. */
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .mistline-deck-heading h1 {
+  color: var(--mist-accent);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .mistline-deck-heading p {
+  color: var(--mist-muted);
+  font-weight: 600;
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th {
+  border-block: 1px solid var(--mist-rule);
+  background: var(--mist-paper-light);
+  font-weight: 600;
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:first-child {
+  padding-inline-start: 10px;
+  color: var(--mist-ink);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:nth-last-child(4) {
+  color: var(--mist-new);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:nth-last-child(3) {
+  color: var(--mist-learn);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:nth-last-child(2) {
+  color: var(--mist-due);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck:where(:not(:has(a.collapse))) a.deck {
+  color: var(--mist-muted);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck > td a.collapse {
+  color: var(--mist-accent);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck:hover a.deck,
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck.current a.deck {
+  color: var(--mist-accent);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck.current > td {
+  background-color: var(--mist-accent-soft);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck.current > td:first-child {
+  box-shadow: inset 3px 0 var(--mist-accent);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .zero-count {
+  color: var(--mist-zero);
+  font-weight: 400;
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck.current .zero-count {
+  color: var(--mist-ink);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .opts {
+  opacity: 1;
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .opts > a {
+  position: relative;
+  display: inline-grid;
+  min-width: 1em;
+  min-height: 1em;
+  place-items: center;
+  color: var(--mist-muted);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .opts > a::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background-color: currentColor;
+  color: currentColor;
+  content: "";
+  -webkit-mask: var(--mist-gear-image, url("/_anki/imgs/gears.svg")) center / contain no-repeat;
+  mask: var(--mist-gear-image, url("/_anki/imgs/gears.svg")) center / contain no-repeat;
+  opacity: 0;
+  pointer-events: none;
+  transition: color var(--mist-transition), opacity var(--mist-transition);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] .gears {
+  opacity: 0;
+  pointer-events: none;
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck.current .opts > a,
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck:hover .opts > a {
+  color: var(--mist-accent);
+}
+
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck.current .opts > a::after,
+:root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck:hover .opts > a::after {
+  opacity: 0.82;
 }
 
 /* Overview: a quiet reading sheet between index and review. */
