@@ -51,6 +51,30 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 
 色板是随插件打包的 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 token 快照，切换时不会联网。原始色值保持不变；对于过浅的原色，按钮文字、小字和键盘焦点会使用由原色推导的高对比度交互色。
 
+### Editorial 暖纸
+
+Editorial 保留纸张的温度和编辑排版感，会跟随 Anki 的日间与夜间模式。
+
+| 日间模式 | 夜间模式 |
+| --- | --- |
+| ![Editorial 暖纸日间模式](./screenshots/themes/editorial-light.png) | ![Editorial 暖纸夜间模式](./screenshots/themes/editorial-dark.png) |
+
+### Catppuccin 四种 flavor
+
+下面四张实际界面统一使用 Blue 强调色，便于直接比较 flavor 本身的层次、对比和氛围。
+
+| Latte · Light | Frappé · Dark |
+| --- | --- |
+| ![Catppuccin Latte 配色](./screenshots/themes/catppuccin-latte-blue.png) | ![Catppuccin Frappé 配色](./screenshots/themes/catppuccin-frappe-blue.png) |
+| Macchiato · Dark | Mocha · Dark |
+| ![Catppuccin Macchiato 配色](./screenshots/themes/catppuccin-macchiato-blue.png) | ![Catppuccin Mocha 配色](./screenshots/themes/catppuccin-mocha-blue.png) |
+
+### 全部 14 种强调色
+
+4 种 flavor 与 14 种强调色可任意组合，共 56 种 Catppuccin 选择。下图展示每个原始官方色值；在真实界面中，小字和焦点边框会在必要时自动使用可读性更高的派生色。
+
+![Catppuccin 四种 flavor 与全部 14 种强调色](./screenshots/themes/catppuccin-accent-matrix.png)
+
 ## 配置
 
 在 Anki 中进入「工具 > 插件」，选中 Editorial Index，再点击「配置」。保存后主界面、已打开的独立窗口与 Editor 会同步更新。

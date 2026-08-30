@@ -49,6 +49,30 @@ New installations and upgrades continue to use Editorial Index's warm-paper pale
 
 The add-on bundles a pinned snapshot of the official [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json); switching colors never requires a network request. Raw palette values remain exact. Where a light raw accent cannot serve as readable small text or a visible keyboard focus indicator, Editorial Index derives a higher-contrast interaction color from that accent.
 
+### Editorial warm paper
+
+Editorial keeps the warmth of paper and the hierarchy of an editorial index, following Anki's light and dark modes.
+
+| Light mode | Dark mode |
+| --- | --- |
+| ![Editorial warm-paper light mode](./screenshots/themes/editorial-light.png) | ![Editorial warm-paper dark mode](./screenshots/themes/editorial-dark.png) |
+
+### Four Catppuccin flavors
+
+All four interface captures use the Blue accent so you can compare each flavor's hierarchy, contrast, and atmosphere directly.
+
+| Latte · Light | Frappé · Dark |
+| --- | --- |
+| ![Catppuccin Latte palette](./screenshots/themes/catppuccin-latte-blue.png) | ![Catppuccin Frappé palette](./screenshots/themes/catppuccin-frappe-blue.png) |
+| Macchiato · Dark | Mocha · Dark |
+| ![Catppuccin Macchiato palette](./screenshots/themes/catppuccin-macchiato-blue.png) | ![Catppuccin Mocha palette](./screenshots/themes/catppuccin-mocha-blue.png) |
+
+### All 14 accents
+
+The four flavors and 14 accents can be combined freely, giving 56 Catppuccin choices. The matrix below shows every exact upstream swatch. In the interface, small text and focus outlines may use a derived higher-contrast color when the raw swatch is not readable enough.
+
+![All 14 Catppuccin accents across four flavors](./screenshots/themes/catppuccin-accent-matrix.png)
+
 ## Configure
 
 Open Tools > Add-ons, select Editorial Index, and choose Config.
