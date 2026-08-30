@@ -31,7 +31,7 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
     require(bool(manifest["name"]), "manifest name is required")
-    require(manifest["human_version"] == "0.3.4", "manifest version must be 0.3.4")
+    require(manifest["human_version"] == "0.3.5", "manifest version must be 0.3.5")
     require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
     require(isinstance(config["enabled"], bool), "enabled must be boolean")
     require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
@@ -157,6 +157,10 @@ def check_runtime_scope() -> None:
     require('mistlineRole="primary"' in native_source, "native primary action role missing")
     require('mistlineRole="chooser"' in native_source, "native chooser role missing")
     require(
+        'QPushButton[mistlineRole="paletteChoice"]:checked' in native_source,
+        "native palette selection state missing",
+    )
+    require(
         'QPushButton[mistlineRole="destructive"]:disabled' in native_source,
         "native destructive disabled-state override missing",
     )
@@ -180,6 +184,17 @@ def check_runtime_scope() -> None:
     require(".editor-field.dupe" in editor_css, "Editor duplicate danger state missing")
     require(".autocomplete-item" in editor_css, "Editor tag autocomplete style missing")
     require("keepThemeLast" in source, "standalone Svelte theme ordering guard missing")
+    require(
+        "def _show_palette_dialog" in source
+        and "Catppuccin 配色工作台" in source
+        and "当前组合的语义对比" in source,
+        "in-Anki Catppuccin palette studio missing",
+    )
+    require(
+        "accent_grid.addWidget(button, index // 7, index % 7)" in source
+        and "preview_grid.addWidget(chip, index // 4, index % 4)" in source,
+        "palette studio must show all accents and balanced semantic roles",
+    )
     require(".spin-box" in css, "Deck Options spinbox component style missing")
     require(".form-switch" in css, "Deck Options switch component style missing")
     require(".range-box" in css, "Stats filter shelf style missing")

@@ -24,7 +24,7 @@ Editorial Index restyles Anki Desktop's deck browser, reviewer shell, navigation
 4. Choose Install from file and select the downloaded file.
 5. Restart Anki.
 
-The Tools menu will now contain an Editorial Index theme toggle and an Editorial Index palette menu. Use them to enable or disable the theme, or switch between the warm-paper default, Catppuccin Auto, and four fixed Catppuccin flavors. See the [installation guide](./docs/INSTALLATION.md) for upgrading, removal, and checksum verification.
+The Tools menu will now contain the theme toggle, a visual Editorial Index palette studio, and a compact quick-palette menu. Use them to enable or disable the theme, inspect every color, or switch between warm paper and Catppuccin. See the [installation guide](./docs/INSTALLATION.md) for upgrading, removal, and checksum verification.
 
 ## What it styles
 
@@ -45,7 +45,7 @@ The add-on does not modify your collection, notes, card templates, FSRS settings
 
 Version 0.3.0 adds the complete Catppuccin palette system: Latte, Frappé, Macchiato, and Mocha, with all 14 accents from Rosewater through Lavender. Auto uses Latte with Anki's light mode and Mocha with Anki's night mode.
 
-New installations and upgrades continue to use Editorial Index's warm-paper palette by default, so the update never opts an existing setup into Catppuccin. Select Tools > Editorial Index 配色 (Palette) to opt in. The main window, reviewer, Add and Browse editors, and native dialogs update together without a restart or a reload of unsaved editor content.
+New installations and upgrades continue to use Editorial Index's warm-paper palette by default, so the update never opts an existing setup into Catppuccin. Select Tools > Editorial Index 配色… (Palette) to opt in. The main window, reviewer, Add and Browse editors, and native dialogs update together without a restart or a reload of unsaved editor content.
 
 The add-on bundles a pinned snapshot of the official [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json), with semantic relationships based on the [official Catppuccin Style Guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md); switching never requires a network request. Every flavor switches its Base / Mantle / Crust, Surface, Overlay, and type hierarchy together. Links stay Blue, focus stays Lavender, the caret stays Rosewater, and status colors retain their own roles instead of all following the selected accent. See the complete [semantic mapping](./docs/CATPPUCCIN_MAPPING.md).
 
@@ -69,7 +69,13 @@ All four interface captures use the Blue accent so you can compare each flavor's
 
 ### All 14 accents
 
-The four flavors and 14 accents can be combined freely, giving 56 Catppuccin choices. The matrix below shows every exact upstream swatch. In the interface, small text and focus outlines may use a derived higher-contrast color when the raw swatch is not readable enough.
+The four flavors and 14 accents combine into 56 selectable configurations. This does not mean all 14 accents are painted across the everyday deck browser at once: one accent is active at a time so the operational hierarchy stays calm.
+
+Open Tools > Editorial Index 配色… (Palette) to see all 14 official swatches, the active flavor and accent, and the actual semantic roles in one native Anki window. A selection applies immediately; the compact Editorial Index quick-palette menu remains available.
+
+![Catppuccin palette studio inside Anki](./screenshots/themes/catppuccin-palette-studio.png)
+
+The matrix below is the cross-flavor reference for every exact upstream swatch. In the interface, small text and focus outlines may use a derived higher-contrast color when the raw swatch is not readable enough.
 
 ![All 14 Catppuccin accents across four flavors](./screenshots/themes/catppuccin-accent-matrix.png)
 
@@ -94,7 +100,7 @@ Open Tools > Add-ons, select Editorial Index, and choose Config.
 | `style_reviewer` | `true` | Style the reviewer shell and rating controls |
 | `animations` | `true` | Enable brief entrance and hover motion |
 
-`accent_color` applies only when `color_theme` is `editorial` and must use the six-digit `#RRGGBB` format. See the [configuration guide](./docs/CONFIGURATION.md) for every Catppuccin flavor and accent, complete JSON examples, and reset instructions. You can also switch palettes immediately from Tools > Editorial Index 配色 (Palette) without editing JSON.
+`accent_color` applies only when `color_theme` is `editorial` and must use the six-digit `#RRGGBB` format. See the [configuration guide](./docs/CONFIGURATION.md) for every Catppuccin flavor and accent, complete JSON examples, and reset instructions. You can inspect every choice in Tools > Editorial Index 配色… (Palette), or switch directly from Editorial Index Quick Palette, without editing JSON.
 
 ## Compatibility
 

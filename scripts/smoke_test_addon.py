@@ -538,7 +538,8 @@ def main() -> None:
     assert len(FakeFontDatabase.registered_paths) == 2
     assert fake_mw.addonManager.write_count == 0
     assert module._menu_action.label == "Editorial Index 主题"
-    assert module._palette_menu.label == "Editorial Index 配色"
+    assert module._palette_dialog_action.label == "Editorial Index 配色…"
+    assert module._palette_menu.label == "Editorial Index 快速配色"
     assert set(module._palette_actions) == {
         "editorial",
         "auto",

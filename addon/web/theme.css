@@ -75,6 +75,9 @@
   --mist-due: #b2352b;
   --mist-good: #28704f;
   --mist-easy: #346492;
+  --mist-new-soft: color-mix(in srgb, var(--mist-new) 12%, var(--mist-paper-light));
+  --mist-learn-soft: color-mix(in srgb, var(--mist-learn) 12%, var(--mist-paper-light));
+  --mist-due-soft: color-mix(in srgb, var(--mist-due) 12%, var(--mist-paper-light));
   /* Review Heatmap keeps forecast and history semantically distinct while
      inheriting the active Editorial/Catppuccin palette. */
   --mist-heatmap-empty: var(--mist-paper-deep);
@@ -1137,14 +1140,20 @@
 
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:nth-last-child(4) {
   color: var(--mist-new);
+  background: var(--mist-new-soft);
+  box-shadow: inset 0 2px var(--mist-new);
 }
 
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:nth-last-child(3) {
   color: var(--mist-learn);
+  background: var(--mist-learn-soft);
+  box-shadow: inset 0 2px var(--mist-learn);
 }
 
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] center > table:first-of-type > :is(thead, tbody) > tr:first-child > th:nth-last-child(2) {
   color: var(--mist-due);
+  background: var(--mist-due-soft);
+  box-shadow: inset 0 2px var(--mist-due);
 }
 
 :root[data-mistline-family="catppuccin"][data-mistline-context="deck-browser"] tr.deck:where(:not(:has(a.collapse))) a.deck {

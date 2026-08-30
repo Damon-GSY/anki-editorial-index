@@ -34,12 +34,13 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 
 ## 直接在「工具」菜单切换
 
-日常使用不需要编辑 JSON。打开「工具 → Editorial Index 配色」，可以直接选择：
+日常使用不需要编辑 JSON。打开「工具 → Editorial Index 配色…」，会出现完整可视化工作台：
 
-- Editorial Index（暖纸默认）
-- Catppuccin 自动（Latte / Mocha）
-- Catppuccin Latte、Frappé、Macchiato 或 Mocha
-- 上述 Catppuccin 配色的 14 种强调色
+- 上方选择 Editorial 暖纸、Catppuccin 自动或四种固定 flavor
+- 中间一次展示全部 14 种 Catppuccin 强调色；每次启用其中一种
+- 下方展示链接、焦点、光标、New、Learn、Due、Good、Easy 的实际运行时颜色
+
+如果已经知道要选什么，也可以使用「工具 → Editorial Index 快速配色」直接切换。56 种 Catppuccin 选择指 4 个 flavor × 14 个 accent 的组合矩阵，不会把 14 种强调色同时塞进日常牌组页。
 
 选择后会立即同步到 Anki 主界面、复习页、原生窗口与 Add / Browse Editor，无需重启。「Editorial Index 主题」仍是总开关；关闭时更换配色只会保存选择，不会自动重新启用主题。
 

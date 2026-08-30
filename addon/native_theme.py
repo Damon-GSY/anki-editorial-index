@@ -398,8 +398,54 @@ QPushButton[mistlineRole="chooser"]:disabled {{
     color: {disabled};
     background-color: {raised};
 }}
+QPushButton[mistlineRole="paletteChoice"] {{
+    min-height: 30px;
+    padding: 5px 9px;
+    border: 1px solid {border};
+    border-radius: 8px;
+    color: {text};
+    background-color: {field};
+    text-align: left;
+}}
+QPushButton[mistlineRole="paletteChoice"]:hover {{
+    border-color: {focus};
+    background-color: {hover};
+}}
+QPushButton[mistlineRole="paletteChoice"]:checked {{
+    border: 2px solid {focus};
+    color: {accent_text};
+    background-color: {accent_soft};
+    font-weight: 600;
+}}
+QPushButton[mistlineRole="paletteChoice"]:disabled {{
+    border-color: {border};
+    color: {disabled};
+    background-color: {raised};
+}}
 QLabel[mistlineRole="fieldLabel"] {{
     color: {label};
+    font-weight: 600;
+}}
+QDialog#EditorialIndexPaletteStudio {{
+    min-width: 760px;
+    min-height: 590px;
+    background-color: {canvas};
+}}
+QLabel#EditorialIndexPaletteTitle {{
+    color: {text};
+    font-family: "Source Serif Pro";
+    font-size: 24px;
+    font-weight: 600;
+}}
+QLabel#EditorialIndexPaletteSubtitle {{
+    color: {muted};
+}}
+QLabel#EditorialIndexPaletteCurrent {{
+    padding: 8px 10px;
+    border: 1px solid {border};
+    border-radius: 8px;
+    color: {accent_text};
+    background-color: {accent_soft};
     font-weight: 600;
 }}
 QWidget[mistlineRole="actionbar"] {{

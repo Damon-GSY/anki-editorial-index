@@ -24,7 +24,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 4. 点击「从文件安装」，选择刚才下载的文件。
 5. 重新启动 Anki。
 
-安装成功后，「工具」菜单中会出现「Editorial Index 主题」和「Editorial Index 配色」。这里可以随时启停主题，或者在暖纸默认、Catppuccin 自动和四种固定 flavor 之间立即切换。
+安装成功后，「工具」菜单中会出现「Editorial Index 主题」、「Editorial Index 配色…」和「Editorial Index 快速配色」。前者是完整可视化工作台，后者适合直接切换。
 
 完整步骤包括升级、卸载和校验下载文件，见 [安装指南](./docs/INSTALLATION.md)。
 
@@ -47,7 +47,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 
 0.3.0 加入了完整的 Catppuccin 配色系统：Latte、Frappé、Macchiato、Mocha 四种 flavor，以及 Rosewater 到 Lavender 的全部 14 种强调色。「自动」会在 Anki 日间模式使用 Latte，夜间模式使用 Mocha。
 
-新安装和从旧版升级都依然默认使用 Editorial Index 暖纸配色，不会自动切换到 Catppuccin。在「工具 → Editorial Index 配色」选择 Catppuccin 后，主界面、复习页、Add / Browse Editor 和原生窗口会同步更新，无需重启，也不会重载正在编辑的内容。
+新安装和从旧版升级都依然默认使用 Editorial Index 暖纸配色，不会自动切换到 Catppuccin。在「工具 → Editorial Index 配色…」选择 Catppuccin 后，主界面、复习页、Add / Browse Editor 和原生窗口会同步更新，无需重启，也不会重载正在编辑的内容。
 
 色板是随插件打包的 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 token 快照，语义关系参考 [Catppuccin 官方 Style Guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md)，切换时不会联网。四种 flavor 会同时切换 Base / Mantle / Crust、Surface、Overlay 和文字层级；链接固定使用 Blue、焦点使用 Lavender、光标使用 Rosewater，状态色也各自保留，不再全部跟随所选 accent。完整对应关系见 [Catppuccin 语义配色映射](./docs/CATPPUCCIN_MAPPING.md)。
 
@@ -71,7 +71,13 @@ Editorial 保留纸张的温度和编辑排版感，会跟随 Anki 的日间与�
 
 ### 全部 14 种强调色
 
-4 种 flavor 与 14 种强调色可任意组合，共 56 种 Catppuccin 选择。下图展示每个原始官方色值；在真实界面中，小字和焦点边框会在必要时自动使用可读性更高的派生色。
+4 种 flavor 与 14 种强调色可任意组合，共 56 种 Catppuccin 选择。这里的“56 种”是 56 个可选组合，并不是在日常界面同时铺满 14 种强调色；一次只启用一个 accent，避免牌组页失去视觉层级。
+
+在 Anki 中打开「工具 → Editorial Index 配色…」，会一次看到全部 14 种官方色值、当前 flavor、当前 accent 和实际语义对比。选择任意色块后会立即应用；「Editorial Index 快速配色」仍保留为紧凑入口。
+
+![Anki 内的 Catppuccin 配色工作台](./screenshots/themes/catppuccin-palette-studio.png)
+
+下图用于横向核对四种 flavor 的全部官方原始色值；真实界面中的小字和焦点边框会在必要时自动使用可读性更高的派生色。
 
 ![Catppuccin 四种 flavor 与全部 14 种强调色](./screenshots/themes/catppuccin-accent-matrix.png)
 
@@ -98,7 +104,7 @@ Editorial 保留纸张的温度和编辑排版感，会跟随 Anki 的日间与�
 
 `accent_color` 只在 `color_theme` 为 `editorial` 时生效，并且只接受六位十六进制颜色，例如 `#2F5BBC`。Catppuccin 的可用 flavor、14 种强调色、JSON 示例和恢复方法都放在 [配置说明](./docs/CONFIGURATION.md) 中。
 
-也可以不打开 JSON，直接使用「工具 → Editorial Index 配色」切换。
+也可以不打开 JSON，直接使用「工具 → Editorial Index 配色…」查看全部选项，或使用「工具 → Editorial Index 快速配色」直接切换。
 
 ## 字体与卡片模板
 

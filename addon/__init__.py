@@ -94,6 +94,8 @@ STANDALONE_WEB_CONTEXTS = {"editor", "stats", "deck-options", "native-page"}
 
 _HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _menu_action: QAction | None = None
+_palette_dialog_action: QAction | None = None
+_palette_dialog_ref: weakref.ReferenceType[Any] | None = None
 _palette_menu: QMenu | None = None
 _accent_menu: QMenu | None = None
 _palette_group: QActionGroup | None = None
@@ -569,6 +571,10 @@ def _sync_menu_actions() -> None:
         pass
     if _accent_menu is not None:
         _accent_menu.setEnabled(config["color_theme"] == "catppuccin")
+    palette_dialog = _palette_dialog_ref() if _palette_dialog_ref is not None else None
+    refresh_dialog = getattr(palette_dialog, "_mistline_refresh", None)
+    if callable(refresh_dialog):
+        refresh_dialog()
 
 
 def _apply_current_theme() -> None:
@@ -902,8 +908,256 @@ def _select_catppuccin_accent(accent_name: str) -> None:
     _apply_current_theme()
 
 
+def _show_palette_dialog() -> None:
+    """Show every flavor, accent, and semantic role inside Anki itself."""
+
+    global _palette_dialog_ref
+    existing = _palette_dialog_ref() if _palette_dialog_ref is not None else None
+    if existing is not None:
+        try:
+            existing.show()
+            existing.raise_()
+            existing.activateWindow()
+            return
+        except RuntimeError:
+            _palette_dialog_ref = None
+
+    # Keep these imports lazy so Anki can import the add-on in headless test
+    # environments without constructing native widgets.
+    from aqt.qt import (
+        QButtonGroup,
+        QColor,
+        QDialog,
+        QFrame,
+        QGridLayout,
+        QHBoxLayout,
+        QIcon,
+        QLabel,
+        QPixmap,
+        QPushButton,
+        QVBoxLayout,
+        QWidget,
+    )
+
+    dialog = QDialog(mw)
+    dialog.setObjectName("EditorialIndexPaletteStudio")
+    dialog.setWindowTitle("Editorial Index 配色")
+    dialog.setMinimumSize(760, 590)
+    dialog.setModal(False)
+
+    outer = QVBoxLayout(dialog)
+    outer.setContentsMargins(24, 22, 24, 20)
+    outer.setSpacing(14)
+
+    title = QLabel("Catppuccin 配色工作台", dialog)
+    title.setObjectName("EditorialIndexPaletteTitle")
+    subtitle = QLabel(
+        "先选择 flavor，再选择 accent。下方会显示 Anki 实际使用的语义色。",
+        dialog,
+    )
+    subtitle.setObjectName("EditorialIndexPaletteSubtitle")
+    subtitle.setWordWrap(True)
+    current = QLabel(dialog)
+    current.setObjectName("EditorialIndexPaletteCurrent")
+    outer.addWidget(title)
+    outer.addWidget(subtitle)
+    outer.addWidget(current)
+
+    flavor_label = QLabel("界面 flavor", dialog)
+    flavor_label.setProperty("mistlineRole", "fieldLabel")
+    outer.addWidget(flavor_label)
+
+    flavor_panel = QWidget(dialog)
+    flavor_grid = QGridLayout(flavor_panel)
+    flavor_grid.setContentsMargins(0, 0, 0, 0)
+    flavor_grid.setHorizontalSpacing(8)
+    flavor_grid.setVerticalSpacing(8)
+    flavor_group = QButtonGroup(dialog)
+    flavor_group.setExclusive(True)
+    flavor_labels = {
+        "editorial": "Editorial 暖纸",
+        "auto": "自动 · Latte / Mocha",
+        "latte": "Latte · Light",
+        "frappe": "Frappé · Dark",
+        "macchiato": "Macchiato · Dark",
+        "mocha": "Mocha · Dark",
+    }
+    flavor_buttons: dict[str, Any] = {}
+    for index, palette_id in enumerate(("editorial", *CATPPUCCIN_FLAVOR_OPTIONS)):
+        button = QPushButton(flavor_labels[palette_id], flavor_panel)
+        button.setCheckable(True)
+        button.setProperty("mistlineRole", "paletteChoice")
+        flavor_group.addButton(button)
+        flavor_grid.addWidget(button, index // 3, index % 3)
+        qconnect(
+            button.clicked,
+            lambda _checked=False, selected=palette_id: _select_palette(selected),
+        )
+        flavor_buttons[palette_id] = button
+    outer.addWidget(flavor_panel)
+
+    accent_label = QLabel("强调色 · 14 种", dialog)
+    accent_label.setProperty("mistlineRole", "fieldLabel")
+    outer.addWidget(accent_label)
+
+    accent_panel = QWidget(dialog)
+    accent_grid = QGridLayout(accent_panel)
+    accent_grid.setContentsMargins(0, 0, 0, 0)
+    accent_grid.setHorizontalSpacing(8)
+    accent_grid.setVerticalSpacing(8)
+    accent_group = QButtonGroup(dialog)
+    accent_group.setExclusive(True)
+    accent_buttons: dict[str, Any] = {}
+    for index, accent_name in enumerate(CATPPUCCIN_ACCENTS):
+        button = QPushButton(accent_name.capitalize(), accent_panel)
+        button.setCheckable(True)
+        button.setProperty("mistlineRole", "paletteChoice")
+        accent_group.addButton(button)
+        accent_grid.addWidget(button, index // 7, index % 7)
+        qconnect(
+            button.clicked,
+            lambda _checked=False, selected=accent_name: _select_catppuccin_accent(
+                selected
+            ),
+        )
+        accent_buttons[accent_name] = button
+    outer.addWidget(accent_panel)
+
+    preview_label = QLabel("当前组合的语义对比", dialog)
+    preview_label.setProperty("mistlineRole", "fieldLabel")
+    outer.addWidget(preview_label)
+
+    preview_panel = QWidget(dialog)
+    preview_grid = QGridLayout(preview_panel)
+    preview_grid.setContentsMargins(0, 0, 0, 0)
+    preview_grid.setHorizontalSpacing(8)
+    preview_grid.setVerticalSpacing(8)
+    preview_roles = (
+        ("link", "链接"),
+        ("focus", "焦点"),
+        ("cursor", "光标"),
+        ("new", "New"),
+        ("learn", "Learn"),
+        ("due", "Due"),
+        ("good", "Good"),
+        ("easy", "Easy"),
+    )
+    preview_chips: dict[str, tuple[Any, Any]] = {}
+    for index, (role, role_label) in enumerate(preview_roles):
+        chip = QFrame(preview_panel)
+        chip.setProperty("mistlineRole", "semanticPreview")
+        chip.setMinimumHeight(48)
+        chip_layout = QVBoxLayout(chip)
+        chip_layout.setContentsMargins(10, 7, 10, 7)
+        chip_text = QLabel(role_label, chip)
+        chip_text.setWordWrap(True)
+        chip_layout.addWidget(chip_text)
+        preview_grid.addWidget(chip, index // 4, index % 4)
+        preview_chips[role] = (chip, chip_text)
+    outer.addWidget(preview_panel)
+
+    bottom = QHBoxLayout()
+    bottom.addStretch(1)
+    close_button = QPushButton("关闭", dialog)
+    close_button.setProperty("mistlineRole", "secondary")
+    qconnect(close_button.clicked, dialog.accept)
+    bottom.addWidget(close_button)
+    outer.addLayout(bottom)
+
+    source_names = {
+        "link": lambda _tokens: "Blue",
+        "focus": lambda _tokens: "Lavender",
+        "cursor": lambda _tokens: "Rosewater",
+        "new": lambda _tokens: "Teal",
+        "learn": lambda _tokens: "Yellow",
+        "due": lambda _tokens: "Red",
+        "good": lambda _tokens: "Green",
+        "easy": lambda _tokens: "Blue",
+    }
+
+    def swatch_icon(color: str) -> Any:
+        swatch = QPixmap(18, 18)
+        swatch.fill(QColor(color))
+        return QIcon(swatch)
+
+    def refresh() -> None:
+        config = _get_config()
+        palette_id = (
+            "editorial"
+            if config["color_theme"] == "editorial"
+            else config["catppuccin_flavor"]
+        )
+        for key, button in flavor_buttons.items():
+            button.setChecked(key == palette_id)
+        requested_flavor = config["catppuccin_flavor"]
+        resolved_flavor = (
+            "mocha" if _system_is_dark() else "latte"
+        ) if requested_flavor == "auto" else requested_flavor
+        palette = catppuccin_palette(resolved_flavor)
+        catppuccin_enabled = config["color_theme"] == "catppuccin"
+        accent_label.setEnabled(catppuccin_enabled)
+        accent_panel.setEnabled(catppuccin_enabled)
+        for key, button in accent_buttons.items():
+            button.setChecked(key == config["catppuccin_accent"])
+            button.setIcon(swatch_icon(palette[key]))
+
+        tokens = _resolved_tokens(config)
+        flavor_name = (
+            "Editorial 暖纸"
+            if tokens.family == "editorial"
+            else tokens.flavor.capitalize()
+        )
+        current.setText(
+            f"当前：{flavor_name} · {tokens.accent_name.capitalize()} · "
+            f"{tokens.accent_raw}"
+        )
+        role_colors = {
+            "link": (tokens.link, tokens.link, tokens.field, tokens.link),
+            "focus": (tokens.focus, tokens.focus, tokens.field, tokens.focus),
+            "cursor": (tokens.cursor, tokens.cursor, tokens.field, tokens.cursor),
+            "new": (tokens.new, tokens.new, tokens.field, tokens.new),
+            "learn": (tokens.learn, tokens.learn, tokens.field, tokens.learn),
+            "due": (tokens.due, tokens.due, tokens.field, tokens.due),
+            "good": (tokens.good, tokens.good, tokens.field, tokens.good),
+            "easy": (tokens.easy, tokens.easy, tokens.field, tokens.easy),
+        }
+        for role, role_label in preview_roles:
+            color, foreground, background, border = role_colors[role]
+            source = (
+                source_names[role](tokens)
+                if tokens.family == "catppuccin"
+                else "Editorial"
+            )
+            chip, chip_text = preview_chips[role]
+            chip.setStyleSheet(
+                f"border: 1px solid {border};"
+                "border-radius: 8px;"
+                f"background-color: {background};"
+            )
+            chip_text.setText(f"{role_label} · {source}\n{color}")
+            chip_text.setStyleSheet(
+                "border: 0;"
+                "background: transparent;"
+                f"color: {foreground};"
+                "font-weight: 600;"
+            )
+
+    dialog._mistline_refresh = refresh
+    _palette_dialog_ref = weakref.ref(dialog)
+    def clear_dialog_ref(_result: int = 0) -> None:
+        global _palette_dialog_ref
+        _palette_dialog_ref = None
+
+    qconnect(dialog.finished, clear_dialog_ref)
+    refresh()
+    dialog.show()
+    dialog.raise_()
+    dialog.activateWindow()
+
+
 def _setup_menu() -> None:
-    global _accent_group, _accent_menu, _menu_action, _palette_group, _palette_menu
+    global _accent_group, _accent_menu, _menu_action, _palette_dialog_action
+    global _palette_group, _palette_menu
     if _menu_action is not None:
         return
 
@@ -911,7 +1165,13 @@ def _setup_menu() -> None:
     action.setCheckable(True)
     qconnect(action.triggered, _toggle_theme)
 
-    palette_menu = QMenu("Editorial Index 配色", mw)
+    palette_dialog_action = QAction("Editorial Index 配色…", mw)
+    qconnect(
+        palette_dialog_action.triggered,
+        lambda _checked=False: _show_palette_dialog(),
+    )
+
+    palette_menu = QMenu("Editorial Index 快速配色", mw)
     palette_group = QActionGroup(palette_menu)
     palette_group.setExclusive(True)
     palette_labels = {
@@ -952,8 +1212,10 @@ def _setup_menu() -> None:
 
     mw.form.menuTools.addSeparator()
     mw.form.menuTools.addAction(action)
+    mw.form.menuTools.addAction(palette_dialog_action)
     mw.form.menuTools.addMenu(palette_menu)
     _menu_action = action
+    _palette_dialog_action = palette_dialog_action
     _palette_menu = palette_menu
     _accent_menu = accent_menu
     _palette_group = palette_group
