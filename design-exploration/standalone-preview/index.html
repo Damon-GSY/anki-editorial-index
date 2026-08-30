@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-CN" data-mistline-context="stats">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editorial Index standalone Svelte fixtures</title>
+  <link rel="icon" href="data:,">
+  <style>
+    /* Approximate Anki's structural Svelte CSS. Visual tokens intentionally
+       live in addon/web/theme.css so the regression suite measures the add-on. */
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button:disabled,
+    input:disabled,
+    [aria-disabled="true"] {
+      cursor: not-allowed;
+    }
+
+    .fixture-label {
+      position: fixed;
+      z-index: 20;
+      right: 10px;
+      bottom: 8px;
+      padding: 3px 6px;
+      pointer-events: none;
+      color: var(--mist-muted);
+      background: color-mix(in srgb, var(--mist-paper) 88%, transparent);
+      font: 11px/1.2 var(--mist-sans);
+    }
+
+    /* Stats contracts. */
+    .statistics-page {
+      width: 100%;
+      padding-block: 1px;
+    }
+
+    .graphs-container {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .graph {
+      min-width: 0;
+    }
+
+    .graph-copy {
+      margin: 0 0 14px;
+      color: var(--mist-muted);
+      line-height: 1.55;
+    }
+
+    .chart-shell {
+      min-height: 160px;
+      display: grid;
+      align-items: end;
+      overflow: hidden;
+    }
+
+    .chart-shell svg {
+      width: 100%;
+      height: 160px;
+    }
+
+    .graph-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      padding: 9px 6px;
+      border-bottom: 1px solid var(--mist-rule);
+      text-align: left;
+    }
+
+    .summary-table td:last-child {
+      text-align: right;
+    }
+
+    /* Deck Options contracts. */
+    .sticky-container {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+    }
+
+    .button-bar {
+      display: flex;
+    }
+
+    .button-bar > .select-container {
+      flex: 1 1 300px;
+    }
+
+    .save-group {
+      display: flex;
+      flex: 0 0 auto;
+    }
+
+    .container-columns {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .settings-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(180px, 44%);
+      align-items: center;
+      gap: 12px 18px;
+    }
+
+    .setting-title small {
+      display: block;
+      margin-top: 2px;
+      color: var(--mist-muted);
+      font-size: 11.5px;
+    }
+
+    .config-input,
+    .spin-box,
+    .select-container {
+      display: flex;
+    }
+
+    .config-input {
+      justify-content: flex-end;
+    }
+
+    .spin-box,
+    .config-input > .select-container {
+      flex: 1 1 auto;
+    }
+
+    .spin-box > input {
+      width: 100%;
+    }
+
+    .select-container .inner {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .select-container .chevron,
+    .spin-box .spinner {
+      flex: 0 0 auto;
+    }
+
+    .form-switch label {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .inline-note {
+      margin: 0;
+      padding: 10px 12px;
+      border-left: 3px solid var(--mist-learn);
+      color: var(--mist-muted);
+      background: color-mix(in srgb, var(--mist-paper-deep) 68%, transparent);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 620px) {
+      .graphs-container,
+      .container-columns {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .setting-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .config-input {
+        justify-content: stretch;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .fixture-label {
+        display: none;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/addon/web/theme.css?v=standalone-r1">
+</head>
+<body></body>
+<script>
+  const params = new URLSearchParams(location.search);
+  const requestedContext = params.get("context");
+  const context = requestedContext === "deck-options" ? "deck-options" : "stats";
+  const darkMode = params.get("theme") === "dark";
+
+  document.documentElement.dataset.mistlineContext = context;
+  document.documentElement.classList.toggle("night-mode", darkMode);
+  document.documentElement.dataset.bsTheme = darkMode ? "dark" : "light";
+
+  const stats = `
+    <main class="statistics-page" aria-label="Statistics">
+      <section class="range-box" aria-label="Statistics filters">
+        <div class="scope-filter">
+          <label><input type="radio" name="scope" checked> Deck</label>
+          <label><input type="radio" name="scope"> Collection</label>
+        </div>
+        <input id="statisticsSearchText" type="search" value="deck:current" aria-label="Search cards">
+        <div class="period-filter">
+          <label><input type="radio" name="period" checked> 1 year</label>
+          <label><input type="radio" name="period"> All history</label>
+          <label><input id="include-suspended" type="checkbox" checked> Include suspended</label>
+        </div>
+      </section>
+
+      <section class="graphs-container">
+        <article class="container light graph" data-card="today">
+          <h1>Today</h1>
+          <p class="graph-copy">You reviewed <button class="search-link" type="button">36 cards</button> in 18 minutes.</p>
+          <table class="summary-table">
+            <tbody>
+              <tr><th scope="row">Again</th><td>4</td></tr>
+              <tr><th scope="row">Learn</th><td>7</td></tr>
+              <tr><th scope="row">Review</th><td>25</td></tr>
+            </tbody>
+          </table>
+          <div class="graph-actions">
+            <button id="stats-secondary" type="button">Export</button>
+            <button id="stats-disabled" type="button" disabled>Compare</button>
+          </div>
+        </article>
+
+        <article class="container light graph" data-card="forecast">
+          <h1>Forecast</h1>
+          <p class="graph-copy">Reviews due over the next thirty days.</p>
+          <div class="chart-shell">
+            <svg viewBox="0 0 420 160" role="img" aria-label="Forecast chart">
+              <g class="bars" fill="#4f9663">
+                <rect x="12" y="88" width="24" height="60" rx="2"></rect>
+                <rect x="44" y="68" width="24" height="80" rx="2"></rect>
+                <rect x="76" y="102" width="24" height="46" rx="2"></rect>
+                <rect x="108" y="48" width="24" height="100" rx="2"></rect>
+                <rect x="140" y="78" width="24" height="70" rx="2"></rect>
+                <rect x="172" y="34" width="24" height="114" rx="2"></rect>
+                <rect x="204" y="96" width="24" height="52" rx="2"></rect>
+                <rect x="236" y="58" width="24" height="90" rx="2"></rect>
+                <rect x="268" y="110" width="24" height="38" rx="2"></rect>
+                <rect x="300" y="72" width="24" height="76" rx="2"></rect>
+              </g>
+              <path d="M8 148H410" fill="none" stroke="currentColor" opacity=".2"></path>
+            </svg>
+          </div>
+        </article>
+      </section>
+    </main>`;
+
+  const spinBox = (id, value, disabled = false) => `
+    <div class="spin-box${disabled ? " is-disabled" : ""}" data-spinbox="${id}">
+      <input id="${id}" type="text" inputmode="numeric" value="${value}" ${disabled ? "disabled" : ""}>
+      <span class="spinner active decrement" role="button" tabindex="${disabled ? "-1" : "0"}" aria-label="Decrease ${id}">−</span>
+      <span class="spinner active increment" role="button" tabindex="${disabled ? "-1" : "0"}" aria-label="Increase ${id}">+</span>
+    </div>`;
+
+  const selectControl = (id, label, disabled = false) => `
+    <div id="${id}" class="select-container" role="combobox" tabindex="${disabled ? "-1" : "0"}" aria-expanded="false" aria-disabled="${disabled}">
+      <span class="inner">${label}</span><span class="chevron" aria-hidden="true">⌄</span>
+    </div>`;
+
+  const deckOptions = `
+    <main class="deck-options-page" aria-label="Deck options">
+      <header class="sticky-container">
+        <div class="button-bar">
+          ${selectControl("preset-select", "Default preset (43 decks)")}
+          <button id="deck-secondary" class="label-button secondary" type="button">Reset changes</button>
+          <span class="save-group">
+            <button id="deck-save" class="label-button primary" type="button">Save</button>
+            <button id="deck-save-menu" class="icon-button chevron" type="button" aria-label="More save actions">⌄</button>
+          </span>
+        </div>
+      </header>
+
+      <section class="container-columns">
+        <article class="container light" data-card="limits">
+          <h1>Daily Limits</h1>
+          <div class="settings-list">
+            <div class="setting-row">
+              <label class="setting-title" for="new-limit">New cards per day <small>Preset limit</small></label>
+              <div class="config-input">${spinBox("new-limit", 30)}</div>
+            </div>
+            <div class="setting-row">
+              <label class="setting-title" for="review-limit">Maximum reviews per day <small>Current deck</small></label>
+              <div class="config-input">${spinBox("review-limit", 9999)}</div>
+            </div>
+            <div class="setting-row">
+              <span class="setting-title">New cards ignore review limit</span>
+              <span class="form-switch"><label><input id="limit-switch" class="form-check-input" type="checkbox" role="switch" checked><span>Enabled</span></label></span>
+            </div>
+            <div class="setting-row">
+              <label class="setting-title" for="inherited-limit">Inherited limit <small>Unavailable for this preset</small></label>
+              <div class="config-input">${spinBox("inherited-limit", 200, true)}</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="container light" data-card="new-cards">
+          <h1>New Cards</h1>
+          <div class="settings-list">
+            <div class="setting-row">
+              <label class="setting-title" for="learning-steps">Learning steps</label>
+              <div class="config-input"><input id="learning-steps" class="form-control" value="1m 10m"></div>
+            </div>
+            <div class="setting-row">
+              <span class="setting-title">Insertion order</span>
+              <div class="config-input">${selectControl("order-select", "Sequential")}</div>
+            </div>
+            <div class="setting-row">
+              <span class="setting-title">Bury related new cards</span>
+              <span class="form-switch"><label><input id="bury-switch" class="form-check-input" type="checkbox" role="switch"><span>Disabled</span></label></span>
+            </div>
+            <p class="inline-note">Changes remain local until the Save action is confirmed.</p>
+          </div>
+        </article>
+      </section>
+    </main>`;
+
+  document.body.innerHTML = context === "stats" ? stats : deckOptions;
+  document.body.insertAdjacentHTML("beforeend", `<span class="fixture-label">${context} · ${darkMode ? "dark" : "light"}</span>`);
+
+  document.querySelectorAll(".spin-box:not(.is-disabled) .spinner").forEach(spinner => {
+    spinner.addEventListener("click", () => {
+      const input = spinner.closest(".spin-box").querySelector("input");
+      const delta = spinner.classList.contains("increment") ? 1 : -1;
+      input.value = String(Number(input.value) + delta);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  });
+
+  document.querySelectorAll('.select-container[role="combobox"]:not([aria-disabled="true"])').forEach(select => {
+    const toggle = () => select.setAttribute("aria-expanded", String(select.getAttribute("aria-expanded") !== "true"));
+    select.addEventListener("click", toggle);
+    select.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggle();
+      }
+    });
+  });
+
+  document.querySelector("#deck-save")?.addEventListener("click", () => { document.body.dataset.saved = "true"; });
+  document.querySelector("#deck-secondary")?.addEventListener("click", () => { document.body.dataset.secondary = "true"; });
+  document.querySelector("#stats-secondary")?.addEventListener("click", () => { document.body.dataset.secondary = "true"; });
+</script>
+</html>

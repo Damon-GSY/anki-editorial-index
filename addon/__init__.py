@@ -7,21 +7,21 @@ import re
 from typing import Any
 
 from aqt import gui_hooks, mw
-from aqt.qt import QAction, qconnect
+from aqt.qt import QAction, QDialogButtonBox, qconnect
 
 from .native_theme import apply_native_theme, extend_native_style
 
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "enabled": True,
-    "accent_color": "#315FC4",
+    "accent_color": "#2F5BBC",
     "style_native_chrome": True,
     "style_reviewer": True,
     "animations": True,
     "frosted_toolbar": False,
 }
 
-LEGACY_DEFAULT_ACCENT = "#18A6B8"
+LEGACY_DEFAULT_ACCENTS = {"#18A6B8", "#315FC4"}
 
 CONTEXT_NAMES = {
     "DeckBrowser": "deck-browser",
@@ -77,9 +77,9 @@ def _get_config() -> dict[str, Any]:
     accent = str(config.get("accent_color", DEFAULT_CONFIG["accent_color"]))
     if not _HEX_COLOR.fullmatch(accent):
         accent = DEFAULT_CONFIG["accent_color"]
-    elif accent.upper() == LEGACY_DEFAULT_ACCENT:
-        # Preserve custom colors, but migrate the previous theme's untouched
-        # default so an in-place upgrade receives Editorial Index blue.
+    elif accent.upper() in LEGACY_DEFAULT_ACCENTS:
+        # Preserve custom colors, but migrate untouched defaults from earlier
+        # releases so an in-place upgrade receives the accessible editor blue.
         accent = DEFAULT_CONFIG["accent_color"]
 
     return {
@@ -253,6 +253,28 @@ def _inject_external_style(webview: Any) -> None:
     link.href = settings.href;
     document.head.appendChild(link);
   }}
+  const keepThemeLast = () => {{
+    const link = document.getElementById("mistline-external-theme");
+    const styles = document.head.querySelectorAll('link[rel="stylesheet"], style');
+    if (link && styles.length && styles[styles.length - 1] !== link) {{
+      document.head.appendChild(link);
+    }}
+  }};
+  if (!root._mistlineThemeOrderObserver) {{
+    let orderQueued = false;
+    root._mistlineThemeOrderObserver = new MutationObserver(() => {{
+      if (orderQueued) return;
+      orderQueued = true;
+      queueMicrotask(() => {{
+        orderQueued = false;
+        keepThemeLast();
+      }});
+    }});
+    root._mistlineThemeOrderObserver.observe(document.head, {{ childList: true }});
+  }}
+  keepThemeLast();
+  requestAnimationFrame(keepThemeLast);
+  setTimeout(keepThemeLast, 250);
 }})();
 """
     )
@@ -265,6 +287,121 @@ def _sync_menu_action() -> None:
 
 def _apply_current_native_theme() -> None:
     apply_native_theme(mw, _get_config())
+
+
+def _set_mistline_role(widget: Any, role: str) -> None:
+    """Attach visual semantics without changing a control's Qt behaviour."""
+
+    if widget is None or widget.property("mistlineRole") == role:
+        return
+    widget.setProperty("mistlineRole", role)
+    try:
+        style = widget.style()
+        style.unpolish(widget)
+        style.polish(widget)
+        widget.update()
+    except Exception:
+        # The property is set before first show in normal operation. A future
+        # Qt wrapper that cannot be repolished will still pick it up on show.
+        pass
+
+
+def _style_add_cards(add_cards: Any) -> None:
+    """Complete Add's hierarchy while preserving shortcuts and default roles."""
+
+    config = _get_config()
+    if not config["enabled"] or not config["style_native_chrome"]:
+        return
+
+    _set_mistline_role(add_cards.addButton, "primary")
+    _set_mistline_role(add_cards.historyButton, "quiet")
+    _set_mistline_role(add_cards.helpButton, "quiet")
+    _set_mistline_role(add_cards.closeButton, "secondary")
+    _set_mistline_role(add_cards.form.buttonBox, "actionbar")
+    _set_mistline_role(add_cards.notetype_chooser.button, "chooser")
+    _set_mistline_role(add_cards.deck_chooser.deck, "chooser")
+    _set_mistline_role(getattr(add_cards.notetype_chooser, "label", None), "fieldLabel")
+    _set_mistline_role(getattr(add_cards.deck_chooser, "deckLabel", None), "fieldLabel")
+    _set_mistline_role(add_cards.form.fieldsArea, "editorCanvas")
+
+    # One spacing scale owns the native frame around the WebView. The editor
+    # stylesheet owns everything inside the WebView itself.
+    add_cards.form.verticalLayout_3.setContentsMargins(16, 10, 16, 14)
+    add_cards.form.verticalLayout_3.setSpacing(12)
+    add_cards.form.horizontalLayout.setSpacing(12)
+    add_cards.notetype_chooser.setSpacing(8)
+    add_cards.deck_chooser.setSpacing(8)
+    button_layout = add_cards.form.buttonBox.layout()
+    if button_layout is not None:
+        button_layout.setSpacing(8)
+
+
+def _style_managed_dialog(
+    _dialog_manager: Any, dialog_name: str, dialog_instance: Any
+) -> None:
+    """Give managed dialogs semantic actions without reordering Qt buttons."""
+
+    config = _get_config()
+    if not config["enabled"] or not config["style_native_chrome"]:
+        return
+    if dialog_name == "AddCards":
+        _style_add_cards(dialog_instance)
+        return
+
+    roles = QDialogButtonBox.ButtonRole
+    primary_roles = {roles.AcceptRole, roles.YesRole, roles.ApplyRole}
+    destructive_roles = {roles.DestructiveRole}
+    for button_box in dialog_instance.findChildren(QDialogButtonBox):
+        _set_mistline_role(button_box, "actionbar")
+        for button in button_box.buttons():
+            button_role = button_box.buttonRole(button)
+            if button.isDefault() or button_role in primary_roles:
+                role = "primary"
+            elif button_role in destructive_roles:
+                role = "destructive"
+            else:
+                role = "secondary"
+            _set_mistline_role(button, role)
+
+
+def _style_browser(browser: Any) -> None:
+    """Expose stable names for Browser surfaces that have local Qt styles."""
+
+    config = _get_config()
+    if not config["enabled"] or not config["style_native_chrome"]:
+        return
+    browser.sidebar.setObjectName("mistlineSidebarTree")
+    browser.sidebar.searchBar.setObjectName("mistlineSidebarSearch")
+    browser.sidebar.toolbar.setObjectName("mistlineSidebarToolbar")
+    browser.form.searchEdit.setObjectName("searchEdit")
+    browser.form.tableView.setObjectName("tableView")
+
+
+def _style_card_layout(card_layout: Any) -> None:
+    """Give Card Layout a clear action hierarchy without touching previews."""
+
+    config = _get_config()
+    if not config["enabled"] or not config["style_native_chrome"]:
+        return
+
+    layout = getattr(card_layout, "buttons", None)
+    if layout is None:
+        return
+    widgets = []
+    for index in range(layout.count()):
+        item = layout.itemAt(index)
+        widget = item.widget() if item is not None else None
+        if widget is not None:
+            widgets.append(widget)
+    if len(widgets) < 4:
+        return
+
+    _set_mistline_role(widgets[0], "quiet")
+    for widget in widgets[1:-2]:
+        _set_mistline_role(widget, "secondary")
+    _set_mistline_role(widgets[-2], "primary")
+    _set_mistline_role(widgets[-1], "secondary")
+    layout.setSpacing(8)
 
 
 def _extend_anki_style(style: str) -> str:
@@ -312,4 +449,9 @@ gui_hooks.webview_will_set_content.append(_inject_theme)
 gui_hooks.deck_browser_will_render_content.append(_decorate_deck_browser)
 gui_hooks.webview_did_inject_style_into_page.append(_inject_external_style)
 gui_hooks.style_did_init.append(_extend_anki_style)
+gui_hooks.add_cards_did_init.append(_style_add_cards)
+gui_hooks.dialog_manager_did_open_dialog.append(_style_managed_dialog)
+gui_hooks.browser_will_show.append(_style_browser)
+gui_hooks.card_layout_will_show.append(_style_card_layout)
+gui_hooks.theme_did_change.append(_apply_current_native_theme)
 gui_hooks.main_window_did_init.append(_setup_menu)

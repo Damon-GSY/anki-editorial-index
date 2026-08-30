@@ -7,7 +7,7 @@
 [English](./README.en.md) · [下载安装](https://github.com/Damon-GSY/anki-editorial-index/releases/latest) · [配置说明](./docs/CONFIGURATION.md) · [问题排查](./docs/TROUBLESHOOTING.md)
 
 [![Latest release](https://img.shields.io/github/v/release/Damon-GSY/anki-editorial-index?label=release)](https://github.com/Damon-GSY/anki-editorial-index/releases/latest)
-[![Anki](https://img.shields.io/badge/Anki-25.09.4%2B-315FC4)](https://apps.ankiweb.net/)
+[![Anki](https://img.shields.io/badge/Anki-25.09.4%2B-2F5BBC)](https://apps.ankiweb.net/)
 [![License](https://img.shields.io/github/license/Damon-GSY/anki-editorial-index)](./LICENSE)
 
 </div>
@@ -49,12 +49,12 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 | 设置 | 默认值 | 用途 |
 | --- | --- | --- |
 | `enabled` | `true` | 控制整个主题是否启用 |
-| `accent_color` | `#315FC4` | 设置按钮、选中状态和焦点的强调色 |
+| `accent_color` | `#2F5BBC` | 设置按钮、选中状态和焦点的强调色 |
 | `style_native_chrome` | `true` | 美化独立窗口、对话框、原生控件及其内嵌 Anki 页面 |
 | `style_reviewer` | `true` | 美化复习卡片外层和评分区 |
 | `animations` | `true` | 启用短促的出现与悬停动画 |
 
-强调色只接受六位十六进制颜色，例如 `#315FC4`。颜色格式写错时，插件会自动使用默认编辑蓝。
+强调色只接受六位十六进制颜色，例如 `#2F5BBC`。颜色格式写错时，插件会自动使用默认编辑蓝。
 
 默认配置、配色示例和恢复方法都放在 [配置说明](./docs/CONFIGURATION.md) 中。
 
@@ -86,6 +86,10 @@ Anki 更新有时会改变插件接口或页面结构。如果更新 Anki 后出
 python3 scripts/package_addon.py
 python3 scripts/validate_addon.py
 python3 scripts/smoke_test_addon.py
+python3 scripts/test_native_theme.py
+npm ci
+npx playwright install chromium
+npm run test:ui
 ```
 
 源码位于 [`addon`](./addon/)，生成的安装包位于 [`dist/Editorial-Index.ankiaddon`](./dist/Editorial-Index.ankiaddon)。参与方式见 [CONTRIBUTING.md](./CONTRIBUTING.md)，每个版本的变化见 [CHANGELOG.md](./CHANGELOG.md)。

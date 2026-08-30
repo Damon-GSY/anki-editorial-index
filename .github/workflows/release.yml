@@ -18,12 +18,24 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
       - name: Build and validate
         run: |
           python3 scripts/package_addon.py
           python3 scripts/validate_addon.py
           python3 scripts/smoke_test_addon.py
+          python3 scripts/test_native_theme.py
           node --check addon/web/editor-marker.js
+      - name: Install visual test runtime
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run UI regression matrix
+        run: npm run test:ui
       - name: Match tag to manifest version
         run: |
           manifest_version="$(python3 -c 'import json; print(json.load(open("addon/manifest.json"))["human_version"])')"

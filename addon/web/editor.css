@@ -1,129 +1,491 @@
 /* Editorial Index editor chrome. This file never modifies saved field HTML. */
 
+@font-face {
+  font-family: "Editorial Inter";
+  src: url("./fonts/inter-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Editorial Inter";
+  src: url("./fonts/inter-semibold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
 :root {
-  --editorial-accent: #315fc4;
+  --editorial-user-accent: #2f5bbc;
+  --editorial-accent: var(--editorial-user-accent);
   --editorial-paper: #f1ede4;
   --editorial-surface: #f8f5ed;
+  --editorial-field: #fcfaf4;
   --editorial-raised: #e7e0d4;
   --editorial-ink: #1d1d1b;
   --editorial-muted: #6f6a62;
+  --editorial-disabled: #8d867b;
   --editorial-rule: #d7d0c4;
   --editorial-rule-strong: #aaa193;
-  --editorial-shadow: 0 3px 10px rgba(54, 45, 32, 0.1), 0 1px 2px rgba(54, 45, 32, 0.1);
-
-  /* Remap Anki's chrome tokens, while leaving font and line-height alone. */
-  --canvas: var(--editorial-paper);
-  --canvas-elevated: var(--editorial-surface);
-  --canvas-inset: var(--editorial-raised);
-  --canvas-overlay: var(--editorial-surface);
-  --canvas-code: var(--editorial-surface);
-  --fg: var(--editorial-ink);
-  --fg-subtle: var(--editorial-muted);
-  --border: var(--editorial-rule);
-  --border-subtle: var(--editorial-rule);
-  --border-strong: var(--editorial-rule-strong);
-  --border-focus: var(--editorial-accent);
-  --button-bg: var(--editorial-surface);
-  --button-gradient-start: var(--editorial-surface);
-  --button-gradient-end: var(--editorial-raised);
-  --button-primary-bg: var(--editorial-accent);
-  --button-primary-gradient-start: var(--editorial-accent);
-  --button-primary-gradient-end: var(--editorial-accent);
-  --shadow: var(--editorial-rule-strong);
-  --shadow-subtle: var(--editorial-rule);
-  --shadow-focus: var(--editorial-accent);
-  --border-radius: 8px;
-  --border-radius-medium: 10px;
-  --border-radius-large: 12px;
+  --editorial-soft-accent: #e8eaf0;
+  --editorial-soft-accent: color-mix(in srgb, var(--editorial-accent) 11%, var(--editorial-surface));
+  --editorial-shadow: 0 8px 22px rgba(54, 45, 32, 0.07), 0 1px 3px rgba(54, 45, 32, 0.11);
+  --editorial-control-shadow: 0 2px 5px rgba(54, 45, 32, 0.09), 0 1px 1px rgba(54, 45, 32, 0.08);
+  --editorial-ui-font: "Editorial Inter", "PingFang SC", "Microsoft YaHei UI", system-ui, sans-serif;
 }
 
 :root.night-mode {
+  --editorial-accent: color-mix(in srgb, var(--editorial-user-accent) 65%, #fff);
   --editorial-paper: #1b1916;
   --editorial-surface: #221f1a;
+  --editorial-field: #27231e;
   --editorial-raised: #2b2721;
   --editorial-ink: #f1eadf;
   --editorial-muted: #b3ab9e;
+  --editorial-disabled: #8f877c;
   --editorial-rule: #514a40;
   --editorial-rule-strong: #71685b;
-  --editorial-shadow: 0 3px 10px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.32);
+  --editorial-soft-accent: #262b36;
+  --editorial-soft-accent: color-mix(in srgb, var(--editorial-accent) 15%, var(--editorial-surface));
+  --editorial-shadow: 0 9px 24px rgba(0, 0, 0, 0.24), 0 1px 3px rgba(0, 0, 0, 0.34);
+  --editorial-control-shadow: 0 2px 6px rgba(0, 0, 0, 0.22), 0 1px 1px rgba(0, 0, 0, 0.28);
 }
 
+html,
 body,
 .note-editor {
   background: var(--editorial-paper);
 }
 
-.editor-toolbar {
-  padding: 7px 8px 9px;
-  border-bottom-color: var(--editorial-rule-strong);
+.note-editor {
+  color: var(--editorial-ink);
+}
+
+/* The command shelf is one surface; controls group by editing function. */
+.note-editor .editor-toolbar {
+  padding: 8px 10px 7px;
+  border: 0;
   background: var(--editorial-paper);
+  color: var(--editorial-ink);
+  font-family: var(--editorial-ui-font);
 }
 
-.editor-toolbar button,
-.editor-toolbar .linkb,
-.tag-editor button {
+.note-editor .editor-toolbar .button-toolbar {
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 6px 7px 3px !important;
+  border: 1px solid var(--editorial-rule);
+  border-radius: 12px;
+  background: var(--editorial-surface);
+  box-shadow: var(--editorial-shadow);
+  align-items: flex-start;
+}
+
+.note-editor .editor-toolbar .button-group {
+  gap: 2px;
+  margin: 0 6px 3px 0 !important;
+  padding-right: 6px;
+  border-right: 1px solid var(--editorial-rule);
+}
+
+.note-editor .editor-toolbar #addons .button-group,
+.note-editor .editor-toolbar .button-group:last-child {
+  border-right-color: transparent;
+}
+
+.note-editor .editor-toolbar button,
+.note-editor .editor-toolbar .linkb,
+.note-editor .tag-editor button {
+  box-sizing: border-box;
+  min-width: 32px;
+  min-height: 32px;
+  height: 32px;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  color: var(--editorial-ink) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.note-editor .editor-toolbar .label-button {
+  min-width: 70px;
+  padding-inline: 10px;
   border-color: var(--editorial-rule) !important;
-  border-radius: 7px !important;
-  background: var(--editorial-surface) !important;
-  box-shadow: 0 1px 3px rgba(54, 45, 32, 0.1);
-  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+  background: var(--editorial-field) !important;
+  font-family: var(--editorial-ui-font);
+  font-weight: 600;
 }
 
-.editor-toolbar button:hover,
-.editor-toolbar .linkb:hover,
-.tag-editor button:hover {
+.note-editor .editor-toolbar #settings button,
+.note-editor .editor-toolbar .anki-addon-button:not(:disabled) {
+  border-color: var(--editorial-rule) !important;
+  background: var(--editorial-field) !important;
+}
+
+.note-editor .editor-toolbar button:hover:not(:disabled),
+.note-editor .editor-toolbar .linkb:hover:not([disabled]),
+.note-editor .tag-editor button:hover:not(:disabled) {
   border-color: var(--editorial-accent) !important;
-  background: color-mix(in srgb, var(--editorial-surface) 88%, var(--editorial-accent) 12%) !important;
-  transform: translateY(-1px);
+  color: var(--editorial-accent) !important;
+  background: var(--editorial-soft-accent) !important;
 }
 
-.editor-toolbar button:active,
-.editor-toolbar .linkb:active,
-.tag-editor button:active {
+.note-editor .editor-toolbar button:active:not(:disabled),
+.note-editor .editor-toolbar .linkb:active:not([disabled]),
+.note-editor .tag-editor button:active:not(:disabled) {
+  border-color: var(--editorial-accent) !important;
   background: var(--editorial-raised) !important;
-  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px rgba(54, 45, 32, 0.16) !important;
 }
 
-.editor-toolbar button.active,
-.editor-toolbar .linkb.active {
+.note-editor .editor-toolbar button.active,
+.note-editor .editor-toolbar .linkb.active {
   border-color: var(--editorial-accent) !important;
-  color: #fff !important;
+  color: var(--editorial-paper) !important;
   background: var(--editorial-accent) !important;
 }
 
-.fields {
-  gap: 10px;
-  margin-top: 8px;
-  padding: 0 6px 12px;
-}
-
-.field-container {
-  border-radius: 11px;
-  background: transparent;
-}
-
-.editor-field {
-  margin: 3px 0;
-  border-color: var(--editorial-rule);
-  border-radius: 10px;
-  background: var(--editorial-surface);
-  box-shadow: var(--editorial-shadow);
-}
-
-.editor-field:focus-within {
-  border-color: var(--editorial-accent);
-  outline: 2px solid var(--editorial-accent);
+.note-editor .editor-toolbar button:focus-visible,
+.note-editor .editor-toolbar .linkb:focus-visible,
+.note-editor .tag-editor button:focus-visible {
+  outline: 2px solid var(--editorial-accent) !important;
   outline-offset: 2px;
 }
 
-.rich-text-input,
-.plain-text-input {
+.note-editor .editor-toolbar button:disabled,
+.note-editor .editor-toolbar .linkb[disabled] {
+  border-color: transparent !important;
+  color: var(--editorial-disabled) !important;
+  background: transparent !important;
+  opacity: 1;
+}
+
+.note-editor .editor-toolbar select {
+  box-sizing: border-box;
+  min-width: min(264px, calc(100vw - 92px));
+  height: 32px;
+  padding: 0 30px 0 10px;
+  border: 1px solid var(--editorial-rule);
+  border-radius: 8px;
+  color: var(--editorial-ink);
+  background: var(--editorial-field);
+  font-family: var(--editorial-ui-font);
+  box-shadow: none;
+}
+
+.note-editor .editor-toolbar select:hover {
+  border-color: var(--editorial-rule-strong);
+}
+
+.note-editor .editor-toolbar select:focus-visible {
+  border-color: var(--editorial-accent);
+  outline: 2px solid var(--editorial-soft-accent);
+  outline-offset: 1px;
+}
+
+.note-editor .editor-toolbar .dropdown-content {
+  padding: 6px;
+  border: 1px solid var(--editorial-rule);
+  border-radius: 10px;
+  color: var(--editorial-ink);
+  background: var(--editorial-surface);
+  box-shadow: 0 8px 24px rgba(54, 45, 32, 0.14);
+}
+
+/* Fields read as one ledger entry: label rail, then user-owned content. */
+.note-editor .scroll-area-relative,
+.note-editor .scroll-area,
+.note-editor .scroll-content {
+  background: var(--editorial-paper);
+}
+
+.note-editor .fields {
+  gap: 12px;
+  margin-top: 10px;
+  padding: 0 10px 16px;
+}
+
+.note-editor .field-container {
+  overflow: hidden;
+  border: 1px solid var(--editorial-rule);
+  border-radius: 12px;
+  background: var(--editorial-surface);
+  box-shadow: var(--editorial-control-shadow);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.note-editor .field-container:focus-within {
+  border-color: var(--editorial-accent);
+  box-shadow: 0 0 0 2px var(--editorial-soft-accent), var(--editorial-shadow);
+}
+
+.note-editor .label-container {
   min-height: 44px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--editorial-rule);
+  color: var(--editorial-ink);
+  background: var(--editorial-raised);
+  background: color-mix(in srgb, var(--editorial-raised) 54%, var(--editorial-surface));
+  font-family: var(--editorial-ui-font);
+}
+
+.note-editor .label-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.note-editor .field-state {
+  gap: 3px;
+  align-items: center;
+  color: var(--editorial-muted);
+}
+
+.note-editor .label-container .badge {
+  box-sizing: border-box;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 4px;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  color: var(--editorial-muted) !important;
+  background: transparent !important;
+  opacity: 0.68;
+}
+
+.note-editor .label-container .badge:hover {
+  border-color: var(--editorial-rule) !important;
+  color: var(--editorial-accent) !important;
+  background: var(--editorial-soft-accent) !important;
+  opacity: 1;
+}
+
+.note-editor .label-container .badge:focus-visible {
+  outline: 2px solid var(--editorial-accent) !important;
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+.note-editor .editor-field {
+  min-height: 66px;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: var(--editorial-field);
+  box-shadow: none !important;
+}
+
+.note-editor .editor-field:focus-within {
+  outline: 0 !important;
+}
+
+/* Anki uses this class for duplicate-field validation. Keep that safety state
+   even though the normal inner focus outline is consolidated on the card. */
+.note-editor .editor-field.dupe,
+.note-editor .editor-field.dupe:focus-within {
+  box-shadow: inset 0 0 0 2px var(--accent-danger, #c94a3e) !important;
+}
+
+.note-editor .rich-text-input,
+.note-editor .plain-text-input {
+  min-height: 66px;
+  background: var(--editorial-field);
+}
+
+.note-editor .rich-text-input {
+  padding: 12px 14px;
+}
+
+.note-editor .rich-text-editable {
+  min-height: 40px;
+}
+
+.note-editor .plain-text-input .CodeMirror,
+.note-editor .plain-text-input .CodeMirror-gutters {
+  background: var(--editorial-field);
+}
+
+/* Tags are the editor's closing rail, not an unstyled line at the viewport edge. */
+.note-editor > .collapse-label {
+  box-sizing: border-box;
+  display: flex;
+  min-height: 44px;
+  margin: 0 10px 8px;
+  padding: 0 10px;
+  align-items: center;
+  border: 1px solid var(--editorial-rule);
+  border-radius: 10px;
+  color: var(--editorial-ink);
+  background: var(--editorial-surface);
+  box-shadow: var(--editorial-control-shadow);
+  font-family: var(--editorial-ui-font);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.note-editor > .collapse-label .collapse-badge {
+  margin-right: 4px;
+}
+
+/*
+ * Anki renders the collapsed Tags affordance as a real button nested inside a
+ * role=button row.  The outer row already has a 44px target, but the inner
+ * focusable control otherwise falls back to Anki's ~20px badge size.
+ */
+.note-editor > .collapse-label[role="button"] > .collapse-badge > button.badge {
+  box-sizing: border-box;
+  display: inline-grid;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 5px !important;
+  place-items: center;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  color: var(--editorial-muted) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.note-editor > .collapse-label[role="button"] > .collapse-badge > button.badge:hover {
+  border-color: var(--editorial-rule) !important;
+  color: var(--editorial-accent) !important;
+  background: var(--editorial-soft-accent) !important;
+}
+
+.note-editor > .collapse-label[role="button"] > .collapse-badge > button.badge:focus-visible {
+  outline: 2px solid var(--editorial-accent) !important;
+  outline-offset: 1px;
+}
+
+.note-editor .tag-editor {
+  box-sizing: border-box;
+  min-height: 42px;
+  margin: 0 10px 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--editorial-rule);
+  border-radius: 10px;
+  color: var(--editorial-ink);
+  background: var(--editorial-field);
+  box-shadow: var(--editorial-control-shadow);
+  font-family: var(--editorial-ui-font);
+}
+
+.note-editor .tag-editor:focus-within {
+  border-color: var(--editorial-accent);
+  outline: 0 !important;
+  box-shadow: 0 0 0 2px var(--editorial-soft-accent), var(--editorial-shadow);
+}
+
+.note-editor .tag {
+  box-sizing: border-box;
+  min-height: 28px;
+  margin: 2px;
+  padding: 2px 8px !important;
+  border: 1px solid var(--editorial-rule) !important;
+  border-radius: 8px;
+  color: var(--editorial-ink);
+  background: var(--editorial-surface);
+  box-shadow: 0 1px 2px rgba(54, 45, 32, 0.08);
+  font-family: var(--editorial-ui-font);
+}
+
+.note-editor .tag:hover,
+.note-editor .tag.selected {
+  border-color: var(--editorial-accent) !important;
+  color: var(--editorial-accent);
+  background: var(--editorial-soft-accent);
+}
+
+.note-editor .tag.selected {
+  box-shadow: 0 0 0 2px var(--editorial-soft-accent);
+}
+
+.note-editor .tag-input {
+  box-sizing: border-box;
+  min-height: 28px;
+  padding: 4px 6px;
+  color: var(--editorial-ink);
+  background: transparent;
+  font-family: var(--editorial-ui-font);
+}
+
+.note-editor .tag-add-button,
+.note-editor .tag-options-button,
+.note-editor .tags-selected-button {
+  box-sizing: border-box;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 5px !important;
+  border-radius: 8px !important;
+  color: var(--editorial-muted) !important;
+}
+
+.note-editor .tag-add-button:hover,
+.note-editor .tag-options-button:hover,
+.note-editor .tags-selected-button:hover {
+  color: var(--editorial-accent) !important;
+}
+
+.note-editor .popover {
+  border: 1px solid var(--editorial-rule);
+  border-radius: 10px;
+  color: var(--editorial-ink);
+  background: var(--editorial-surface);
+  box-shadow: 0 8px 24px rgba(54, 45, 32, 0.14);
+  font-family: var(--editorial-ui-font);
+}
+
+.note-editor .autocomplete-menu {
+  padding: 4px;
+  color: var(--editorial-ink);
   background: var(--editorial-surface);
 }
 
-.tag-editor {
-  margin: 12px 6px 6px;
+.note-editor .autocomplete-item {
+  min-height: 28px;
+  padding: 5px 8px;
+  border-color: transparent !important;
+  border-radius: 7px;
+  color: var(--editorial-ink);
+  background: transparent;
+}
+
+.note-editor .autocomplete-item:hover,
+.note-editor .autocomplete-item.selected {
+  border-color: transparent !important;
+  color: var(--editorial-ink);
+  background: var(--editorial-soft-accent);
+}
+
+@media (max-width: 560px) {
+  .note-editor .editor-toolbar {
+    padding-inline: 6px;
+  }
+
+  .note-editor .editor-toolbar .button-toolbar {
+    padding-inline: 5px !important;
+  }
+
+  .note-editor .editor-toolbar .button-group {
+    margin-right: 4px !important;
+    padding-right: 4px;
+  }
+
+  .note-editor .fields {
+    padding-inline: 6px;
+  }
+
+  .note-editor > .collapse-label,
+  .note-editor .tag-editor {
+    margin-inline: 6px;
+  }
 }
 
 :root[data-editorial-motion="off"] *,

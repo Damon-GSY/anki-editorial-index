@@ -2,6 +2,24 @@
 
 本项目使用语义化版本号。面向普通用户的重要变化会记录在这里。
 
+## 0.2.4 · 2026-08-30
+
+### 修复
+
+- 重做 Add 与 Browse 的内嵌编辑器层级：工具栏、字段卡、标签区、禁用态与聚焦态统一为暖纸界面，窄窗口不再溢出
+- 补齐 Add / Browse 标签折叠按钮的真实嵌套控件尺寸，并统一 Fields 与 Card Layout 的操作层级；卡片模板预览仍由用户自己的卡片 CSS 控制
+- 完成 Stats 筛选栏、Deck Options 的输入框/步进器/开关/Save 操作以及 Preferences 微控件的统一样式
+- 用共享的明暗色 token 同步 Qt `QPalette` 与 QSS，修正弹窗、菜单、选择器和禁用状态的混色问题；破坏性操作在禁用时也会回落为中性层级
+- 修正 Deck Browser 与 Overview 中 Review Heatmap 统计文字在暖纸背景上几乎不可见的对比度回归，不改动热力图单元格配色
+- 重新标定浅色模式的默认编辑蓝、学习中 / Hard 琥珀色和待复习 / Again 红色，使普通牌组行、选中行、Overview 和评分按钮的小字都达到 4.5:1 对比度；暗色模式自动使用可读的浅色强调色
+- 重新标定 Good / Easy 的交互色，保证评分按钮在 hover 深纸背景上仍达到 4.5:1；自定义强调色不会再影响危险操作按钮自身的前景色选择
+- 收紧 Reviewer 选择器与继承边界：主题不再改写用户卡片中的按钮、链接、圆角、字体、颜色、行高、换行、动画或 transition
+
+### 验证
+
+- 新增真实 Anki 弹窗回归矩阵，覆盖 Add、选择弹窗、Browse、Preferences、Stats、Deck Options 与 Overview
+- 将主界面、Editor 以及 Stats / Deck Options 的 Playwright 布局回归接入 Validate 与 Release CI，自动阻止尺寸、溢出、暗色和 CSS 优先级回归
+
 ## 0.2.3 · 2026-08-30
 
 ### 修复

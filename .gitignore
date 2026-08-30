@@ -3,4 +3,8 @@ __pycache__/
 .DS_Store
 .pytest_cache/
 .venv/
+node_modules/
+design-exploration/*-preview/captures/
+design-exploration/*-preview/report.json
+design-exploration/*-preview/REPORT.md
 dist/*-backup.zip

@@ -53,6 +53,71 @@ class FakeFontDatabase:
         return ["Inter"]
 
 
+class FakeStyle:
+    def unpolish(self, _widget) -> None:
+        pass
+
+    def polish(self, _widget) -> None:
+        pass
+
+
+class FakeRoleWidget:
+    def __init__(self) -> None:
+        self.properties = {}
+        self.object_name = ""
+
+    def property(self, name: str):
+        return self.properties.get(name)
+
+    def setProperty(self, name: str, value) -> None:
+        self.properties[name] = value
+
+    def style(self):
+        return FakeStyle()
+
+    def update(self) -> None:
+        pass
+
+    def setObjectName(self, name: str) -> None:
+        self.object_name = name
+
+
+class FakeLayout:
+    def __init__(self, widgets=None) -> None:
+        self.spacing = None
+        self.margins = None
+        self.widgets = list(widgets or [])
+
+    def setSpacing(self, value: int) -> None:
+        self.spacing = value
+
+    def setContentsMargins(self, *values: int) -> None:
+        self.margins = values
+
+    def count(self) -> int:
+        return len(self.widgets)
+
+    def itemAt(self, index: int):
+        if index < 0 or index >= len(self.widgets):
+            return None
+        return types.SimpleNamespace(widget=lambda: self.widgets[index])
+
+
+class FakeDialogButtonBox(FakeRoleWidget):
+    class ButtonRole:
+        AcceptRole = "accept"
+        YesRole = "yes"
+        ApplyRole = "apply"
+        DestructiveRole = "destructive"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._layout = FakeLayout()
+
+    def layout(self):
+        return self._layout
+
+
 class FakeApplication:
     _instance = None
 
@@ -86,7 +151,7 @@ class FakeAddonManager:
     def __init__(self) -> None:
         self.config = {
             "enabled": True,
-            "accent_color": "#315FC4",
+            "accent_color": "#2F5BBC",
             "style_native_chrome": True,
             "style_reviewer": True,
             "animations": True,
@@ -155,6 +220,10 @@ class FakeWebView:
 
 def install_fake_aqt() -> tuple[FakeMainWindow, types.SimpleNamespace]:
     hooks = types.SimpleNamespace(
+        add_cards_did_init=HookList(),
+        browser_will_show=HookList(),
+        card_layout_will_show=HookList(),
+        dialog_manager_did_open_dialog=HookList(),
         webview_will_set_content=HookList(),
         deck_browser_will_render_content=HookList(),
         webview_did_inject_style_into_page=HookList(),
@@ -171,6 +240,7 @@ def install_fake_aqt() -> tuple[FakeMainWindow, types.SimpleNamespace]:
     qt = types.ModuleType("aqt.qt")
     qt.QAction = FakeAction
     qt.QApplication = FakeApplication
+    qt.QDialogButtonBox = FakeDialogButtonBox
     qt.QFontDatabase = FakeFontDatabase
     qt.qconnect = lambda signal, callback: signal.connect(callback)
 
@@ -196,10 +266,12 @@ def main() -> None:
     spec.loader.exec_module(module)
 
     fake_mw.addonManager.config["accent_color"] = "#18A6B8"
-    assert module._get_config()["accent_color"] == "#315FC4"
+    assert module._get_config()["accent_color"] == "#2F5BBC"
+    fake_mw.addonManager.config["accent_color"] = "#315FC4"
+    assert module._get_config()["accent_color"] == "#2F5BBC"
     fake_mw.addonManager.config["accent_color"] = "#123456"
     assert module._get_config()["accent_color"] == "#123456"
-    fake_mw.addonManager.config["accent_color"] = "#315FC4"
+    fake_mw.addonManager.config["accent_color"] = "#2F5BBC"
 
     assert fake_mw.addonManager.export_pattern == (
         r"^web/(?:theme\.css|editor\.css|editor-marker\.js|fonts/.*\.(?:woff2|ttf|txt|md))$"
@@ -207,6 +279,65 @@ def main() -> None:
     assert len(hooks.webview_will_set_content) == 1
     assert len(hooks.deck_browser_will_render_content) == 1
     assert len(hooks.style_did_init) == 1
+    assert len(hooks.add_cards_did_init) == 1
+    assert len(hooks.browser_will_show) == 1
+    assert len(hooks.card_layout_will_show) == 1
+    assert len(hooks.dialog_manager_did_open_dialog) == 1
+    assert len(hooks.theme_did_change) == 1
+
+    add_form = types.SimpleNamespace(
+        buttonBox=FakeDialogButtonBox(),
+        fieldsArea=FakeRoleWidget(),
+        verticalLayout_3=FakeLayout(),
+        horizontalLayout=FakeLayout(),
+    )
+    notetype = types.SimpleNamespace(
+        button=FakeRoleWidget(), label=FakeRoleWidget(), setSpacing=lambda value: None
+    )
+    deck = types.SimpleNamespace(
+        deck=FakeRoleWidget(), deckLabel=FakeRoleWidget(), setSpacing=lambda value: None
+    )
+    add_cards = types.SimpleNamespace(
+        addButton=FakeRoleWidget(),
+        historyButton=FakeRoleWidget(),
+        helpButton=FakeRoleWidget(),
+        closeButton=FakeRoleWidget(),
+        form=add_form,
+        notetype_chooser=notetype,
+        deck_chooser=deck,
+    )
+    hooks.add_cards_did_init[0](add_cards)
+    assert add_cards.addButton.property("mistlineRole") == "primary"
+    assert add_cards.historyButton.property("mistlineRole") == "quiet"
+    assert add_cards.helpButton.property("mistlineRole") == "quiet"
+    assert add_cards.closeButton.property("mistlineRole") == "secondary"
+    assert add_form.buttonBox.property("mistlineRole") == "actionbar"
+    assert notetype.button.property("mistlineRole") == "chooser"
+    assert deck.deck.property("mistlineRole") == "chooser"
+    assert add_form.fieldsArea.property("mistlineRole") == "editorCanvas"
+    assert add_form.verticalLayout_3.margins == (16, 10, 16, 14)
+    assert add_form.verticalLayout_3.spacing == 12
+
+    browser = types.SimpleNamespace(
+        sidebar=FakeRoleWidget(),
+        form=types.SimpleNamespace(searchEdit=FakeRoleWidget(), tableView=FakeRoleWidget()),
+    )
+    browser.sidebar.searchBar = FakeRoleWidget()
+    browser.sidebar.toolbar = FakeRoleWidget()
+    hooks.browser_will_show[0](browser)
+    assert browser.sidebar.object_name == "mistlineSidebarTree"
+    assert browser.sidebar.searchBar.object_name == "mistlineSidebarSearch"
+    assert browser.sidebar.toolbar.object_name == "mistlineSidebarToolbar"
+
+    card_layout_buttons = [FakeRoleWidget() for _ in range(5)]
+    card_layout = types.SimpleNamespace(buttons=FakeLayout(card_layout_buttons))
+    hooks.card_layout_will_show[0](card_layout)
+    assert card_layout_buttons[0].property("mistlineRole") == "quiet"
+    assert card_layout_buttons[1].property("mistlineRole") == "secondary"
+    assert card_layout_buttons[2].property("mistlineRole") == "secondary"
+    assert card_layout_buttons[3].property("mistlineRole") == "primary"
+    assert card_layout_buttons[4].property("mistlineRole") == "secondary"
+    assert card_layout.buttons.spacing == 8
     assert len(hooks.main_window_did_init) == 1
 
     filtered_style = hooks.style_did_init[0]("anki-base-style")
@@ -239,7 +370,7 @@ def main() -> None:
     hooks.webview_will_set_content[0](editor_content, editor)
     assert editor_content.css == ["/_addons/mistline_ui/web/editor.css"]
     assert editor_content.js == [
-        "/_addons/mistline_ui/web/editor-marker.js?accent=315FC4&motion=on"
+        "/_addons/mistline_ui/web/editor-marker.js?accent=2F5BBC&motion=on"
     ]
     assert not editor_content.head
 

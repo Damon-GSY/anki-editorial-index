@@ -7,7 +7,7 @@ An editorial, warm-paper desktop theme for Anki
 [中文](./README.md) · [Download](https://github.com/Damon-GSY/anki-editorial-index/releases/latest) · [Configuration](./docs/CONFIGURATION.md) · [Troubleshooting](./docs/TROUBLESHOOTING.md)
 
 [![Latest release](https://img.shields.io/github/v/release/Damon-GSY/anki-editorial-index?label=release)](https://github.com/Damon-GSY/anki-editorial-index/releases/latest)
-[![Anki](https://img.shields.io/badge/Anki-25.09.4%2B-315FC4)](https://apps.ankiweb.net/)
+[![Anki](https://img.shields.io/badge/Anki-25.09.4%2B-2F5BBC)](https://apps.ankiweb.net/)
 [![License](https://img.shields.io/github/license/Damon-GSY/anki-editorial-index)](./LICENSE)
 
 </div>
@@ -47,7 +47,7 @@ Open Tools > Add-ons, select Editorial Index, and choose Config.
 | Key | Default | Purpose |
 | --- | --- | --- |
 | `enabled` | `true` | Enable the complete theme |
-| `accent_color` | `#315FC4` | Set the accent used for actions and focus states |
+| `accent_color` | `#2F5BBC` | Set the accent used for actions and focus states |
 | `style_native_chrome` | `true` | Style standalone windows, dialogs, native controls, and their Anki-owned embedded pages |
 | `style_reviewer` | `true` | Style the reviewer shell and rating controls |
 | `animations` | `true` | Enable brief entrance and hover motion |
@@ -72,6 +72,10 @@ Editorial Index makes no network requests, collects no telemetry, and does not r
 python3 scripts/package_addon.py
 python3 scripts/validate_addon.py
 python3 scripts/smoke_test_addon.py
+python3 scripts/test_native_theme.py
+npm ci
+npx playwright install chromium
+npm run test:ui
 ```
 
 Source code is licensed under the [MIT License](./LICENSE). Bundled Inter and Source Serif Pro fonts use the [SIL Open Font License 1.1](./addon/web/fonts/OFL.txt). Contributions are described in [CONTRIBUTING.md](./CONTRIBUTING.md).

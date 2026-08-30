@@ -17,7 +17,7 @@ Editorial Index is an independent, from-scratch UI theme for Anki Desktop.
 ## Independent design decisions
 
 - Product name and compatibility package: `Editorial Index` / `mistline_ui`.
-- Default accent: `#315FC4`; custom user accents remain supported.
+- Default accent: `#2F5BBC`; custom user accents remain supported.
 - Original semantic palette based on warm paper, deep ink, editorial blue, amber, vermilion and green.
 - Anki-native status semantics remain distinct for Again, Hard, Good and Easy.
 - The interface uses continuous ledgers and reading planes instead of glass or card grids.

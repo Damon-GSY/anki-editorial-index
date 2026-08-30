@@ -7,7 +7,7 @@
 ```json
 {
   "enabled": true,
-  "accent_color": "#315FC4",
+  "accent_color": "#2F5BBC",
   "style_native_chrome": true,
   "style_reviewer": true,
   "animations": true
@@ -21,7 +21,7 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 | 设置 | 类型 | 默认值 | 保存后的结果 |
 | --- | --- | --- | --- |
 | `enabled` | 布尔值 | `true` | 控制整个主题。关闭后恢复 Anki 原有界面 |
-| `accent_color` | 字符串 | `#315FC4` | 改变按钮、选中状态、链接和键盘焦点的颜色 |
+| `accent_color` | 字符串 | `#2F5BBC` | 改变按钮、选中状态、链接和键盘焦点的颜色 |
 | `style_native_chrome` | 布尔值 | `true` | 控制 Add、Browse、Stats、Deck Options、Preferences、原生对话框及其内嵌 Anki 页面 |
 | `style_reviewer` | 布尔值 | `true` | 控制复习卡片外层、显示答案按钮和评分按钮 |
 | `animations` | 布尔值 | `true` | 控制牌组进入、悬停和按下时的短动画 |
@@ -30,7 +30,7 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 
 | 名称 | 色值 | 感觉 |
 | --- | --- | --- |
-| 编辑蓝 | `#315FC4` | 默认，清晰而克制 |
+| 编辑蓝 | `#2F5BBC` | 默认，在暖纸和选中行上保持可读 |
 | 墨绿 | `#0F766E` | 安静，适合长时间阅读 |
 | 深紫 | `#6D4AFF` | 更鲜明，仍能保持对比度 |
 | 焦糖棕 | `#A14F16` | 更接近纸张和印刷品 |
@@ -44,7 +44,7 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 ```json
 {
   "enabled": true,
-  "accent_color": "#315FC4",
+  "accent_color": "#2F5BBC",
   "style_native_chrome": true,
   "style_reviewer": false,
   "animations": true
@@ -58,7 +58,7 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 ```json
 {
   "enabled": true,
-  "accent_color": "#315FC4",
+  "accent_color": "#2F5BBC",
   "style_native_chrome": false,
   "style_reviewer": true,
   "animations": true

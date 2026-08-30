@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en" data-editorial-motion="off">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editorial Index · Anki Editor regression fixture</title>
+  <link rel="icon" href="data:,">
+  <style>
+    /*
+     * Production-like baseline: these selectors intentionally carry the same
+     * extra Svelte class specificity as Anki 25.09's compiled editor styles.
+     * The add-on stylesheet is loaded afterwards and must win without relying
+     * on generated Svelte hashes.
+     */
+    :root {
+      --fg: #020202;
+      --fg-subtle: #737373;
+      --fg-disabled: #858585;
+      --canvas: #f5f5f5;
+      --canvas-elevated: #fff;
+      --border: #c4c4c4;
+      --border-subtle: #e4e4e4;
+      --border-focus: #3b82f6;
+      --shadow: #c4c4c4;
+      --button-bg: #fcfcfc;
+      --button-gradient-start: #fff;
+      --button-gradient-end: #fcfcfc;
+      --accent-danger: #ef4444;
+      --font-size: 15px;
+      --border-radius: 5px;
+      --buttons-size: 36px;
+      --buttons-wrap: wrap;
+      color-scheme: light;
+    }
+
+    :root.night-mode {
+      --fg: #fcfcfc;
+      --fg-subtle: #a3a3a3;
+      --fg-disabled: #737373;
+      --canvas: #2c2c2c;
+      --canvas-elevated: #363636;
+      --border: #202020;
+      --border-subtle: #3f3f3f;
+      --border-focus: #60a5fa;
+      --shadow: #141414;
+      --button-bg: #404040;
+      --button-gradient-start: #4a4a4a;
+      --button-gradient-end: #404040;
+      --accent-danger: #f87171;
+      color-scheme: dark;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    body {
+      color: var(--fg);
+      background: var(--canvas);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: var(--font-size);
+    }
+
+    button,
+    select,
+    input {
+      color: inherit;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      border-bottom-color: var(--shadow);
+      background: var(--button-bg);
+    }
+
+    .note-editor.svelte-898lu1 {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+
+    .editor-toolbar.svelte-d0vydo {
+      flex: 0 0 auto;
+      padding: 0 0 4px;
+      border-bottom: 1px solid var(--border);
+      background: var(--canvas);
+    }
+
+    .button-toolbar.svelte-1v9a56g {
+      display: flex;
+      flex-wrap: var(--buttons-wrap);
+      padding-left: .15rem;
+    }
+
+    .toolbar-section {
+      display: contents;
+    }
+
+    .button-group.svelte-11p3kpe {
+      display: flex;
+      flex-flow: row var(--buttons-wrap);
+      margin-right: .3rem;
+      margin-bottom: .15rem;
+    }
+
+    .label-button.svelte-control,
+    .icon-button.svelte-control,
+    .linkb.svelte-control {
+      min-width: var(--buttons-size);
+      height: var(--buttons-size);
+      padding: 0 8px;
+      border-radius: var(--border-radius);
+    }
+
+    .label-button.svelte-control {
+      min-width: 76px;
+    }
+
+    .icon-button.svelte-control {
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .editor-toolbar select.svelte-control {
+      width: 274px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--border-radius);
+      background: var(--canvas-elevated);
+    }
+
+    .scroll-area-relative.svelte-12n8jxj {
+      position: relative;
+      flex-grow: 1;
+      min-height: 0;
+    }
+
+    .scroll-area.svelte-12n8jxj {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: none;
+    }
+
+    .fields.svelte-1ak4cu5 {
+      position: relative;
+      display: grid;
+      flex-grow: 1;
+      grid-auto-rows: min-content;
+      grid-gap: 6px;
+      margin-top: 5px;
+      padding: 0 0 5px;
+    }
+
+    .field-container.svelte-1ntoitd {
+      overflow: hidden;
+      border-radius: var(--border-radius);
+      background: var(--canvas);
+    }
+
+    .label-container.svelte-1td87t5 {
+      position: sticky;
+      z-index: 2;
+      top: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 3px 1px;
+      border-radius: var(--border-radius) var(--border-radius) 0 0;
+      background: var(--canvas);
+    }
+
+    .field-state.svelte-qwwjd5 {
+      display: flex;
+      flex-grow: 1;
+      align-items: center;
+    }
+
+    .label-actions {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .badge.svelte-7bi64i {
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: 0;
+      color: var(--fg-subtle);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .editor-field.svelte-1ntoitd {
+      overflow: hidden;
+      margin: 1px;
+      border: 1px solid var(--border);
+      border-radius: var(--border-radius);
+      outline-offset: -1px;
+      background: var(--canvas-elevated);
+      box-shadow: 0 2px 1px -1px #14141433, 0 1px 1px #14141424, 0 1px 3px #1414141f;
+    }
+
+    .editor-field.svelte-1ntoitd:focus-within {
+      outline: 2px solid var(--border-focus);
+    }
+
+    .editor-field.dupe.svelte-1ntoitd,
+    .editor-field.dupe.svelte-1ntoitd:focus-within {
+      outline: 2px solid var(--accent-danger);
+    }
+
+    .rich-text-input.svelte-14pp365 {
+      height: 100%;
+      padding: 6px;
+      background: var(--canvas-elevated);
+    }
+
+    .rich-text-editable.svelte-14pp365 {
+      position: relative;
+      outline: none;
+    }
+
+    /* This stands in for card/field CSS and must remain user-owned. */
+    .user-content {
+      color: rgb(89, 42, 44);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 19px;
+      font-weight: 400;
+      line-height: 31px;
+      letter-spacing: .12px;
+    }
+
+    .user-content code {
+      color: rgb(30, 82, 71);
+      font-family: Menlo, Monaco, monospace;
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .night-mode .user-content {
+      color: rgb(226, 190, 174);
+    }
+
+    .night-mode .user-content code {
+      color: rgb(145, 207, 190);
+    }
+
+    .collapse-label.svelte-1glqwph {
+      cursor: pointer;
+    }
+
+    .tag-editor.svelte-1jt07lg {
+      display: flex;
+      flex-flow: row wrap;
+      flex-grow: 0;
+      align-items: flex-end;
+      margin: 1px 3px 3px 1px;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--border-radius);
+      background: var(--canvas-elevated);
+    }
+
+    .tag.svelte-17ae53l {
+      min-height: 27px;
+      padding: 2px 8px;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--border-radius);
+      background: var(--button-bg);
+    }
+
+    .tag-input.svelte-3n5c0h {
+      min-width: 88px;
+      flex: 1;
+      padding: 4px 6px;
+      border: 1px solid transparent !important;
+      outline: none;
+      background: transparent;
+    }
+
+    [data-tags="collapsed"] .tag-editor,
+    [data-tags="expanded"] > .collapse-label {
+      display: none !important;
+    }
+
+    .fixture-watermark {
+      position: fixed;
+      z-index: 20;
+      top: 8px;
+      right: 12px;
+      pointer-events: none;
+      color: var(--editorial-muted, var(--fg-subtle));
+      font-family: var(--editorial-ui-font, system-ui);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      opacity: .6;
+      text-transform: uppercase;
+    }
+  </style>
+  <link rel="stylesheet" href="../../addon/web/editor.css">
+</head>
+<body>
+  <main class="note-editor svelte-898lu1" data-tags="collapsed" aria-label="Anki note editor fixture">
+    <div class="editor-toolbar svelte-d0vydo">
+      <div class="button-toolbar svelte-1v9a56g" role="toolbar" aria-label="Editor commands">
+        <div id="notetype" class="toolbar-section">
+          <div class="button-group svelte-11p3kpe">
+            <button class="label-button svelte-control" type="button">Fields…</button>
+            <button class="label-button svelte-control" type="button">Cards…</button>
+          </div>
+        </div>
+        <div id="settings" class="toolbar-section">
+          <div class="button-group svelte-11p3kpe">
+            <button class="icon-button svelte-control" type="button" aria-label="Editor settings">⚙</button>
+          </div>
+        </div>
+        <div id="inlineFormatting" class="toolbar-section">
+          <div class="button-group svelte-11p3kpe">
+            <button class="icon-button svelte-control" type="button" aria-label="Bold">B</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Italic"><i>I</i></button>
+            <button class="icon-button svelte-control" type="button" aria-label="Underline"><u>U</u></button>
+            <button class="icon-button svelte-control" type="button" aria-label="Superscript">x²</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Subscript">x₂</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Text color">A</button>
+          </div>
+        </div>
+        <div id="blockFormatting" class="toolbar-section">
+          <div class="button-group svelte-11p3kpe">
+            <button class="icon-button svelte-control" type="button" aria-label="Highlight">▤</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Clear formatting">⌫</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Bulleted list">☷</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Numbered list">1.</button>
+          </div>
+        </div>
+        <div id="template" class="toolbar-section">
+          <div class="button-group svelte-11p3kpe">
+            <button class="icon-button svelte-control" type="button" aria-label="Attach">⌕</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Record (unavailable)" disabled>●</button>
+            <button class="icon-button svelte-control" type="button" aria-label="Math">fₓ</button>
+          </div>
+        </div>
+        <div id="addons" class="toolbar-section">
+          <div class="button-group svelte-11p3kpe">
+            <select class="svelte-control" aria-label="Code language">
+              <option>Python</option>
+              <option>JavaScript</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-area-relative svelte-12n8jxj">
+      <div class="scroll-area svelte-12n8jxj">
+        <section class="fields svelte-1ak4cu5" aria-label="Note fields">
+          <article class="field-container svelte-1ntoitd" data-field-card="front">
+            <header class="label-container svelte-1td87t5">
+              <span class="field-state svelte-qwwjd5"><span class="label-name">Front</span></span>
+              <span class="label-actions">
+                <button class="badge svelte-7bi64i" type="button" aria-label="Pin Front">⌖</button>
+                <button class="badge svelte-7bi64i" type="button" aria-label="Edit Front HTML">‹›</button>
+              </span>
+            </header>
+            <div class="editor-field svelte-1ntoitd" data-editor-field="front">
+              <div class="rich-text-input svelte-14pp365">
+                <div class="rich-text-editable svelte-14pp365 user-content" data-field="front" contenteditable="true" role="textbox" aria-label="Front field">What does <code>yield</code> do?</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="field-container svelte-1ntoitd" data-field-card="back">
+            <header class="label-container svelte-1td87t5">
+              <span class="field-state svelte-qwwjd5"><span class="label-name">Back</span></span>
+              <span class="label-actions">
+                <button class="badge svelte-7bi64i" type="button" aria-label="Pin Back">⌖</button>
+                <button class="badge svelte-7bi64i" type="button" aria-label="Edit Back HTML">‹›</button>
+              </span>
+            </header>
+            <div class="editor-field svelte-1ntoitd" data-editor-field="back">
+              <div class="rich-text-input svelte-14pp365">
+                <div class="rich-text-editable svelte-14pp365 user-content" data-field="back" contenteditable="true" role="textbox" aria-label="Back field">It pauses a generator and returns its next value without changing the card’s own typography.</div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </div>
+
+    <span class="collapse-label svelte-1glqwph" role="button" tabindex="0" title="Expand tags">
+      <span class="collapse-badge collapsed">
+        <button class="badge svelte-7bi64i" type="button" aria-label="Expand tags">›</button>
+      </span>
+      <span>Tags</span>
+    </span>
+
+    <section class="tag-editor svelte-1jt07lg" aria-label="Tags editor">
+      <button class="tag svelte-17ae53l selected" type="button">python</button>
+      <button class="tag svelte-17ae53l" type="button">generators</button>
+      <input class="tag-input svelte-3n5c0h" aria-label="Add a tag" placeholder="Add tag…">
+      <button type="button" aria-label="Tag options">…</button>
+    </section>
+  </main>
+
+  <span class="fixture-watermark" aria-hidden="true">Editor regression fixture</span>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const theme = params.get("theme") === "dark" ? "dark" : "light";
+    const tags = params.get("tags") === "expanded" ? "expanded" : "collapsed";
+    const duplicate = params.get("dupe") === "1";
+
+    document.documentElement.classList.toggle("night-mode", theme === "dark");
+    document.documentElement.dataset.theme = theme;
+    document.querySelector(".note-editor").dataset.tags = tags;
+    document.querySelector("[data-editor-field='front']").classList.toggle("dupe", duplicate);
+  </script>
+</body>
+</html>

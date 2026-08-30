@@ -12,9 +12,13 @@
 python3 scripts/package_addon.py
 python3 scripts/validate_addon.py
 python3 scripts/smoke_test_addon.py
+python3 scripts/test_native_theme.py
+npm ci
+npx playwright install chromium
+npm run test:ui
 ```
 
-三个命令都通过以后，`dist/Editorial-Index.ankiaddon` 才可以用于安装测试。
+上述打包、原生主题和三套 UI 回归（主界面、Editor、Stats / Deck Options）都通过以后，`dist/Editorial-Index.ankiaddon` 才可以用于安装测试。
 
 ## 改动边界
 
