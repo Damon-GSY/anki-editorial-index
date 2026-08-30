@@ -115,6 +115,17 @@ def _best_contrast_text(
     return ranked[0].upper()
 
 
+def _first_contrasting_color(
+    background: str, candidates: tuple[str, ...], target: float = 3.5
+) -> str:
+    """Prefer semantic colors, falling back to black/white only when needed."""
+
+    for candidate in candidates:
+        if contrast_ratio(candidate, background) >= target:
+            return candidate.upper()
+    return _best_contrast_text((background,), candidates)
+
+
 def _contrast_text(background: str) -> str:
     """Compatibility helper for callers that need a black/white decision."""
 
@@ -371,6 +382,23 @@ def resolve_color_tokens(config: Mapping[str, Any], system_dark: bool) -> ColorT
 
 
 def web_color_variables(tokens: ColorTokens) -> dict[str, str]:
+    heatmap_fills = {
+        "empty": tokens.raised,
+        "future-1": _mix_hex(tokens.faint, tokens.raised, 0.32),
+        "future-2": _mix_hex(tokens.faint, tokens.raised, 0.50),
+        "future-3": _mix_hex(tokens.faint, tokens.raised, 0.66),
+        "future-4": _mix_hex(tokens.faint, tokens.raised, 0.80),
+        "history-1": _mix_hex(tokens.accent, tokens.raised, 0.72),
+        "history-2": _mix_hex(tokens.accent, tokens.raised, 0.50),
+        "history-3": _mix_hex(tokens.accent, tokens.raised, 0.28),
+        "history-4": tokens.accent,
+    }
+    heatmap_outline_candidates = (
+        tokens.text,
+        tokens.on_accent,
+        "#000000",
+        "#FFFFFF",
+    )
     variables = {
         "--mist-user-accent": tokens.accent_raw,
         "--mist-accent-fill": tokens.accent,
@@ -416,6 +444,14 @@ def web_color_variables(tokens: ColorTokens) -> dict[str, str]:
         "--editorial-rule": tokens.border,
         "--editorial-rule-strong": tokens.border_strong,
     }
+    variables.update(
+        {
+            f"--mist-heatmap-today-{name}": _first_contrasting_color(
+                fill, heatmap_outline_candidates
+            )
+            for name, fill in heatmap_fills.items()
+        }
+    )
     if tokens.family == "catppuccin":
         variables["--mist-paper-field"] = "none"
         # The full official palette remains available through ``tokens.palette``.

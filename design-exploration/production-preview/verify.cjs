@@ -144,6 +144,33 @@ function check(condition, message) {
         probe.remove();
         return resolved;
       };
+      const resolveColor = (variable) => {
+        const probe = document.createElement("span");
+        probe.style.color = `var(${variable})`;
+        document.body.append(probe);
+        const resolved = getComputedStyle(probe).color;
+        probe.remove();
+        return resolved;
+      };
+      const channels = (value) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        context.fillStyle = value;
+        context.fillRect(0, 0, 1, 1);
+        return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+      };
+      const luminance = (value) => channels(value)
+        .map(channel => channel / 255)
+        .map(channel => channel <= .04045
+          ? channel / 12.92
+          : ((channel + .055) / 1.055) ** 2.4)
+        .reduce((total, channel, index) => total + channel * [.2126, .7152, .0722][index], 0);
+      const contrast = (first, second) => {
+        const values = [luminance(first), luminance(second)].sort((a, b) => b - a);
+        return (values[0] + .05) / (values[1] + .05);
+      };
       const expectedTokens = {
         empty: "--mist-heatmap-empty",
         "future-empty": "--mist-paper-light",
@@ -152,6 +179,7 @@ function check(condition, message) {
         "future-3": "--mist-heatmap-future-3",
         "future-4": "--mist-heatmap-future-4",
         "today-empty": "--mist-heatmap-empty",
+        "today-active": "--mist-heatmap-history-4",
         "history-1": "--mist-heatmap-history-1",
         "history-2": "--mist-heatmap-history-2",
         "history-3": "--mist-heatmap-history-3",
@@ -168,18 +196,49 @@ function check(condition, message) {
             expectedFill: resolveSvg("fill", expectedTokens[role]),
             stroke: style.stroke,
             strokeWidth: Number.parseFloat(style.strokeWidth),
+            strokeDasharray: style.strokeDasharray,
+            strokeContrast: contrast(style.stroke, style.fill),
           };
         });
       const current = cells.find(cell => cell.role === "today-empty");
+      const activeCurrent = cells.find(cell => cell.role === "today-active");
       const selected = cells.find(cell => cell.role === "selected");
       const control = getComputedStyle(document.querySelector(".rh-container .hm-btn"));
       const labelStyle = getComputedStyle(document.querySelector(".cal-heatmap-container .graph-label"));
+      const controls = [...document.querySelectorAll(".heatmap-controls .hm-btn")]
+        .map((node, index) => {
+          const image = node.querySelector(":scope > img");
+          const imageStyle = image ? getComputedStyle(image) : null;
+          const iconStyle = getComputedStyle(node, "::before");
+          const maskImage = iconStyle.maskImage || iconStyle.webkitMaskImage;
+          const background = getComputedStyle(node).backgroundColor;
+          const fixtureData = window.__fixtureHeatmapControlData?.[index];
+          return {
+            directImage: image?.parentElement === node,
+            imageOpacity: Number.parseFloat(imageStyle?.opacity || "1"),
+            src: image?.getAttribute("src") || "",
+            title: node.getAttribute("title") || "",
+            maskImage,
+            iconColor: iconStyle.backgroundColor,
+            expectedIconColor: resolveColor("--mist-muted"),
+            background,
+            contrast: contrast(iconStyle.backgroundColor, background),
+            sameNode: image === window.__fixtureHeatmapControlNodes?.[index],
+            sameData: image?.getAttribute("src") === fixtureData?.src
+              && (node.getAttribute("title") || "") === fixtureData?.title,
+          };
+        });
       return {
         cells,
         current,
+        activeCurrent,
         selected,
-        currentStroke: resolveSvg("stroke", "--mist-ink"),
-        selectedStroke: resolveSvg("stroke", "--mist-focus"),
+        controls,
+        sameCellNodes: cells.every((_, index) => document.querySelectorAll(".cal-heatmap-container rect[data-heatmap-role]")[index] === window.__fixtureHeatmapNodes?.[index]),
+        sameCellRoles: cells.every((cell, index) => cell.role === window.__fixtureHeatmapRoles?.[index]),
+        currentStroke: resolveSvg("stroke", "--mist-heatmap-today-empty"),
+        activeCurrentStroke: resolveSvg("stroke", "--mist-heatmap-today-history-4"),
+        selectedStroke: resolveSvg("stroke", "--mist-heatmap-today-history-4"),
         controlBackground: control.backgroundColor,
         oldControlBackground: control.backgroundColor === "rgb(230, 230, 230)",
         labelFill: labelStyle.fill,
@@ -187,12 +246,21 @@ function check(condition, message) {
         rootIdentity: root.dataset.mistlineEnabled,
       };
     });
-    check(calendar.cells.length === 12, `${label}: real SVG Review Heatmap fixture missing ${JSON.stringify(calendar.cells)}`);
+    check(calendar.cells.length === 13, `${label}: real SVG Review Heatmap fixture missing ${JSON.stringify(calendar.cells)}`);
     check(calendar.cells.every(cell => cell.fill === cell.expectedFill), `${label}: selected-palette heatmap ramp mismatch ${JSON.stringify(calendar.cells)}`);
     check(new Set(calendar.cells.filter(cell => cell.role.startsWith("future-") && cell.role !== "future-empty").map(cell => cell.fill)).size === 4, `${label}: forecast hierarchy collapsed ${JSON.stringify(calendar.cells)}`);
     check(new Set(calendar.cells.filter(cell => cell.role.startsWith("history-")).map(cell => cell.fill)).size === 4, `${label}: history hierarchy collapsed ${JSON.stringify(calendar.cells)}`);
     check(calendar.current?.stroke === calendar.currentStroke && calendar.current.strokeWidth >= 1, `${label}: today outline mismatch ${JSON.stringify(calendar.current)}`);
-    check(calendar.selected?.stroke === calendar.selectedStroke && calendar.selected.strokeWidth >= 2, `${label}: selected-day outline mismatch ${JSON.stringify(calendar.selected)}`);
+    check(calendar.activeCurrent?.stroke === calendar.activeCurrentStroke && calendar.activeCurrent.strokeWidth >= 1 && calendar.activeCurrent.strokeDasharray !== "none", `${label}: active-today outline mismatch ${JSON.stringify(calendar.activeCurrent)}`);
+    check(calendar.activeCurrent?.strokeContrast >= 3, `${label}: active-today outline contrast below 3:1 ${JSON.stringify(calendar.activeCurrent)}`);
+    check(calendar.selected?.stroke === calendar.selectedStroke && calendar.selected.strokeWidth >= 2 && calendar.selected.strokeDasharray === "none", `${label}: selected-day outline mismatch ${JSON.stringify(calendar.selected)}`);
+    check(calendar.selected?.strokeContrast >= 3, `${label}: selected-day outline contrast below 3:1 ${JSON.stringify(calendar.selected)}`);
+    check(calendar.sameCellNodes && calendar.sameCellRoles, `${label}: Review Heatmap cell DOM/data changed in place`);
+    check(calendar.controls.length === 5 && calendar.controls.every(item => item.directImage && item.src.startsWith("data:image/svg+xml,")), `${label}: real Review Heatmap img controls missing ${JSON.stringify(calendar.controls)}`);
+    check(calendar.controls.every(item => item.imageOpacity === 0 && item.maskImage !== "none"), `${label}: Review Heatmap img replacement mask missing ${JSON.stringify(calendar.controls)}`);
+    check(new Set(calendar.controls.map(item => item.maskImage)).size === 5, `${label}: Review Heatmap control masks are not icon-specific ${JSON.stringify(calendar.controls)}`);
+    check(calendar.controls.every(item => item.iconColor === item.expectedIconColor && item.contrast >= 3), `${label}: Review Heatmap icons do not follow theme at 3:1 ${JSON.stringify(calendar.controls)}`);
+    check(calendar.controls.every(item => item.sameNode && item.sameData), `${label}: Review Heatmap control DOM/src/title changed in place ${JSON.stringify(calendar.controls)}`);
     check(!calendar.oldControlBackground && calendar.controlBackground, `${label}: Review Heatmap controls kept third-party gray ${JSON.stringify(calendar)}`);
     check(calendar.labelFill === calendar.expectedLabelFill, `${label}: Review Heatmap label color mismatch ${JSON.stringify(calendar)}`);
     check(calendar.rootIdentity === "on", `${label}: theme ownership marker missing`);

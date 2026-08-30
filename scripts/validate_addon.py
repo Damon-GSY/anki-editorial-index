@@ -31,7 +31,7 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
     require(bool(manifest["name"]), "manifest name is required")
-    require(manifest["human_version"] == "0.3.1", "manifest version must be 0.3.1")
+    require(manifest["human_version"] == "0.3.2", "manifest version must be 0.3.2")
     require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
     require(isinstance(config["enabled"], bool), "enabled must be boolean")
     require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
@@ -190,6 +190,15 @@ def check_runtime_scope() -> None:
         "--mist-heatmap-history-2",
         "--mist-heatmap-history-3",
         "--mist-heatmap-history-4",
+        "--mist-heatmap-today-empty",
+        "--mist-heatmap-today-future-1",
+        "--mist-heatmap-today-future-2",
+        "--mist-heatmap-today-future-3",
+        "--mist-heatmap-today-future-4",
+        "--mist-heatmap-today-history-1",
+        "--mist-heatmap-today-history-2",
+        "--mist-heatmap-today-history-3",
+        "--mist-heatmap-today-history-4",
     ):
         require(variable in css, f"Review Heatmap palette token missing: {variable}")
     for level in range(1, 21):
@@ -199,6 +208,18 @@ def check_runtime_scope() -> None:
         and ".cal-heatmap-container" in css
         and "rect.highlight:not(.highlight-now)" in css,
         "scoped Review Heatmap SVG ownership guard missing",
+    )
+    require(
+        "--mist-heatmap-cell-outline" in css
+        and "stroke-dasharray: 2 1" in css
+        and ".heatmap-controls .hm-btn > img" in css,
+        "Review Heatmap active-today or real-image guard missing",
+    )
+    require(
+        "--mist-heatmap-icon-mask" in css
+        and "-webkit-mask: var(--mist-heatmap-icon-mask)" in css
+        and "background-color: currentColor" in css,
+        "Review Heatmap themed icon mask guard missing",
     )
     require("grid-template-columns: repeat(4, max-content max-content)" in css, "Review Heatmap desktop rhythm guard missing")
     require("grid-template-columns: max-content max-content" in css, "Review Heatmap compact rhythm guard missing")

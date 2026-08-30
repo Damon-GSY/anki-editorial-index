@@ -284,6 +284,23 @@ def test_every_selectable_combination(module) -> None:
             assert variables["--editorial-accent"] == tokens.accent_text
             assert variables["--editorial-focus"] == tokens.focus
             assert variables["--editorial-on-accent"] == tokens.on_accent
+            heatmap_fills = {
+                "empty": tokens.raised,
+                "future-1": module._mix_hex(tokens.faint, tokens.raised, 0.32),
+                "future-2": module._mix_hex(tokens.faint, tokens.raised, 0.50),
+                "future-3": module._mix_hex(tokens.faint, tokens.raised, 0.66),
+                "future-4": module._mix_hex(tokens.faint, tokens.raised, 0.80),
+                "history-1": module._mix_hex(tokens.accent, tokens.raised, 0.72),
+                "history-2": module._mix_hex(tokens.accent, tokens.raised, 0.50),
+                "history-3": module._mix_hex(tokens.accent, tokens.raised, 0.28),
+                "history-4": tokens.accent,
+            }
+            for heatmap_role, heatmap_fill in heatmap_fills.items():
+                outline = variables[f"--mist-heatmap-today-{heatmap_role}"]
+                assert module.contrast_ratio(outline, heatmap_fill) >= 3.5, (
+                    f"{label}: {heatmap_role} outline does not clear the "
+                    "non-text contrast guard"
+                )
             assert not any(name.startswith("--ctp-") for name in variables), (
                 f"{label}: generic Catppuccin variables would override card templates"
             )

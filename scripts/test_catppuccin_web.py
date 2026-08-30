@@ -462,16 +462,32 @@ def audit_deck(
               ];
               window.__heatmapRoleIdentity = window.__heatmapNodeIdentity
                 .map(node => node.dataset.heatmapRole);
+              window.__heatmapControlIdentity = [
+                ...document.querySelectorAll(
+                  ".heatmap-controls .hm-btn > img"
+                )
+              ];
+              window.__heatmapControlData = window.__heatmapControlIdentity
+                .map(node => ({
+                  src: node.getAttribute("src"),
+                  title: node.parentElement?.getAttribute("title") || "",
+                }));
             }
             """
         )
         heatmap_ramps: set[tuple[str, ...]] = set()
+        heatmap_icon_colors: set[tuple[str, ...]] = set()
         checks.require(
             page.locator(
                 ".cal-heatmap-container rect[data-heatmap-role]"
             ).count()
-            == 12,
+            == 13,
             "deck: real SVG Review Heatmap fixture missing",
+            "deck",
+        )
+        checks.require(
+            page.locator(".heatmap-controls .hm-btn > img").count() == 5,
+            "deck: real Review Heatmap img controls missing",
             "deck",
         )
 
@@ -508,6 +524,33 @@ def audit_deck(
                       probe.remove();
                       return resolved;
                     };
+                    const resolveColor = variable => {
+                      const probe = document.createElement("span");
+                      probe.style.color = `var(${variable})`;
+                      document.body.append(probe);
+                      const resolved = getComputedStyle(probe).color;
+                      probe.remove();
+                      return resolved;
+                    };
+                    const channels = value => {
+                      const canvas = document.createElement("canvas");
+                      canvas.width = 1;
+                      canvas.height = 1;
+                      const context = canvas.getContext("2d", { willReadFrequently: true });
+                      context.fillStyle = value;
+                      context.fillRect(0, 0, 1, 1);
+                      return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+                    };
+                    const luminance = value => channels(value)
+                      .map(channel => channel / 255)
+                      .map(channel => channel <= .04045
+                        ? channel / 12.92
+                        : ((channel + .055) / 1.055) ** 2.4)
+                      .reduce((total, channel, index) => total + channel * [.2126, .7152, .0722][index], 0);
+                    const contrast = (first, second) => {
+                      const values = [luminance(first), luminance(second)].sort((a, b) => b - a);
+                      return (values[0] + .05) / (values[1] + .05);
+                    };
                     const expectedTokens = {
                       empty: "--mist-heatmap-empty",
                       "future-empty": "--mist-paper-light",
@@ -516,6 +559,7 @@ def audit_deck(
                       "future-3": "--mist-heatmap-future-3",
                       "future-4": "--mist-heatmap-future-4",
                       "today-empty": "--mist-heatmap-empty",
+                      "today-active": "--mist-heatmap-history-4",
                       "history-1": "--mist-heatmap-history-1",
                       "history-2": "--mist-heatmap-history-2",
                       "history-3": "--mist-heatmap-history-3",
@@ -536,10 +580,37 @@ def audit_deck(
                         expected: resolveSvg("fill", expectedTokens[role]),
                         stroke: style.stroke,
                         strokeWidth: Number.parseFloat(style.strokeWidth),
+                        strokeDasharray: style.strokeDasharray,
+                        strokeContrast: contrast(style.stroke, style.fill),
+                      };
+                    });
+                    const controls = [
+                      ...document.querySelectorAll(".heatmap-controls .hm-btn")
+                    ].map((node, index) => {
+                      const image = node.querySelector(":scope > img");
+                      const imageStyle = image ? getComputedStyle(image) : null;
+                      const iconStyle = getComputedStyle(node, "::before");
+                      const maskImage = iconStyle.maskImage || iconStyle.webkitMaskImage;
+                      const background = getComputedStyle(node).backgroundColor;
+                      const original = window.__heatmapControlData[index];
+                      return {
+                        directImage: image?.parentElement === node,
+                        imageOpacity: Number.parseFloat(imageStyle?.opacity || "1"),
+                        src: image?.getAttribute("src") || "",
+                        title: node.getAttribute("title") || "",
+                        maskImage,
+                        iconColor: iconStyle.backgroundColor,
+                        expectedIconColor: resolveColor("--mist-muted"),
+                        background,
+                        contrast: contrast(iconStyle.backgroundColor, background),
+                        sameNode: image === window.__heatmapControlIdentity[index],
+                        sameData: image?.getAttribute("src") === original.src
+                          && (node.getAttribute("title") || "") === original.title,
                       };
                     });
                     return {
                       cells,
+                      controls,
                       sameNodes: nodes.every(
                         (node, index) => node === window.__heatmapNodeIdentity[index]
                       ),
@@ -547,8 +618,9 @@ def audit_deck(
                         .every(
                           (role, index) => role === window.__heatmapRoleIdentity[index]
                         ),
-                      currentStroke: resolveSvg("stroke", "--mist-ink"),
-                      selectedStroke: resolveSvg("stroke", "--mist-focus"),
+                      currentStroke: resolveSvg("stroke", "--mist-heatmap-today-empty"),
+                      activeCurrentStroke: resolveSvg("stroke", "--mist-heatmap-today-history-4"),
+                      selectedStroke: resolveSvg("stroke", "--mist-heatmap-today-history-4"),
                     };
                   })(),
                 })
@@ -584,6 +656,9 @@ def audit_deck(
             current = next(
                 cell for cell in heatmap_cells if cell["role"] == "today-empty"
             )
+            active_current = next(
+                cell for cell in heatmap_cells if cell["role"] == "today-active"
+            )
             selected = next(
                 cell for cell in heatmap_cells if cell["role"] == "selected"
             )
@@ -594,10 +669,62 @@ def audit_deck(
                 "heatmap-focus",
             )
             checks.require(
+                active_current["stroke"]
+                == semantic["heatmap"]["activeCurrentStroke"]
+                and active_current["strokeWidth"] >= 1
+                and active_current["strokeDasharray"] != "none"
+                and active_current["strokeContrast"] + 1e-9 >= 3.0,
+                f"{label}: Review Heatmap active-today outline mismatch {active_current}",
+                "heatmap-today-contrast",
+            )
+            checks.require(
                 selected["stroke"] == semantic["heatmap"]["selectedStroke"]
-                and selected["strokeWidth"] >= 2,
+                and selected["strokeWidth"] >= 2
+                and selected["strokeDasharray"] == "none"
+                and selected["strokeContrast"] + 1e-9 >= 3.0,
                 f"{label}: Review Heatmap selected outline mismatch {selected}",
                 "heatmap-focus",
+            )
+            heatmap_controls = semantic["heatmap"]["controls"]
+            checks.require(
+                len(heatmap_controls) == 5
+                and all(
+                    control["directImage"]
+                    and control["src"].startswith("data:image/svg+xml,")
+                    for control in heatmap_controls
+                ),
+                f"{label}: real Review Heatmap img control contract missing {heatmap_controls}",
+                "heatmap-icon-contract",
+            )
+            checks.require(
+                all(
+                    control["imageOpacity"] == 0
+                    and control["maskImage"] != "none"
+                    for control in heatmap_controls
+                )
+                and len({control["maskImage"] for control in heatmap_controls}) == 5,
+                f"{label}: Review Heatmap icon masks missing or collapsed {heatmap_controls}",
+                "heatmap-icon-contract",
+            )
+            checks.require(
+                all(
+                    control["iconColor"] == control["expectedIconColor"]
+                    and control["contrast"] + 1e-9 >= 3.0
+                    for control in heatmap_controls
+                ),
+                f"{label}: Review Heatmap icons do not follow theme at 3:1 {heatmap_controls}",
+                "heatmap-icon-theme",
+            )
+            checks.require(
+                all(
+                    control["sameNode"] and control["sameData"]
+                    for control in heatmap_controls
+                ),
+                f"{label}: Review Heatmap control DOM/src/title changed {heatmap_controls}",
+                "heatmap-in-place-switch",
+            )
+            heatmap_icon_colors.add(
+                tuple(control["iconColor"] for control in heatmap_controls)
             )
             heatmap_ramps.add(
                 tuple(
@@ -610,6 +737,11 @@ def audit_deck(
             len(heatmap_ramps) >= len(ACCENTS),
             f"deck: Review Heatmap did not switch with Catppuccin palettes ({len(heatmap_ramps)})",
             "heatmap-theme-linkage",
+        )
+        checks.require(
+            len(heatmap_icon_colors) >= len(FLAVORS),
+            f"deck: Review Heatmap icons did not follow all Catppuccin flavors ({len(heatmap_icon_colors)})",
+            "heatmap-icon-theme",
         )
         checks.require(not errors, f"deck browser errors: {errors}", "browser-errors")
     finally:

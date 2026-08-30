@@ -112,6 +112,16 @@
     <tr class="deck"><td class="decktd" colspan="5">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="collapse"></span><a class="deck" href="#">Typography</a></td><td align="end"><span class="new-count">21</span></td><td align="end"><span class="learn-count">8</span></td><td align="end"><span class="review-count">29</span></td><td class="opts" align="center"><span class="gears">⚙</span></td></tr>`;
 
   const heatmapView = context === "deck-browser" ? "rh-view-deckbrowser" : "rh-view-overview";
+  const heatmapIconUrl = (body) => `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">${body}</svg>`
+  )}`;
+  const heatmapIcons = {
+    previous: heatmapIconUrl('<path d="M7 1.25 2.75 5 7 8.75" fill="none" stroke="#9e9e9e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'),
+    today: heatmapIconUrl('<circle cx="5" cy="5" r="3.6" fill="none" stroke="#9e9e9e" stroke-width="1.8"/>'),
+    next: heatmapIconUrl('<path d="m3 1.25 4.25 3.75L3 8.75" fill="none" stroke="#9e9e9e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'),
+    options: heatmapIconUrl('<g fill="none" stroke="#9e9e9e" stroke-width="1.25" stroke-linecap="round"><path d="M2 1.5v7M5 1.5v7M8 1.5v7"/><path d="M.8 3h2.4M3.8 6.6h2.4M6.8 4.3h2.4"/></g>'),
+    support: heatmapIconUrl('<path d="M5 8.7.95 5A2.35 2.35 0 0 1 4.3 1.7L5 2.4l.7-.7A2.35 2.35 0 0 1 9.05 5Z" fill="#9e9e9e"/>'),
+  };
   const heatmapSamples = [
     ["graph-rect", "empty"],
     ["graph-rect future", "future-empty"],
@@ -120,6 +130,7 @@
     ["q6 future", "future-3"],
     ["q9 future", "future-4"],
     ["q10 q0 highlight-now now", "today-empty"],
+    ["q20 highlight-now now", "today-active"],
     ["q11", "history-1"],
     ["q13", "history-2"],
     ["q16", "history-3"],
@@ -131,7 +142,7 @@
     const y = 2;
     return `<g transform="translate(${x}, ${y})"><rect width="13" height="13" rx="1" ry="1" class="${className}" data-heatmap-role="${role}"></rect></g>`;
   }).join("");
-  const heatmapStats = `<div class="rh-container rh-theme-lime ${heatmapView}"><div class="heatmap" aria-label="Review calendar"><div class="heatmap-controls"><div class="alignleft"><span>&nbsp;</span></div><div class="aligncenter"><div class="hm-btn" role="button" tabindex="0" aria-label="Previous year">‹</div><div class="hm-btn" role="button" tabindex="0" aria-label="Today">○</div><div class="hm-btn" role="button" tabindex="0" aria-label="Next year">›</div></div><div class="alignright"><div class="hm-btn opts-btn" role="button" tabindex="0" aria-label="Heatmap options">☷</div><div class="hm-btn opts-btn" role="button" tabindex="0" aria-label="Support Review Heatmap">♥</div></div><div style="clear: both">&nbsp;</div></div><div id="cal-heatmap"><svg class="cal-heatmap-container" width="100%" height="50" viewBox="0 0 194 50" role="img" aria-label="Review activity"><svg class="graph"><text class="graph-label" x="97" y="42" text-anchor="middle">2026</text><svg class="graph-domain"><svg class="graph-subdomain-group">${heatmapRects}</svg></svg></svg></svg><div class="ch-tooltip">Review activity</div></div></div><div class="streak"><span class="streak-info">Daily average:</span> <span class="sstats rh-col15">55 cards</span><span class="streak-info">Days learned:</span> <span class="sstats rh-col16">83%</span><span class="streak-info">Longest streak:</span> <span class="sstats rh-col20">293 days</span><span class="streak-info">Current streak:</span> <span class="sstats rh-col0">0 day</span></div></div>`;
+  const heatmapStats = `<div class="rh-container rh-theme-lime ${heatmapView}"><div class="heatmap" aria-label="Review calendar"><div class="heatmap-controls"><div class="alignleft"><span>&nbsp;</span></div><div class="aligncenter"><div title="Go back (Shift-click for first year)" class="hm-btn" role="button" tabindex="0" aria-label="Previous year"><img height="10" alt="" src="${heatmapIcons.previous}"></div><div title="Today" class="hm-btn" role="button" tabindex="0" aria-label="Today"><img height="10" alt="" src="${heatmapIcons.today}"></div><div title="Go forward (Shift-click for last year)" class="hm-btn" role="button" tabindex="0" aria-label="Next year"><img height="10" alt="" src="${heatmapIcons.next}"></div></div><div class="alignright"><div title="Options" class="hm-btn opts-btn" role="button" tabindex="0" aria-label="Heatmap options"><img alt="" src="${heatmapIcons.options}"></div><div title="Support this add-on" class="hm-btn opts-btn" role="button" tabindex="0" aria-label="Support Review Heatmap"><img alt="" src="${heatmapIcons.support}"></div></div><div style="clear: both">&nbsp;</div></div><div id="cal-heatmap"><svg class="cal-heatmap-container" width="100%" height="50" viewBox="0 0 210 50" role="img" aria-label="Review activity"><svg class="graph"><text class="graph-label" x="105" y="42" text-anchor="middle">2026</text><svg class="graph-domain"><svg class="graph-subdomain-group">${heatmapRects}</svg></svg></svg></svg><div class="ch-tooltip">Review activity</div></div></div><div class="streak"><span class="streak-info">Daily average:</span> <span class="sstats rh-col15">55 cards</span><span class="streak-info">Days learned:</span> <span class="sstats rh-col16">83%</span><span class="streak-info">Longest streak:</span> <span class="sstats rh-col20">293 days</span><span class="streak-info">Current streak:</span> <span class="sstats rh-col0">0 day</span></div></div>`;
   const deck = `<center><section class="mistline-deck-heading" data-mistline-owned="deck-heading"><h1>Deck Home</h1><p>Memory index</p></section><table cellspacing="0" cellpadding="3"><thead><tr><th colspan="5" align="start">Deck</th><th class="count">New</th><th class="count">Learn</th><th class="count">Due</th><th class="optscol"></th></tr></thead><tbody>${deckRows}</tbody></table><div id="studiedToday">126 cards studied today · 24 minutes</div>${heatmapStats}</center>`;
   const toolbar = `<div class="header"><div class="left-tray"></div><nav class="toolbar"><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.decks}" title="${toolbarLabels.decks}" id="decks" href="#">${toolbarLabels.decks}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.add}" title="${toolbarLabels.add}" id="add" href="#">${toolbarLabels.add}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.browse}" title="${toolbarLabels.browse}" id="browse" href="#">${toolbarLabels.browse}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.stats}" title="${toolbarLabels.stats}" id="stats" href="#">${toolbarLabels.stats}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.sync}" title="${toolbarLabels.sync}" id="sync" href="#">${toolbarLabels.sync}<img id="sync-spinner" class="${syncActive ? "spin" : ""}" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23808080' d='M18 13.5h10.75V2.67zM24.9 19.78a8.9 8.9 0 0 1-8.32 5.49 9.13 9.13 0 1 1 6.51-15.6l2.6-3.05a13 13 0 1 0 2.74 13.16z'/%3E%3C/svg%3E"></a></nav><div class="right-tray"></div></div>`;
   const overview = `<center><h3>Anatomy</h3><div class="descfont descmid description"><p><span class="new-count">28 new</span> · <span class="learn-count">14 learning</span> · <span class="review-count">57 due</span></p><p>126 cards studied today · 24 minutes</p></div><table width="400" cellpadding="5"><tr><td align="center" valign="top"><table cellspacing="5"><tr><td>New:</td><td><b><span class="new-count">28</span></b></td></tr><tr><td>Learning:</td><td><b><span class="learn-count">14</span></b></td></tr><tr><td>To Review:</td><td><b><span class="review-count">57</span></b></td></tr></table></td><td align="center"><button id="study" autofocus>Study Now</button></td></tr></table>${heatmapStats}</center>`;
@@ -160,6 +171,24 @@
   const fixtureState = [answer ? "answer" : "question", context === "standard-bottom-bar" ? standardVariant : "", context === "reviewer-bottom-bar" && answer ? `${ratingCount} ratings` : "", context === "top-toolbar" && syncActive ? "syncing" : ""].filter(Boolean).join(" · ");
   document.body.insertAdjacentHTML("beforeend", `<span class="fixture-label">${context} · ${fixtureState}</span>`);
 
+  if (context === "deck-browser" || context === "overview") {
+    window.__fixtureHeatmapNodes = [
+      ...document.querySelectorAll(".cal-heatmap-container rect[data-heatmap-role]"),
+    ];
+    window.__fixtureHeatmapRoles = window.__fixtureHeatmapNodes.map(
+      (node) => node.dataset.heatmapRole
+    );
+    window.__fixtureHeatmapControlNodes = [
+      ...document.querySelectorAll(".heatmap-controls .hm-btn > img"),
+    ];
+    window.__fixtureHeatmapControlData = window.__fixtureHeatmapControlNodes.map(
+      (node) => ({
+        src: node.getAttribute("src"),
+        title: node.parentElement?.getAttribute("title") || "",
+      })
+    );
+  }
+
   // Review Heatmap injects its stylesheet after Anki and add-on styles. Keep
   // this fixture late and deliberately forceful so the scoped theme bridge is
   // tested against the real SVG/q-class contract and real stylesheet order.
@@ -181,11 +210,13 @@
       .cal-heatmap-container rect.highlight { stroke: #e9002e; stroke-width: 1px; }
       ${thirdPartyCells}
       .hm-btn { display: inline-block; padding: 2px 8px; margin-left: 2px; color: #808080; background: #e6e6e6; border-radius: 3px; }
+      .hm-btn > img { display: inline-block; }
       .alignleft, .aligncenter, .alignright { float: left; width: 33.333%; }
       .alignleft { text-align: left; }
       .aligncenter { text-align: center; }
       .alignright { text-align: right; }
       .opts-btn { padding: 2px 4px; }
+      .opts-btn > img { position: relative; top: calc(50% - 12px); width: 10px; height: 10px; }
       .ch-tooltip { display: none; color: #f0f0f0; background: #222; }
       .sstats { color: #e6e6e6 !important; font-weight: bold; }
       .rh-theme-lime .rh-col15 { color: #74ba58 !important; }
