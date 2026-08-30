@@ -351,15 +351,6 @@ def test_every_selectable_combination(module) -> None:
             assert variables["--mist-crust"] == tokens.crust
             assert variables["--mist-label"] == tokens.label
             assert variables["--mist-selection"] == tokens.selection
-            assert variables["--mist-new-soft"] == module._mix_hex(
-                tokens.new, tokens.surface, 0.88
-            )
-            assert variables["--mist-learn-soft"] == module._mix_hex(
-                tokens.learn, tokens.surface, 0.88
-            )
-            assert variables["--mist-due-soft"] == module._mix_hex(
-                tokens.due, tokens.surface, 0.88
-            )
             assert variables["--mist-zero"] == module._ensure_contrast(
                 tokens.faint, surfaces, 4.5, tokens.text
             )

@@ -31,7 +31,7 @@ def check_json() -> None:
     config = json.loads((ADDON / "config.json").read_text(encoding="utf-8"))
     require(manifest["package"] == "mistline_ui", "unexpected add-on package name")
     require(bool(manifest["name"]), "manifest name is required")
-    require(manifest["human_version"] == "0.3.5", "manifest version must be 0.3.5")
+    require(manifest["human_version"] == "0.3.6", "manifest version must be 0.3.6")
     require(manifest["homepage"] == "https://github.com/Damon-GSY/anki-editorial-index", "manifest homepage mismatch")
     require(isinstance(config["enabled"], bool), "enabled must be boolean")
     require(bool(re.fullmatch(r"#[0-9A-Fa-f]{6}", config["accent_color"])), "accent_color must be a six-digit hex color")
@@ -194,6 +194,12 @@ def check_runtime_scope() -> None:
         "accent_grid.addWidget(button, index // 7, index % 7)" in source
         and "preview_grid.addWidget(chip, index // 4, index % 4)" in source,
         "palette studio must show all accents and balanced semantic roles",
+    )
+    require(
+        'background: currentColor;' in css
+        and 'width: 0.42em;' in css
+        and '--mist-new-soft' not in css,
+        "deck headers must use compact semantic markers, not color blocks",
     )
     require(".spin-box" in css, "Deck Options spinbox component style missing")
     require(".form-switch" in css, "Deck Options switch component style missing")

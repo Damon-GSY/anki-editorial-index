@@ -25,7 +25,7 @@ The master reaches the benchmark's hierarchy and close-reading density without c
 4. Mapped eight fixed semantic roles into a balanced 4 × 2 verification grid.
 5. Used each semantic color for its own text and border rather than as decoration.
 6. Preserved an Anki-native dialog, focus behavior, and compact quick menu alongside the studio.
-7. Added low-saturation New / Learn / Due header surfaces to the operational deck browser instead of placing all accents there.
+7. Kept the operational deck header neutral and used compact New / Learn / Due dots plus text color instead of large semantic blocks.
 
 ## Required views
 
