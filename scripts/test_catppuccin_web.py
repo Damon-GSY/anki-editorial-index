@@ -1132,7 +1132,7 @@ def audit_reviewer(
     page = browser.new_page(viewport={"width": 1000, "height": 720})
     errors = install_error_capture(page, "reviewer")
     try:
-        page.goto(f"{base_url}/{PRODUCTION_FIXTURE}?context=reviewer&state=answer")
+        page.goto(f"{base_url}/{PRODUCTION_FIXTURE}?context=reviewer&state=question")
         page.wait_for_load_state("networkidle")
         page.locator(".user-card-button").focus()
         baseline = page.locator(".user-card-button").evaluate(
@@ -1162,6 +1162,74 @@ def audit_reviewer(
         for payload in payloads:
             label = f"reviewer/{payload['label']}"
             audit_core(page, payload, "reviewer", checks)
+            page.wait_for_timeout(220)
+            typed_answer = page.locator("#typeans")
+            resting_input = typed_answer.evaluate(
+                """
+                node => {
+                  const parse = value => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+                  const luminance = value => parse(value)
+                    .map(channel => channel / 255)
+                    .map(channel => channel <= .04045
+                      ? channel / 12.92
+                      : ((channel + .055) / 1.055) ** 2.4)
+                    .reduce((total, channel, index) => total + channel * [.2126, .7152, .0722][index], 0);
+                  const style = getComputedStyle(node);
+                  const foreground = luminance(style.color);
+                  const background = luminance(style.backgroundColor);
+                  return {
+                    background: style.backgroundColor,
+                    color: style.color,
+                    border: style.borderTopColor,
+                    contrast: (Math.max(foreground, background) + .05)
+                      / (Math.min(foreground, background) + .05),
+                  };
+                }
+                """
+            )
+            checks.require(
+                resting_input["background"]
+                == rgb_from_hex(payload["variables"]["--mist-paper"])
+                and resting_input["background"]
+                != rgb_from_hex(payload["variables"]["--mist-field"])
+                and resting_input["border"]
+                == rgb_from_hex(payload["variables"]["--mist-rule"])
+                and resting_input["color"]
+                == rgb_from_hex(payload["variables"]["--mist-ink"])
+                and resting_input["contrast"] >= 4.5,
+                f"{label}: typed-answer resting colors mismatch {resting_input}",
+                "reviewer-typed-answer",
+            )
+            typed_answer.focus()
+            page.wait_for_timeout(220)
+            focused_input = typed_answer.evaluate(
+                """
+                node => {
+                  const style = getComputedStyle(node);
+                  return {
+                    active: document.activeElement === node,
+                    background: style.backgroundColor,
+                    border: style.borderTopColor,
+                    outlineColor: style.outlineColor,
+                    outlineStyle: style.outlineStyle,
+                    outlineWidth: style.outlineWidth,
+                  };
+                }
+                """
+            )
+            checks.require(
+                focused_input["active"]
+                and focused_input["background"] != resting_input["background"]
+                and focused_input["border"]
+                == rgb_from_hex(payload["variables"]["--mist-focus"])
+                and focused_input["outlineColor"]
+                == rgb_from_hex(payload["variables"]["--mist-focus"])
+                and focused_input["outlineStyle"] == "solid"
+                and focused_input["outlineWidth"] == "2px",
+                f"{label}: typed-answer focus colors mismatch {focused_input}",
+                "reviewer-typed-answer",
+            )
+            page.locator(".user-card-button").focus()
             inheritance = page.evaluate(REVIEWER_INHERITANCE_AUDIT_JS)
             checks.require(
                 all(

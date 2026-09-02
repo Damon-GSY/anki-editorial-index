@@ -1586,15 +1586,24 @@
 :root[data-mistline-context="reviewer"] #typeans {
   min-height: 40px;
   padding: 8px 10px;
-  border: 1px solid var(--mist-rule-strong);
+  border: 1px solid var(--mist-rule);
   border-radius: 2px;
   color: var(--mist-ink);
-  background: var(--mist-field);
+  background: var(--mist-paper);
   font-family: var(--mist-sans);
+  transition:
+    background-color var(--mist-transition),
+    border-color var(--mist-transition),
+    box-shadow var(--mist-transition);
+}
+
+:root[data-mistline-context="reviewer"] #typeans:hover {
+  border-color: var(--mist-rule-strong);
 }
 
 :root[data-mistline-context="reviewer"] #typeans:focus {
   border-color: var(--mist-focus);
+  background: color-mix(in srgb, var(--mist-paper) 94%, var(--mist-focus) 6%);
   outline: 2px solid var(--mist-focus);
   outline-offset: 2px;
   box-shadow: none;

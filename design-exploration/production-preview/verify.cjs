@@ -444,8 +444,59 @@ function check(condition, message) {
     }
     if (context === "reviewer") {
       await auditReviewerInheritanceBoundary(filename);
+      await page.waitForTimeout(220);
       const background = await page.locator("#qa").evaluate(node => getComputedStyle(node).backgroundColor);
       check(background === "rgba(0, 0, 0, 0)", `#qa became an opaque card: ${background}`);
+      if (state === "question") {
+        const typedAnswer = page.locator("#typeans");
+        check(await typedAnswer.count() === 1, "reviewer typed-answer field missing");
+        const resting = await typedAnswer.evaluate(node => {
+          const style = getComputedStyle(node);
+          const root = getComputedStyle(document.documentElement);
+          return {
+            background: style.backgroundColor,
+            expectedBackground: root.getPropertyValue("--mist-paper").trim(),
+            border: style.borderTopColor,
+            expectedBorder: root.getPropertyValue("--mist-rule").trim(),
+            fontFamily: style.fontFamily,
+          };
+        });
+        check(
+          resting.background === "rgb(241, 237, 228)"
+            && resting.expectedBackground === "#f1ede4"
+            && resting.border === "rgb(215, 208, 196)"
+            && resting.expectedBorder === "#d7d0c4",
+          `typed-answer resting colors mismatch: ${JSON.stringify(resting)}`,
+        );
+        check(resting.fontFamily.includes("Mist Inter"), `typed-answer font mismatch: ${resting.fontFamily}`);
+        await auditTextContrast("#typeans", "typed-answer default");
+        await typedAnswer.focus();
+        await page.waitForTimeout(220);
+        const focused = await typedAnswer.evaluate(node => {
+          const style = getComputedStyle(node);
+          const root = getComputedStyle(document.documentElement);
+          return {
+            active: document.activeElement === node,
+            background: style.backgroundColor,
+            border: style.borderTopColor,
+            outlineColor: style.outlineColor,
+            outlineStyle: style.outlineStyle,
+            outlineWidth: style.outlineWidth,
+            focus: root.getPropertyValue("--mist-focus").trim(),
+          };
+        });
+        check(
+          focused.active
+            && focused.background !== resting.background
+            && focused.border === "rgb(47, 91, 188)"
+            && focused.outlineColor === "rgb(47, 91, 188)"
+            && focused.outlineStyle === "solid"
+            && focused.outlineWidth === "2px"
+            && focused.focus === "#2f5bbc",
+          `typed-answer focus colors mismatch: ${JSON.stringify(focused)}`,
+        );
+        await auditTextContrast("#typeans", "typed-answer focus");
+      }
       const inherited = await page.locator(".user-card-inheritance-probe").evaluate(node => {
         const style = getComputedStyle(node);
         return {
