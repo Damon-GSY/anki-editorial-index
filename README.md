@@ -46,7 +46,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 4. 点击「从文件安装」，选择刚才下载的文件。
 5. 重新启动 Anki。
 
-安装成功后，「工具」菜单中会出现「Editorial Index 主题」、「Editorial Index 配色…」和「Editorial Index 快速配色」。前者是完整可视化工作台，后者适合直接切换。
+安装成功后，「工具」菜单中会出现「Editorial Index 主题」、「Editorial Index 配色…」和「Editorial Index 快速配色」。「配色…」打开完整可视化工作台，「快速配色」适合直接切换。
 
 完整步骤包括升级、卸载和校验下载文件，见 [安装指南](./docs/INSTALLATION.md)。
 
