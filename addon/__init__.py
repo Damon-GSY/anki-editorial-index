@@ -31,10 +31,13 @@ from .color_themes import (
     web_color_variables,
 )
 from .native_theme import apply_native_theme, extend_native_style
+from . import cabinet, cabinet_display
 
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "enabled": True,
+    "layout": "editorial",
+    "cabinet_display": {},
     "accent_color": "#2F5BBC",
     "color_theme": "editorial",
     "catppuccin_flavor": "auto",
@@ -102,6 +105,8 @@ _palette_group: QActionGroup | None = None
 _accent_group: QActionGroup | None = None
 _palette_actions: dict[str, QAction] = {}
 _accent_actions: dict[str, QAction] = {}
+_layout_actions: dict[str, QAction] = {}
+_layout_group: QActionGroup | None = None
 _observed_webviews: weakref.WeakSet[Any] = weakref.WeakSet()
 _observed_add_cards: weakref.WeakSet[Any] = weakref.WeakSet()
 _observed_managed_dialogs: weakref.WeakSet[Any] = weakref.WeakSet()
@@ -125,6 +130,8 @@ def _get_config() -> dict[str, Any]:
 
     return {
         "enabled": bool(config.get("enabled", True)),
+        "layout": "cabinet" if config.get("layout") == "cabinet" else "editorial",
+        "cabinet_display": config.get("cabinet_display") if isinstance(config.get("cabinet_display"), dict) else {},
         "accent_color": accent.upper(),
         "color_theme": normalize_color_theme(config.get("color_theme")),
         "catppuccin_flavor": normalize_catppuccin_flavor(
@@ -160,12 +167,20 @@ def _resolved_tokens(config: dict[str, Any] | None = None):
 def _theme_metadata(config: dict[str, Any] | None = None) -> dict[str, Any]:
     current = config or _get_config()
     tokens = _resolved_tokens(current)
+    variables = web_color_variables(tokens)
+    if current.get("layout") == "cabinet" and tokens.family == "catppuccin":
+        variables.update({
+            "--cabinet-lilac": tokens.palette["mauve"],
+            "--cabinet-peach": tokens.palette["peach"],
+            "--cabinet-sage": tokens.palette["green"],
+        })
     return {
+        "layout": current.get("layout", "editorial"),
         "family": tokens.family,
         "flavor": tokens.flavor,
         "tone": "dark" if tokens.dark else "light",
         "accentName": tokens.accent_name,
-        "variables": web_color_variables(tokens),
+        "variables": variables,
     }
 
 
@@ -228,10 +243,15 @@ def _inject_theme(web_content: Any, context: object | None) -> None:
         )
         return
 
-    web_content.css.append(f"/_addons/{package}/web/theme.css")
+    cabinet_context = cabinet.context(config, context_name)
+    stylesheet = "cabinet.css" if cabinet_context else "theme.css"
+    web_content.css.append(f"/_addons/{package}/web/{stylesheet}")
+    if cabinet_context == "deck":
+        web_content.js.append(f"/_addons/{package}/web/cabinet.js")
 
     settings = {
         "context": context_name,
+        "cabinetContext": cabinet_context,
         "motion": "on" if config["animations"] else "off",
         "glass": "on" if config["frosted_toolbar"] else "off",
         **metadata,
@@ -260,9 +280,19 @@ def _inject_theme(web_content: Any, context: object | None) -> None:
     root.dataset.mistlineTone = settings.tone;
     root.dataset.mistlineAccent = settings.accentName;
     root.dataset.mistlineEnabled = "on";
+    root.dataset.mistlineLayout = settings.layout;
+    if (settings.cabinetContext) {{
+      root.dataset.cabinetContext = settings.cabinetContext;
+      root.dataset.cabinetTone = settings.tone;
+    }}
     root.dataset.mistlineFonts = "loading";
     const verifyFonts = async () => {{
       await document.fonts.ready;
+      if (settings.cabinetContext) {{
+        const fonts = await document.fonts.load('400 16px CabinetInter');
+        root.dataset.mistlineFonts = fonts.length ? "ready" : "fallback";
+        return;
+      }}
       const [sans, serif] = await Promise.all([
         document.fonts.load('400 16px "Mist Inter"'),
         document.fonts.load('600 32px "Mist Source Serif"'),
@@ -276,7 +306,12 @@ def _inject_theme(web_content: Any, context: object | None) -> None:
 
 
 def _decorate_deck_browser(_deck_browser: Any, content: Any) -> None:
-    """Add one owned heading without replacing Anki's deck tree."""
+    """Use real deck data for Cabinet, with the original tree as fallback."""
+
+    config = _get_config()
+    if config["enabled"] and config["layout"] == "cabinet":
+        if cabinet.render_home(_deck_browser, content, config):
+            return
 
     marker = 'data-mistline-owned="deck-heading"'
     if marker in content.tree:
@@ -382,9 +417,11 @@ def _runtime_theme_script(
         "enabled": config["enabled"],
         "context": context_name,
         "blockedContexts": blocked_contexts,
-        "managedVariables": MANAGED_COLOR_VARIABLES,
+        "managedVariables": (*MANAGED_COLOR_VARIABLES, "--cabinet-lilac", "--cabinet-peach", "--cabinet-sage"),
         "themeHref": f"/_addons/{package}/web/theme.css",
         "editorHref": f"/_addons/{package}/web/editor.css",
+        "cabinetHref": f"/_addons/{package}/web/cabinet.css",
+        "cabinetContext": cabinet.context(config, context_name),
         "motion": "on" if config["animations"] else "off",
         "glass": "on" if config["frosted_toolbar"] else "off",
         **metadata,
@@ -407,10 +444,12 @@ def _runtime_theme_script(
   const ownedIds = new Set([
     "mistline-external-theme",
     "mistline-editor-theme",
+    "mistline-cabinet-theme",
   ]);
   const ownedHrefs = new Set([
     absoluteHref(settings.themeHref),
     absoluteHref(settings.editorHref),
+    absoluteHref(settings.cabinetHref),
   ]);
   const themeLinks = () => Array.from(
     document.querySelectorAll('link[rel="stylesheet"]')
@@ -434,6 +473,7 @@ def _runtime_theme_script(
   }};
 
   if (!enabled) {{
+    delete root.dataset.cabinetContext;
     settings.managedVariables.forEach((name) => root.style.removeProperty(name));
     themeLinks().forEach((link) => {{ link.disabled = true; }});
     if (root.dataset.mistlineOwnsColorScheme === "true") {{
@@ -464,6 +504,13 @@ def _runtime_theme_script(
   root.dataset.mistlineTone = settings.tone;
   root.dataset.mistlineAccent = settings.accentName;
   root.dataset.mistlineEnabled = "on";
+  root.dataset.mistlineLayout = settings.layout;
+  if (settings.cabinetContext) {{
+    root.dataset.cabinetContext = settings.cabinetContext;
+    root.dataset.cabinetTone = settings.tone;
+  }} else {{
+    delete root.dataset.cabinetContext;
+  }}
   if (context === "deck-browser") {{
     document.querySelectorAll('[data-mistline-owned="deck-heading"]')
       .forEach((heading) => {{ heading.hidden = false; }});
@@ -479,10 +526,19 @@ def _runtime_theme_script(
   let activeLink = null;
   if (context === "editor") {{
     activeLink = ensureLink("mistline-editor-theme", settings.editorHref);
+  }} else if (settings.cabinetContext) {{
+    activeLink = ensureLink("mistline-cabinet-theme", settings.cabinetHref);
   }} else if (context) {{
     activeLink = ensureLink("mistline-external-theme", settings.themeHref);
   }}
   themeLinks().forEach((link) => {{ link.disabled = link !== activeLink; }});
+
+  // The observer owns one active stylesheet. Layout changes must release the
+  // previous observer, or two closures would continually reorder each other.
+  if (root._mistlineThemeOrderObserver) {{
+    root._mistlineThemeOrderObserver.disconnect();
+    delete root._mistlineThemeOrderObserver;
+  }}
 
   const external = context === "editor" ? null : activeLink;
   const keepThemeLast = () => {{
@@ -554,6 +610,8 @@ def _sync_menu_actions() -> None:
         action.setChecked(key == selected_palette)
     for key, action in _accent_actions.items():
         action.setChecked(key == config["catppuccin_accent"])
+    for key, action in _layout_actions.items():
+        action.setChecked(key == config["layout"])
     requested_flavor = config["catppuccin_flavor"]
     preview_flavor = (
         "mocha" if _system_is_dark() else "latte"
@@ -583,6 +641,52 @@ def _apply_current_theme() -> None:
     apply_native_theme(mw, config)
     _sync_open_native_surfaces(config)
     _broadcast_web_theme(config)
+    cabinet.refresh(mw, config)
+
+
+def _select_layout(layout: str) -> None:
+    if layout not in {"editorial", "cabinet"}:
+        return
+    _write_config_patch(layout=layout)
+    _apply_current_theme()
+
+
+def _save_cabinet_display(profiles: dict) -> None:
+    _write_config_patch(cabinet_display=profiles)
+    _apply_current_theme()
+
+
+def _show_cabinet_display():
+    return cabinet_display.show_settings(mw, _get_config, _save_cabinet_display)
+
+
+def _cabinet_display_message(handled, message: str, context):
+    prefix = "editorial-cabinet:"
+    if handled[0] or not message.startswith(prefix):
+        return handled
+    config = _get_config()
+    if _context_name(context) != "deck-browser" or not config["enabled"] or config["layout"] != "cabinet":
+        return (True, None)
+    action = message[len(prefix):]
+    if action == "settings":
+        _show_cabinet_display()
+    elif action == "palette":
+        _show_palette_dialog()
+    else:
+        cabinet_display.apply_action(mw, config, action, _save_cabinet_display)
+    return (True, None)
+
+
+def _cabinet_review_shown(*_args) -> None:
+    config = _get_config()
+    if config["enabled"] and config["layout"] == "cabinet" and config["style_reviewer"]:
+        cabinet.mark_review(mw)
+        cabinet.fit_toolbars(mw)
+
+
+def _cabinet_page_rendered(*_args) -> None:
+    if _get_config()["layout"] == "cabinet":
+        cabinet.fit_toolbars(mw)
 
 
 def _repolish_widget(widget: Any) -> None:
@@ -933,8 +1037,13 @@ def _show_palette_dialog() -> None:
         QHBoxLayout,
         QIcon,
         QLabel,
+        QPainter,
         QPixmap,
         QPushButton,
+        QScrollArea,
+        QSizePolicy,
+        QTabWidget,
+        Qt,
         QVBoxLayout,
         QWidget,
     )
@@ -942,36 +1051,56 @@ def _show_palette_dialog() -> None:
     dialog = QDialog(mw)
     dialog.setObjectName("EditorialIndexPaletteStudio")
     dialog.setWindowTitle("Editorial Index 配色")
-    dialog.setMinimumSize(760, 590)
+    dialog.setMinimumSize(680, 600)
+    dialog.resize(840, 760)
     dialog.setModal(False)
 
     outer = QVBoxLayout(dialog)
-    outer.setContentsMargins(24, 22, 24, 20)
-    outer.setSpacing(14)
+    outer.setContentsMargins(24, 24, 24, 20)
+    outer.setSpacing(16)
 
     title = QLabel("Catppuccin 配色工作台", dialog)
     title.setObjectName("EditorialIndexPaletteTitle")
     subtitle = QLabel(
-        "先选择 flavor，再选择 accent。下方会显示 Anki 实际使用的语义色。",
+        "点选主题与强调色后立即应用并记住。评分颜色保持各自含义。",
         dialog,
     )
     subtitle.setObjectName("EditorialIndexPaletteSubtitle")
     subtitle.setWordWrap(True)
     current = QLabel(dialog)
     current.setObjectName("EditorialIndexPaletteCurrent")
-    outer.addWidget(title)
-    outer.addWidget(subtitle)
+    current.setWordWrap(True)
+    heading = QVBoxLayout()
+    heading.setSpacing(6)
+    heading.addWidget(title)
+    heading.addWidget(subtitle)
+    outer.addLayout(heading)
     outer.addWidget(current)
 
-    flavor_label = QLabel("界面 flavor", dialog)
+    controls = QWidget(dialog)
+    controls.setObjectName("EditorialIndexPaletteChoices")
+    controls_layout = QVBoxLayout(controls)
+    controls_layout.setContentsMargins(0, 0, 0, 0)
+    controls_layout.setSpacing(0)
+    scroll = QScrollArea(dialog)
+    scroll.setObjectName("EditorialIndexPaletteScroll")
+    scroll.setWidgetResizable(True)
+    scroll.setFrameShape(QFrame.Shape.NoFrame)
+    scroll.setWidget(controls)
+    outer.addWidget(scroll, 1)
+
+    flavor_label = QLabel("界面主题", controls)
     flavor_label.setProperty("mistlineRole", "fieldLabel")
-    outer.addWidget(flavor_label)
+    controls_layout.addWidget(flavor_label)
+    controls_layout.addSpacing(8)
 
     flavor_panel = QWidget(dialog)
     flavor_grid = QGridLayout(flavor_panel)
     flavor_grid.setContentsMargins(0, 0, 0, 0)
     flavor_grid.setHorizontalSpacing(8)
     flavor_grid.setVerticalSpacing(8)
+    for column in range(3):
+        flavor_grid.setColumnStretch(column, 1)
     flavor_group = QButtonGroup(dialog)
     flavor_group.setExclusive(True)
     flavor_labels = {
@@ -985,8 +1114,12 @@ def _show_palette_dialog() -> None:
     flavor_buttons: dict[str, Any] = {}
     for index, palette_id in enumerate(("editorial", *CATPPUCCIN_FLAVOR_OPTIONS)):
         button = QPushButton(flavor_labels[palette_id], flavor_panel)
+        button.setObjectName("PaletteFlavor_" + palette_id)
         button.setCheckable(True)
         button.setProperty("mistlineRole", "paletteChoice")
+        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        # Resolve the themed size hint before the grid's first layout pass.
+        button.ensurePolished()
         flavor_group.addButton(button)
         flavor_grid.addWidget(button, index // 3, index % 3)
         qconnect(
@@ -994,26 +1127,33 @@ def _show_palette_dialog() -> None:
             lambda _checked=False, selected=palette_id: _select_palette(selected),
         )
         flavor_buttons[palette_id] = button
-    outer.addWidget(flavor_panel)
+    controls_layout.addWidget(flavor_panel)
+    controls_layout.addSpacing(20)
 
     accent_label = QLabel("强调色 · 14 种", dialog)
     accent_label.setProperty("mistlineRole", "fieldLabel")
-    outer.addWidget(accent_label)
+    controls_layout.addWidget(accent_label)
+    controls_layout.addSpacing(8)
 
     accent_panel = QWidget(dialog)
     accent_grid = QGridLayout(accent_panel)
     accent_grid.setContentsMargins(0, 0, 0, 0)
     accent_grid.setHorizontalSpacing(8)
     accent_grid.setVerticalSpacing(8)
+    for column in range(5):
+        accent_grid.setColumnStretch(column, 1)
     accent_group = QButtonGroup(dialog)
     accent_group.setExclusive(True)
     accent_buttons: dict[str, Any] = {}
     for index, accent_name in enumerate(CATPPUCCIN_ACCENTS):
         button = QPushButton(accent_name.capitalize(), accent_panel)
+        button.setObjectName("PaletteAccent_" + accent_name)
         button.setCheckable(True)
         button.setProperty("mistlineRole", "paletteChoice")
+        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        button.ensurePolished()
         accent_group.addButton(button)
-        accent_grid.addWidget(button, index // 7, index % 7)
+        accent_grid.addWidget(button, index // 5, index % 5)
         qconnect(
             button.clicked,
             lambda _checked=False, selected=accent_name: _select_catppuccin_accent(
@@ -1021,15 +1161,19 @@ def _show_palette_dialog() -> None:
             ),
         )
         accent_buttons[accent_name] = button
-    outer.addWidget(accent_panel)
+    controls_layout.addWidget(accent_panel)
+    controls_layout.addStretch(1)
 
-    preview_label = QLabel("当前组合的语义对比", dialog)
-    preview_label.setProperty("mistlineRole", "fieldLabel")
-    outer.addWidget(preview_label)
+    from .palette_preview import create_preview
+    preview_tabs = QTabWidget(dialog)
+    preview_tabs.setObjectName("EditorialIndexPaletteTabs")
+    preview_tabs.setFixedHeight(212)
+    preview_web = create_preview(preview_tabs)
+    preview_tabs.addTab(preview_web, "界面预览")
 
     preview_panel = QWidget(dialog)
     preview_grid = QGridLayout(preview_panel)
-    preview_grid.setContentsMargins(0, 0, 0, 0)
+    preview_grid.setContentsMargins(16, 16, 16, 16)
     preview_grid.setHorizontalSpacing(8)
     preview_grid.setVerticalSpacing(8)
     preview_roles = (
@@ -1054,11 +1198,13 @@ def _show_palette_dialog() -> None:
         chip_layout.addWidget(chip_text)
         preview_grid.addWidget(chip, index // 4, index % 4)
         preview_chips[role] = (chip, chip_text)
-    outer.addWidget(preview_panel)
+    preview_tabs.addTab(preview_panel, "颜色用途与色值")
+    outer.addWidget(preview_tabs)
 
     bottom = QHBoxLayout()
     bottom.addStretch(1)
     close_button = QPushButton("关闭", dialog)
+    close_button.setObjectName("PaletteClose")
     close_button.setProperty("mistlineRole", "secondary")
     qconnect(close_button.clicked, dialog.accept)
     bottom.addWidget(close_button)
@@ -1077,7 +1223,13 @@ def _show_palette_dialog() -> None:
 
     def swatch_icon(color: str) -> Any:
         swatch = QPixmap(18, 18)
-        swatch.fill(QColor(color))
+        swatch.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(swatch)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(QColor(color))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(1, 1, 16, 16)
+        painter.end()
         return QIcon(swatch)
 
     def refresh() -> None:
@@ -1100,6 +1252,7 @@ def _show_palette_dialog() -> None:
         for key, button in accent_buttons.items():
             button.setChecked(key == config["catppuccin_accent"])
             button.setIcon(swatch_icon(palette[key]))
+            button.setToolTip(f"{key.capitalize()} · {palette[key]}")
 
         tokens = _resolved_tokens(config)
         flavor_name = (
@@ -1109,8 +1262,11 @@ def _show_palette_dialog() -> None:
         )
         current.setText(
             f"当前：{flavor_name} · {tokens.accent_name.capitalize()} · "
-            f"{tokens.accent_raw}"
+            f"{tokens.accent_raw}" + (" · 主题当前已关闭" if not config["enabled"] else "")
         )
+        preview_web.eval(_runtime_theme_script(
+            {**config, "enabled": True, "style_reviewer": True}, "reviewer-bottom-bar"
+        ))
         role_colors = {
             "link": (tokens.link, tokens.link, tokens.field, tokens.link),
             "focus": (tokens.focus, tokens.focus, tokens.field, tokens.focus),
@@ -1147,6 +1303,8 @@ def _show_palette_dialog() -> None:
     def clear_dialog_ref(_result: int = 0) -> None:
         global _palette_dialog_ref
         _palette_dialog_ref = None
+        preview_web.cleanup()
+        dialog.deleteLater()
 
     qconnect(dialog.finished, clear_dialog_ref)
     refresh()
@@ -1158,6 +1316,7 @@ def _show_palette_dialog() -> None:
 def _setup_menu() -> None:
     global _accent_group, _accent_menu, _menu_action, _palette_dialog_action
     global _palette_group, _palette_menu
+    global _layout_group
     if _menu_action is not None:
         return
 
@@ -1214,6 +1373,20 @@ def _setup_menu() -> None:
     mw.form.menuTools.addAction(action)
     mw.form.menuTools.addAction(palette_dialog_action)
     mw.form.menuTools.addMenu(palette_menu)
+    layout_menu = QMenu("Editorial Index 布局", mw)
+    _layout_group = QActionGroup(layout_menu)
+    _layout_group.setExclusive(True)
+    for layout, label in (("cabinet", "卡匣 Cabinet"), ("editorial", "经典 Editorial")):
+        layout_action = QAction(label, layout_menu)
+        layout_action.setCheckable(True)
+        _layout_group.addAction(layout_action)
+        layout_menu.addAction(layout_action)
+        qconnect(layout_action.triggered, lambda _checked=False, selected=layout: _select_layout(selected))
+        _layout_actions[layout] = layout_action
+    mw.form.menuTools.addMenu(layout_menu)
+    display_action = QAction("Editorial Index 首页展示…", mw)
+    qconnect(display_action.triggered, lambda _checked=False: _show_cabinet_display())
+    mw.form.menuTools.addAction(display_action)
     _menu_action = action
     _palette_dialog_action = palette_dialog_action
     _palette_menu = palette_menu
@@ -1235,7 +1408,7 @@ def _theme_did_change() -> None:
 
 mw.addonManager.setWebExports(
     __name__,
-    r"^web/(?:theme\.css|editor\.css|editor-marker\.js|fonts/.*\.(?:woff2|ttf|txt|md))$",
+    r"^web/(?:theme\.css|heatmap\.css|cabinet\.css|cabinet\.js|editor\.css|editor-marker\.js|fonts/.*\.(?:woff2|ttf|txt|md))$",
 )
 mw.addonManager.setConfigUpdatedAction(__name__, _config_updated)
 
@@ -1249,3 +1422,8 @@ gui_hooks.browser_will_show.append(_style_browser)
 gui_hooks.card_layout_will_show.append(_style_card_layout)
 gui_hooks.theme_did_change.append(_theme_did_change)
 gui_hooks.main_window_did_init.append(_setup_menu)
+gui_hooks.deck_browser_did_render.append(_cabinet_page_rendered)
+gui_hooks.overview_did_refresh.append(_cabinet_page_rendered)
+gui_hooks.reviewer_did_show_question.append(_cabinet_review_shown)
+gui_hooks.reviewer_did_show_answer.append(_cabinet_review_shown)
+gui_hooks.webview_did_receive_js_message.append(_cabinet_display_message)

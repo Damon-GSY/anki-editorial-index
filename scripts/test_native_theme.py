@@ -190,6 +190,11 @@ def main() -> None:
     assert "QRadioButton::indicator" not in qss
     assert "QPushButton {\n    min-width: 48px;\n    min-height: 20px;" in qss
     assert "QTabBar::tab {\n    min-height: 18px;" in qss
+    # A thicker selected/focus border must consume padding, not grow the tile.
+    assert 'QPushButton[mistlineRole="paletteChoice"] {\n    min-height: 26px;\n    padding: 8px 11px;\n    border: 1px solid' in qss
+    for state in ("focus", "checked"):
+        assert (f'QPushButton[mistlineRole="paletteChoice"]:{state} {{\n'
+                f'    border: 2px solid {tokens.focus};\n    padding: 7px 10px;') in qss
 
     # Every official Catppuccin flavor/accent pair resolves through the same
     # token contract that the web surfaces use. Raw swatches remain exact,

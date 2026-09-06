@@ -4,7 +4,7 @@
 
 一款给 Anki Desktop 使用的编辑索引主题，支持暖纸与 Catppuccin 配色
 
-[English](./README.en.md) · [下载安装](https://github.com/Damon-GSY/anki-editorial-index/releases/latest) · [配置说明](./docs/CONFIGURATION.md) · [问题排查](./docs/TROUBLESHOOTING.md)
+[English](./README.en.md) · [安装指南](./docs/INSTALLATION.md) · [配置说明](./docs/CONFIGURATION.md) · [问题排查](./docs/TROUBLESHOOTING.md)
 
 [![Latest release](https://img.shields.io/github/v/release/Damon-GSY/anki-editorial-index?label=release)](https://github.com/Damon-GSY/anki-editorial-index/releases/latest)
 [![Anki](https://img.shields.io/badge/Anki-25.09.4%2B-2F5BBC)](https://apps.ankiweb.net/)
@@ -12,11 +12,33 @@
 
 </div>
 
-![Editorial Index 牌组页面](./screenshots/deck-browser.png)
+![Cabinet 预览版的真实 Anki 牌组页面（生成的测试牌组）](./screenshots/cabinet/home.png)
 
 Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / Stats / Deck Options 等独立窗口与桌面菜单整理成克制的编辑索引风格。安装以后仍然使用原来的牌组、卡片和快捷键，也不会改动学习进度与调度算法。
 
 ## 下载与安装
+
+### 当前预览版：卡匣、展示设置与新调色板
+
+本分支 `codex/cabinet-local-migration` 包含目前的 Cabinet 设计和间距修正，**尚未合并到 main，也未创建新 Release**。顶部 Release 徽章和旧稳定版下载不代表本次预览。
+
+1. [直接下载 Cabinet 预览安装包](https://github.com/Damon-GSY/anki-editorial-index/raw/refs/heads/codex/cabinet-local-migration/dist/Editorial-Index-Cabinet-preview.ankiaddon)，不要解压，也不要下载整个仓库 ZIP 来安装。
+2. 打开 **Anki Desktop → 工具 → 插件 → 从文件安装**，选择下载的 `.ankiaddon` 文件。
+3. 完整退出并重新打开 Anki。已有 Editorial Index 的用户直接覆盖安装，不必先卸载。
+4. 打开 **工具 → Editorial Index 布局 → 卡匣 Cabinet**。为兼容旧配置，新安装默认仍是经典布局；这一步需要手动选择。
+5. 首页右上角点 **配色**：选主题和强调色，即时预览并保存。点 **展示设置** 管理哪些顶层牌组显示、哪些默认收起。
+
+安装包与 SHA-256 校验文件都在本分支的 [dist](./dist/) 中。预览版已在 macOS / Anki 26.05b1 / Qt 6.11.0 验证；其他版本、Windows 和 Linux 尚需实机验收。插件元数据暂沿用 0.3.7，不表示此预览已作为 0.3.7 Release 发布。
+
+| Latte 调色板 | Mocha 调色板 |
+| --- | --- |
+| ![Latte 原生调色板与评分预览](./screenshots/cabinet/palette-latte.png) | ![Mocha 原生调色板与评分预览](./screenshots/cabinet/palette-mocha.png) |
+
+完整的启用、折叠和边界说明见 [卡匣指南](./docs/CABINET.md)。
+
+### 旧稳定版：经典 Editorial
+
+如果只需要已发布的经典布局，可安装旧稳定版；它**不包含上面的 Cabinet 功能和本次间距修正**。
 
 1. 打开 [最新版本页面](https://github.com/Damon-GSY/anki-editorial-index/releases/latest)。
 2. 在页面底部的 Assets 中下载 `Editorial-Index.ankiaddon`。
@@ -47,7 +69,7 @@ Editorial Index 会把 Anki 的牌组页、复习外层界面、Add / Browse / S
 
 0.3.0 加入了完整的 Catppuccin 配色系统：Latte、Frappé、Macchiato、Mocha 四种 flavor，以及 Rosewater 到 Lavender 的全部 14 种强调色。「自动」会在 Anki 日间模式使用 Latte，夜间模式使用 Mocha。
 
-新安装和从旧版升级都依然默认使用 Editorial Index 暖纸配色，不会自动切换到 Catppuccin。在「工具 → Editorial Index 配色…」选择 Catppuccin 后，主界面、复习页、Add / Browse Editor 和原生窗口会同步更新，无需重启，也不会重载正在编辑的内容。
+新安装默认使用 Editorial Index 暖纸配色；升级保留已有配色，缺少的新选项采用默认值。在「工具 → Editorial Index 配色…」选择 Catppuccin 后，主界面、复习页、Add / Browse Editor 和原生窗口会同步更新，无需重启，也不会重载正在编辑的内容。
 
 色板是随插件打包的 [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json) 官方 token 快照，语义关系参考 [Catppuccin 官方 Style Guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md)，切换时不会联网。四种 flavor 会同时切换 Base / Mantle / Crust、Surface、Overlay 和文字层级；链接固定使用 Blue、焦点使用 Lavender、光标使用 Rosewater，状态色也各自保留，不再全部跟随所选 accent。完整对应关系见 [Catppuccin 语义配色映射](./docs/CATPPUCCIN_MAPPING.md)。
 
@@ -94,6 +116,7 @@ Editorial 保留纸张的温度和编辑排版感，会跟随 Anki 的日间与�
 | 设置 | 默认值 | 用途 |
 | --- | --- | --- |
 | `enabled` | `true` | 控制整个主题是否启用 |
+| `layout` | `editorial` | 本分支可切换经典布局或 `cabinet` 卡匣布局 |
 | `color_theme` | `editorial` | 选择 Editorial Index 暖纸或 Catppuccin 配色 |
 | `accent_color` | `#2F5BBC` | 设置 Editorial Index 暖纸配色的强调色 |
 | `catppuccin_flavor` | `auto` | 选择自动、Latte、Frappé、Macchiato 或 Mocha |
@@ -108,7 +131,7 @@ Editorial 保留纸张的温度和编辑排版感，会跟随 Anki 的日间与�
 
 ## 字体与卡片模板
 
-界面操作文字使用 Inter，页面标题和复习阅读区域使用 Source Serif Pro。两套字体均随插件安装；中文、日文和韩文继续使用系统自带字体，避免缺字。
+界面操作文字使用 Inter，经典布局标题使用 Source Serif Pro，Cabinet 的界面标题与按钮统一使用 Inter。两套字体均随插件安装；中文、日文和韩文继续使用系统自带字体，避免缺字。卡片正文的字体仍由原模板决定。
 
 Editorial Index 只处理 Anki 官方界面拥有的区域。已有卡片模板中的字段排版仍由你的模板控制。想让卡片内容也使用配套样式，可以选择性安装 [`extras/card-template`](./extras/card-template/README.md)，这一步不会影响插件本身。
 
@@ -132,6 +155,10 @@ Anki 更新有时会改变插件接口或页面结构。如果更新 Anki 后出
 ## 开发
 
 ```bash
+python3 scripts/package_addon.py --preview
+python3 scripts/validate_addon.py --preview
+python3 scripts/test_cabinet_decks.py
+python3 scripts/test_cabinet_display.py
 python3 scripts/package_addon.py
 python3 scripts/validate_addon.py
 python3 scripts/smoke_test_addon.py

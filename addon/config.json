@@ -1,5 +1,7 @@
 {
   "enabled": true,
+  "layout": "editorial",
+  "cabinet_display": {},
   "accent_color": "#2F5BBC",
   "color_theme": "editorial",
   "catppuccin_flavor": "auto",

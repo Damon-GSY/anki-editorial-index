@@ -1210,22 +1210,23 @@ def audit_reviewer(
                     active: document.activeElement === node,
                     background: style.backgroundColor,
                     border: style.borderTopColor,
+                    borderWidth: style.borderTopWidth,
                     outlineColor: style.outlineColor,
                     outlineStyle: style.outlineStyle,
                     outlineWidth: style.outlineWidth,
+                    shadow: style.boxShadow,
                   };
                 }
                 """
             )
             checks.require(
                 focused_input["active"]
-                and focused_input["background"] != resting_input["background"]
+                and focused_input["background"] == resting_input["background"]
                 and focused_input["border"]
                 == rgb_from_hex(payload["variables"]["--mist-focus"])
-                and focused_input["outlineColor"]
-                == rgb_from_hex(payload["variables"]["--mist-focus"])
-                and focused_input["outlineStyle"] == "solid"
-                and focused_input["outlineWidth"] == "2px",
+                and focused_input["borderWidth"] == "2px"
+                and focused_input["outlineStyle"] == "none"
+                and focused_input["shadow"] == "none",
                 f"{label}: typed-answer focus colors mismatch {focused_input}",
                 "reviewer-typed-answer",
             )

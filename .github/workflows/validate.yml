@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - codex/cabinet-local-migration
   pull_request:
 
 permissions:
@@ -36,6 +37,15 @@ jobs:
         run: python3 scripts/test_native_theme.py
       - name: Test Catppuccin palette contract
         run: python3 scripts/test_catppuccin_palette.py
+      - name: Test Cabinet rendering and display preferences
+        run: |
+          python3 scripts/test_cabinet_decks.py
+          python3 scripts/test_cabinet_display.py
+          node --check addon/web/cabinet.js
+      - name: Build and validate shareable preview
+        run: |
+          python3 scripts/package_addon.py --preview
+          python3 scripts/validate_addon.py --preview
       - name: Install visual test runtime
         run: |
           npm ci
@@ -52,3 +62,5 @@ jobs:
           path: |
             dist/Editorial-Index.ankiaddon
             dist/SHA256SUMS
+            dist/Editorial-Index-Cabinet-preview.ankiaddon
+            dist/Editorial-Index-Cabinet-preview.sha256

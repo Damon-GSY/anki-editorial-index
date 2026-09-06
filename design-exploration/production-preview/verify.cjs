@@ -479,23 +479,68 @@ function check(condition, message) {
             active: document.activeElement === node,
             background: style.backgroundColor,
             border: style.borderTopColor,
+            borderWidth: style.borderTopWidth,
             outlineColor: style.outlineColor,
             outlineStyle: style.outlineStyle,
             outlineWidth: style.outlineWidth,
+            shadow: style.boxShadow,
             focus: root.getPropertyValue("--mist-focus").trim(),
           };
         });
         check(
           focused.active
-            && focused.background !== resting.background
+            && focused.background === resting.background
             && focused.border === "rgb(47, 91, 188)"
-            && focused.outlineColor === "rgb(47, 91, 188)"
-            && focused.outlineStyle === "solid"
-            && focused.outlineWidth === "2px"
+            && focused.borderWidth === "2px"
+            && focused.outlineStyle === "none"
+            && focused.shadow === "none"
             && focused.focus === "#2f5bbc",
           `typed-answer focus colors mismatch: ${JSON.stringify(focused)}`,
         );
         await auditTextContrast("#typeans", "typed-answer focus");
+      }
+      if (state === "answer") {
+        const comparison = page.locator("code#typeans");
+        check(await comparison.count() === 1, "reviewer typed-answer comparison missing");
+        const comparisonLayout = await comparison.evaluate(node => {
+          const style = getComputedStyle(node);
+          const box = node.getBoundingClientRect();
+          const lines = [...node.querySelectorAll(".typeGood")].map(line => line.getBoundingClientRect());
+          return {
+            display: style.display,
+            boxSizing: style.boxSizing,
+            paddingTop: parseFloat(style.paddingTop),
+            paddingRight: parseFloat(style.paddingRight),
+            paddingBottom: parseFloat(style.paddingBottom),
+            paddingLeft: parseFloat(style.paddingLeft),
+            background: style.backgroundColor,
+            border: style.borderTopColor,
+            box: { left: box.left, right: box.right, top: box.top, bottom: box.bottom },
+            lines: lines.map(line => ({ left: line.left, right: line.right, top: line.top, bottom: line.bottom })),
+          };
+        });
+        check(
+          comparisonLayout.display === "block"
+            && comparisonLayout.boxSizing === "border-box"
+            && comparisonLayout.paddingTop === 12
+            && comparisonLayout.paddingRight === 14
+            && comparisonLayout.paddingBottom === 12
+            && comparisonLayout.paddingLeft === 14,
+          `typed-answer comparison padding mismatch: ${JSON.stringify(comparisonLayout)}`,
+        );
+        check(
+          comparisonLayout.lines.length === 2
+            && comparisonLayout.lines.every(line => line.left >= comparisonLayout.box.left + 14)
+            && comparisonLayout.lines.every(line => line.right <= comparisonLayout.box.right - 14)
+            && comparisonLayout.lines[0].top >= comparisonLayout.box.top + 12
+            && comparisonLayout.lines.at(-1).bottom <= comparisonLayout.box.bottom - 12,
+          `typed-answer comparison content touches its border: ${JSON.stringify(comparisonLayout)}`,
+        );
+        check(
+          comparisonLayout.background === "rgb(241, 237, 228)"
+            && comparisonLayout.border === "rgb(215, 208, 196)",
+          `typed-answer comparison colors mismatch: ${JSON.stringify(comparisonLayout)}`,
+        );
       }
       const inherited = await page.locator(".user-card-inheritance-probe").evaluate(node => {
         const style = getComputedStyle(node);

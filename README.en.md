@@ -4,7 +4,7 @@
 
 An editorial desktop theme for Anki with warm-paper and Catppuccin palettes
 
-[中文](./README.md) · [Download](https://github.com/Damon-GSY/anki-editorial-index/releases/latest) · [Configuration](./docs/CONFIGURATION.md) · [Troubleshooting](./docs/TROUBLESHOOTING.md)
+[中文](./README.md) · [Installation](./docs/INSTALLATION.md) · [Configuration](./docs/CONFIGURATION.md) · [Troubleshooting](./docs/TROUBLESHOOTING.md)
 
 [![Latest release](https://img.shields.io/github/v/release/Damon-GSY/anki-editorial-index?label=release)](https://github.com/Damon-GSY/anki-editorial-index/releases/latest)
 [![Anki](https://img.shields.io/badge/Anki-25.09.4%2B-2F5BBC)](https://apps.ankiweb.net/)
@@ -12,11 +12,31 @@ An editorial desktop theme for Anki with warm-paper and Catppuccin palettes
 
 </div>
 
-![Editorial Index deck browser](./screenshots/deck-browser.png)
+![Cabinet preview in real Anki, using generated demo decks](./screenshots/cabinet/home.png)
 
 Editorial Index restyles Anki Desktop's deck browser, reviewer shell, navigation, and standalone Add, Browse, Stats, Deck Options, and Preferences windows. It leaves your collection, scheduling, shortcuts, and card templates intact.
 
 ## Install
+
+### Current Cabinet preview
+
+This `codex/cabinet-local-migration` branch includes Cabinet, visibility/folding controls, the live palette preview, and spacing fixes. **It is not merged into main or published as a new Release.** The release badge refers to the older stable release.
+
+1. [Download the preview add-on](https://github.com/Damon-GSY/anki-editorial-index/raw/refs/heads/codex/cabinet-local-migration/dist/Editorial-Index-Cabinet-preview.ankiaddon). Do not unzip it or install the repository ZIP.
+2. In Anki Desktop, choose **Tools → Add-ons → Install from file** and select the `.ankiaddon` file.
+3. Restart Anki. Existing Editorial Index users can install over the current version; do not uninstall first.
+4. Select **Tools → Editorial Index 布局 → 卡匣 Cabinet**. The default layout remains Editorial for compatibility.
+5. Use **配色** (Palette) on the home page to switch flavors and accents. Use **展示设置** (Display settings) to hide or fold top-level decks.
+
+The package and SHA-256 file are in [dist](./dist/). This preview was verified on macOS with Anki 26.05b1 / Qt 6.11.0; other versions and platforms remain unverified. Its metadata still says 0.3.7; this does not make it a new 0.3.7 Release. See the [Cabinet guide](./docs/CABINET.md).
+
+| Latte palette | Mocha palette |
+| --- | --- |
+| ![Latte native palette preview](./screenshots/cabinet/palette-latte.png) | ![Mocha native palette preview](./screenshots/cabinet/palette-mocha.png) |
+
+### Older stable release
+
+The existing release provides the classic Editorial layout, not the Cabinet changes above.
 
 1. Open the [latest release](https://github.com/Damon-GSY/anki-editorial-index/releases/latest).
 2. Download `Editorial-Index.ankiaddon` from Assets.
@@ -45,7 +65,7 @@ The add-on does not modify your collection, notes, card templates, FSRS settings
 
 Version 0.3.0 adds the complete Catppuccin palette system: Latte, Frappé, Macchiato, and Mocha, with all 14 accents from Rosewater through Lavender. Auto uses Latte with Anki's light mode and Mocha with Anki's night mode.
 
-New installations and upgrades continue to use Editorial Index's warm-paper palette by default, so the update never opts an existing setup into Catppuccin. Select Tools > Editorial Index 配色… (Palette) to opt in. The main window, reviewer, Add and Browse editors, and native dialogs update together without a restart or a reload of unsaved editor content.
+New installations default to warm paper; upgrades preserve existing palette choices and use defaults only for missing settings. Select Tools > Editorial Index 配色… (Palette) to opt in. The main window, reviewer, Add and Browse editors, and native dialogs update together without a restart or a reload of unsaved editor content.
 
 The add-on bundles a pinned snapshot of the official [Catppuccin Palette v1.8.0](https://github.com/catppuccin/palette/blob/v1.8.0/palette.json), with semantic relationships based on the [official Catppuccin Style Guide](https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md); switching never requires a network request. Every flavor switches its Base / Mantle / Crust, Surface, Overlay, and type hierarchy together. Links stay Blue, focus stays Lavender, the caret stays Rosewater, and status colors retain their own roles instead of all following the selected accent. See the complete [semantic mapping](./docs/CATPPUCCIN_MAPPING.md).
 
@@ -92,6 +112,7 @@ Open Tools > Add-ons, select Editorial Index, and choose Config.
 | Key | Default | Purpose |
 | --- | --- | --- |
 | `enabled` | `true` | Enable the complete theme |
+| `layout` | `editorial` | On this branch, select `editorial` or `cabinet` |
 | `color_theme` | `editorial` | Select the Editorial Index warm-paper or Catppuccin color system |
 | `accent_color` | `#2F5BBC` | Set the accent for the Editorial Index warm-paper palette |
 | `catppuccin_flavor` | `auto` | Select Auto, Latte, Frappé, Macchiato, or Mocha |
@@ -118,6 +139,10 @@ Editorial Index makes no network requests, collects no telemetry, and does not r
 ## Development
 
 ```bash
+python3 scripts/package_addon.py --preview
+python3 scripts/validate_addon.py --preview
+python3 scripts/test_cabinet_decks.py
+python3 scripts/test_cabinet_display.py
 python3 scripts/package_addon.py
 python3 scripts/validate_addon.py
 python3 scripts/smoke_test_addon.py

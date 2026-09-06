@@ -22,11 +22,18 @@ REQUIRED = {
     "THIRD_PARTY_NOTICES.md",
     "catppuccin.json",
     "color_themes.py",
+    "cabinet.py",
+    "cabinet_decks.py",
+    "cabinet_display.py",
+    "palette_preview.py",
     "native_theme.py",
     "manifest.json",
     "config.json",
     "config.md",
     "web/theme.css",
+    "web/heatmap.css",
+    "web/cabinet.css",
+    "web/cabinet.js",
     "web/editor.css",
     "web/editor-marker.js",
     "web/fonts/inter-regular.woff2",
@@ -73,5 +80,12 @@ def build() -> Path:
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--preview", action="store_true", help="Build the Cabinet preview without replacing release artifacts")
+    if parser.parse_args().preview:
+        OUTPUT = DIST_DIR / "Editorial-Index-Cabinet-preview.ankiaddon"
+        CHECKSUMS = DIST_DIR / "Editorial-Index-Cabinet-preview.sha256"
     result = build()
     print(f"Built {result} ({result.stat().st_size} bytes)")

@@ -73,6 +73,7 @@ def check_runtime_scope() -> None:
     source = (ADDON / "__init__.py").read_text(encoding="utf-8")
     native_source = (ADDON / "native_theme.py").read_text(encoding="utf-8")
     css = (ADDON / "web" / "theme.css").read_text(encoding="utf-8")
+    css += (ADDON / "web" / "heatmap.css").read_text(encoding="utf-8")
     editor_css = (ADDON / "web" / "editor.css").read_text(encoding="utf-8")
     editor_js = (ADDON / "web" / "editor-marker.js").read_text(encoding="utf-8")
     for hook in (
@@ -187,13 +188,19 @@ def check_runtime_scope() -> None:
     require(
         "def _show_palette_dialog" in source
         and "Catppuccin 配色工作台" in source
-        and "当前组合的语义对比" in source,
+        and 'preview_tabs.addTab(preview_web, "界面预览")' in source
+        and 'preview_tabs.addTab(preview_panel, "颜色用途与色值")' in source,
         "in-Anki Catppuccin palette studio missing",
     )
     require(
-        "accent_grid.addWidget(button, index // 7, index % 7)" in source
+        "accent_grid.addWidget(button, index // 5, index % 5)" in source
         and "preview_grid.addWidget(chip, index // 4, index % 4)" in source,
         "palette studio must show all accents and balanced semantic roles",
+    )
+    require(
+        'scroll.setObjectName("EditorialIndexPaletteScroll")' in source
+        and "preview_web.cleanup()" in source,
+        "palette choices must scroll and preview hooks must be cleaned up",
     )
     require(
         'background: currentColor;' in css
@@ -326,4 +333,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--preview", action="store_true", help="Validate the Cabinet preview archive and checksum")
+    if parser.parse_args().preview:
+        ARCHIVE = ROOT / "dist" / "Editorial-Index-Cabinet-preview.ankiaddon"
+        CHECKSUMS = ROOT / "dist" / "Editorial-Index-Cabinet-preview.sha256"
     main()

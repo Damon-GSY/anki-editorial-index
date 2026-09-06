@@ -68,6 +68,9 @@
     .card-content { text-align: center; }
     .card-content h1 { max-width: 26ch; margin: 0 auto 48px; font: 600 clamp(36px, 4.6vw, 52px)/1.12 var(--mist-serif); letter-spacing: -.025em; text-wrap: balance; }
     .card-content p { margin: 0; font: 600 clamp(28px, 3.2vw, 38px)/1.18 var(--mist-serif); }
+    .typeGood { color: #000; background: #afa; }
+    .typeBad { color: #000; background: #faa; }
+    .typeMissed { color: #000; background: #ccc; }
     .user-card-button { margin-top: 24px; padding: 7px 13px; border: 3px dotted rgb(126, 53, 91); border-radius: 19px; color: rgb(88, 36, 66); background: rgb(252, 224, 238); box-shadow: 4px 5px 0 rgb(88, 36, 66); font-family: Georgia, serif; font-weight: 400; animation: user-card-pulse 3s infinite; transition: opacity 2s; }
     .user-card-button:active { transform: scale(.92); }
     .user-card-inheritance-probe { font-size: 23px; }
@@ -146,8 +149,10 @@
   const deck = `<center><section class="mistline-deck-heading" data-mistline-owned="deck-heading"><h1>Deck Home</h1><p>Memory index</p></section><table cellspacing="0" cellpadding="3"><tr><th colspan="5" align="start">Deck</th><th class="count">New</th><th class="count">Learn</th><th class="count">Due</th><th class="optscol"></th></tr>${deckRows}</table><div id="studiedToday">126 cards studied today · 24 minutes</div>${heatmapStats}</center>`;
   const toolbar = `<div class="header"><div class="left-tray"></div><nav class="toolbar"><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.decks}" title="${toolbarLabels.decks}" id="decks" href="#">${toolbarLabels.decks}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.add}" title="${toolbarLabels.add}" id="add" href="#">${toolbarLabels.add}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.browse}" title="${toolbarLabels.browse}" id="browse" href="#">${toolbarLabels.browse}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.stats}" title="${toolbarLabels.stats}" id="stats" href="#">${toolbarLabels.stats}</a><a class="hitem" tabindex="-1" aria-label="${toolbarLabels.sync}" title="${toolbarLabels.sync}" id="sync" href="#">${toolbarLabels.sync}<img id="sync-spinner" class="${syncActive ? "spin" : ""}" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23808080' d='M18 13.5h10.75V2.67zM24.9 19.78a8.9 8.9 0 0 1-8.32 5.49 9.13 9.13 0 1 1 6.51-15.6l2.6-3.05a13 13 0 1 0 2.74 13.16z'/%3E%3C/svg%3E"></a></nav><div class="right-tray"></div></div>`;
   const overview = `<center><h3>Anatomy</h3><div class="descfont descmid description"><p><span class="new-count">28 new</span> · <span class="learn-count">14 learning</span> · <span class="review-count">57 due</span></p><p>126 cards studied today · 24 minutes</p></div><table width="400" cellpadding="5"><tr><td align="center" valign="top"><table cellspacing="5"><tr><td>New:</td><td><b><span class="new-count">28</span></b></td></tr><tr><td>Learning:</td><td><b><span class="learn-count">14</span></b></td></tr><tr><td>To Review:</td><td><b><span class="review-count">57</span></b></td></tr></table></td><td align="center"><button id="study" autofocus>Study Now</button></td></tr></table>${heatmapStats}</center>`;
-  const typedAnswer = `<input id="typeans" aria-label="Typed answer" value="be out on a limb">`;
-  const reviewer = `<div id="qa"><div class="card-content"><h1>Which valve lesion produces a holosystolic murmur radiating to the axilla?</h1>${answer ? "<p>Mitral regurgitation</p>" : typedAnswer}<span class="user-card-inheritance-probe">User-owned inherited typography</span><button class="user-card-button" type="button">User card action</button></div></div>`;
+  const typedAnswer = answer
+    ? `<div style="font-family: Arial, sans-serif; font-size: 32px"><code id="typeans"><span class="typeGood">be out on a limb</span><br><span id="typearrow">&darr;</span><br><span class="typeGood">be out on a limb</span></code></div>`
+    : `<input id="typeans" aria-label="Typed answer" value="be out on a limb">`;
+  const reviewer = `<div id="qa"><div class="card-content"><h1>Which valve lesion produces a holosystolic murmur radiating to the axilla?</h1>${answer ? "<p>Mitral regurgitation</p>" : ""}${typedAnswer}<span class="user-card-inheritance-probe">User-owned inherited typography</span><button class="user-card-button" type="button">User card action</button></div></div>`;
   const ratingPresets = {
     2: [[1, "Again", "20m"], [2, "Good", "3mo"]],
     3: [[1, "Again", "20m"], [2, "Good", "3mo"], [3, "Easy", "3mo"]],

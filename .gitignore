@@ -8,3 +8,8 @@ design-exploration/*-preview/captures/
 design-exploration/*-preview/report.json
 design-exploration/*-preview/REPORT.md
 dist/*-backup.zip
+dist/*-local.ankiaddon
+dist/*-local.sha256
+design-exploration/anki-cabinet-lab/runtime-report.json
+design-exploration/anki-cabinet-lab/screenshots/
+design-exploration/anki-cabinet-lab/production-evidence/

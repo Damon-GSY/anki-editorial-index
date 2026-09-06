@@ -7,6 +7,8 @@
 ```json
 {
   "enabled": true,
+  "layout": "editorial",
+  "cabinet_display": {},
   "accent_color": "#2F5BBC",
   "color_theme": "editorial",
   "catppuccin_flavor": "auto",
@@ -24,6 +26,8 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 | 设置 | 类型 | 默认值 | 保存后的结果 |
 | --- | --- | --- | --- |
 | `enabled` | 布尔值 | `true` | 控制整个主题。关闭后恢复 Anki 原有界面 |
+| `layout` | 字符串 | `editorial` | 本分支支持 `editorial` 经典或 `cabinet` 卡匣；也可在工具菜单选择 |
+| `cabinet_display` | 对象 | `{}` | 按 Anki 账户保存隐藏／收起的顶层牌组，由「首页展示设置」管理，无需手填牌组编号 |
 | `color_theme` | 字符串 | `editorial` | 选择 `editorial` 暖纸配色或 `catppuccin` 配色系统 |
 | `accent_color` | 字符串 | `#2F5BBC` | 改变 Editorial Index 配色的按钮、链接和焦点色；Catppuccin 不使用此值 |
 | `catppuccin_flavor` | 字符串 | `auto` | 选择 `auto`、`latte`、`frappe`、`macchiato` 或 `mocha` |
@@ -38,11 +42,17 @@ JSON 对逗号、引号和布尔值的写法有严格要求。`true` 与 `false`
 
 - 上方选择 Editorial 暖纸、Catppuccin 自动或四种固定 flavor
 - 中间一次展示全部 14 种 Catppuccin 强调色；每次启用其中一种
-- 下方展示链接、焦点、光标、New、Learn、Due、Good、Easy 的实际运行时颜色
+- 本分支下方的「界面预览」显示当前布局的标题、按钮和评分样式；「颜色用途与色值」保留链接、焦点、光标和评分等语义色
 
 如果已经知道要选什么，也可以使用「工具 → Editorial Index 快速配色」直接切换。56 种 Catppuccin 选择指 4 个 flavor × 14 个 accent 的组合矩阵，不会把 14 种强调色同时塞进日常牌组页。
 
 选择后会立即同步到 Anki 主界面、复习页、原生窗口与 Add / Browse Editor，无需重启。「Editorial Index 主题」仍是总开关；关闭时更换配色只会保存选择，不会自动重新启用主题。
+
+## 卡匣首页（当前预览分支）
+
+在「工具 → Editorial Index 布局 → 卡匣 Cabinet」启用。首页右上角「配色」与工具菜单打开同一个面板；「展示设置」可选择默认显示／隐藏与收起状态，点击「保存」生效。卡匣右上角和「全部收起／全部展开」可直接切换，不删除或暂停卡片。回到「经典 Editorial」即可恢复传统首页。
+
+这些偏好保存在当前电脑，显示设置按 Anki 账户区分，不随牌组或学习进度同步。分享插件不等于分享你的个人配置。完整说明见 [卡匣指南](./CABINET.md)。
 
 ## Editorial Index 暖纸强调色
 

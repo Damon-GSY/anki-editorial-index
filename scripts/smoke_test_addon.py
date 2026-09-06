@@ -362,7 +362,12 @@ def install_fake_aqt() -> tuple[FakeMainWindow, types.SimpleNamespace]:
         dialog_manager_did_open_dialog=HookList(),
         webview_will_set_content=HookList(),
         deck_browser_will_render_content=HookList(),
+        deck_browser_did_render=HookList(),
+        overview_did_refresh=HookList(),
+        reviewer_did_show_question=HookList(),
+        reviewer_did_show_answer=HookList(),
         webview_did_inject_style_into_page=HookList(),
+        webview_did_receive_js_message=HookList(),
         style_did_init=HookList(),
         main_window_did_init=HookList(),
         theme_did_change=HookList(),
@@ -429,7 +434,7 @@ def main() -> None:
     fake_mw.addonManager.config["accent_color"] = "#2F5BBC"
 
     assert fake_mw.addonManager.export_pattern == (
-        r"^web/(?:theme\.css|editor\.css|editor-marker\.js|fonts/.*\.(?:woff2|ttf|txt|md))$"
+        r"^web/(?:theme\.css|heatmap\.css|cabinet\.css|cabinet\.js|editor\.css|editor-marker\.js|fonts/.*\.(?:woff2|ttf|txt|md))$"
     )
     assert len(hooks.webview_will_set_content) == 1
     assert len(hooks.deck_browser_will_render_content) == 1

@@ -1,0 +1,6 @@
+{
+  "package": "cabinet_lab",
+  "name": "Card Cabinet — ISOLATED INTEGRATION LAB",
+  "human_version": "0.0.0-lab",
+  "conflicts": ["mistline_ui"]
+}
