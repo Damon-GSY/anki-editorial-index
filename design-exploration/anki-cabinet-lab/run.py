@@ -43,19 +43,21 @@ def main():
     mode.add_argument("--verify", action="store_true", help="Run native UI checks, screenshot, then exit")
     mode.add_argument("--open", action="store_true", help="Leave the isolated demo window open")
     mode.add_argument("--palette", action="store_true", help="Verify only the production palette dialog in isolated Anki")
+    mode.add_argument("--footer", action="store_true", help="Verify only the production reviewer footer in isolated Anki")
     parser.add_argument("--production", action="store_true",
                         help="Test the repository's production addon/ in a fresh scratch profile")
     args = parser.parse_args()
-    if args.palette and not args.production:
-        parser.error("--palette requires --production")
+    if (args.palette or args.footer) and not args.production:
+        parser.error("--palette and --footer require --production")
     if not PACKAGES.is_dir():
         raise SystemExit("This runner requires /Applications/Anki.app; no fallback mock is used.")
     source = LAB.parents[1] / "addon" if args.production else LAB / "addon"
     package = "mistline_ui" if args.production else "cabinet_lab"
-    output = LAB / "production-evidence" if args.production else LAB
+    output = (LAB.parents[1] / "local-tests" / "reviewer-footer-2026-09-19"
+              if args.footer else LAB / "production-evidence" if args.production else LAB)
     if not (source / "__init__.py").is_file():
         raise SystemExit(f"The requested add-on is not present: {source}")
-    output.mkdir(exist_ok=True)
+    output.mkdir(parents=True, exist_ok=True)
     interpreter, version = compatible_python()
     # Never accept a user-supplied base path: each invocation creates a new lab.
     scratch = Path(tempfile.mkdtemp(prefix="anki-cabinet-lab-")).resolve()
@@ -69,13 +71,14 @@ def main():
         # Only the freshly generated add-on copy receives this user config.
         (addon / "meta.json").write_text(json.dumps({"config": {
             "enabled": True, "layout": "cabinet", "color_theme": "catppuccin",
-            "catppuccin_flavor": "latte", "catppuccin_accent": "blue",
+            "catppuccin_flavor": "latte", "catppuccin_accent": "mauve" if args.footer else "blue",
             "style_reviewer": True,
         }}, indent=2), encoding="utf-8")
     env = os.environ.copy()
     env["PYTHONPATH"] = str(PACKAGES)
     env["ANKI_CABINET_LAB_BASE"] = str(scratch)
-    env["ANKI_CABINET_LAB_MODE"] = "open" if args.open else "palette" if args.palette else "verify"
+    env["ANKI_CABINET_LAB_MODE"] = ("open" if args.open else "palette" if args.palette
+                                          else "footer" if args.footer else "verify")
     env["ANKI_CABINET_LAB_OUTPUT"] = str(output)
     env["ANKI_CABINET_LAB_ADDON"] = package
     env["PYTHONUNBUFFERED"] = "1"

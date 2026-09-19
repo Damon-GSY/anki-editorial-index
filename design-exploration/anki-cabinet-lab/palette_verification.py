@@ -112,11 +112,17 @@ class PaletteVerification:
     def preview_state(self, then):
         self.d.js("""(()=>{const root=document.documentElement, buttons=[...document.querySelectorAll('#middle button[data-ease]')];
           const css=e=>getComputedStyle(e), box=e=>e.getBoundingClientRect();
+          const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d',{willReadFrequently:true});
+          const rgb=c=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=c;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3)};
+          const lum=c=>rgb(c).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+          const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+          const answer=document.querySelector('#ansbut'),answerStyle=css(answer);
           const heading=box(document.querySelector('.palette-preview-heading')),first=box(buttons[0]),last=box(buttons[3]);return {
             flavor:root.dataset.mistlinePalette,accent:root.dataset.mistlineAccent,
             colors:buttons.map(b=>css(b).color),
             inert:buttons.length===4&&buttons.every(b=>b.disabled&&!b.hasAttribute('onclick')),
-            accentFill:css(document.querySelector('#ansbut')).backgroundColor,
+            accentRaw:'rgb('+rgb(css(root).getPropertyValue('--mist-accent-fill').trim()).join(', ')+')',
+            answer:{color:answerStyle.color,background:answerStyle.backgroundColor,contrast:ratio(answerStyle.color,answerStyle.backgroundColor)},
             noOverflow:root.scrollWidth<=innerWidth+2&&root.scrollHeight<=innerHeight+2,
             spacing:{left:Math.abs(first.left-heading.left),right:Math.abs(last.right-heading.right),
               top:heading.top,bottom:innerHeight-last.bottom,gap:first.top-heading.bottom},
@@ -159,12 +165,14 @@ class PaletteVerification:
         self.rating_colors.setdefault(self.flavor, preview["colors"])
         self.d.check("Semantic ratings stay distinct and independent of accent: " + label,
                      len(set(preview["colors"])) == 4 and preview["colors"] == self.rating_colors[self.flavor])
+        self.d.check("Answer preview remains readable with a soft accent surface: " + label,
+                     preview["answer"]["contrast"] >= 4.5, preview["answer"])
 
         def after_home(home):
             rgb = "rgb(" + ", ".join(str(int(expected.accent[i:i + 2], 16)) for i in (1, 3, 5)) + ")"
             self.d.check("Homepage badge updates without rebuilding decks: " + label,
                          home["same"] and home["flavor"] == self.flavor.capitalize()
-                         and home["swatch"] == rgb and home["swatch"] == preview["accentFill"]
+                         and home["swatch"] == rgb and home["swatch"] == preview["accentRaw"]
                          and self.accent in home["accessible"], home)
             if self.accent == "blue" and self.flavor in {"latte", "mocha"}:
                 self.capture("24-palette-latte" if self.flavor == "latte" else "25-palette-mocha")

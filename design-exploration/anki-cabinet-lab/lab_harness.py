@@ -134,12 +134,110 @@ class Driver:
         elif MODE == "palette":
             self.production_addon = sys.modules[PACKAGE]
             self.later(2000, self.start_palette_checks)
+        elif MODE == "footer":
+            self.production_addon = sys.modules[PACKAGE]
+            self.later(1600, self.start_footer_checks)
         else:
             self.later(1600, self.home)
 
     def start_palette_checks(self):
         from palette_verification import PaletteVerification
         self.palette_verification = PaletteVerification(self)
+
+    def start_footer_checks(self):
+        self.mw.moveToState("overview")
+        self.wait(lambda: self.mw.state == "overview", lambda: self.study(self.footer_question),
+                  "native overview for footer verification")
+
+    def footer_question(self):
+        self.wait(lambda: self.mw.reviewer.state == "question" and self.mw.bottomWeb.isVisible(),
+                  lambda: self.footer_state("latte-mauve", self.footer_latte_checked),
+                  "native question footer")
+
+    def footer_state(self, label, then):
+        script = """(()=>{
+          const canvas=document.createElement('canvas');canvas.width=canvas.height=1;
+          const ctx=canvas.getContext('2d',{willReadFrequently:true});
+          const css=e=>getComputedStyle(e);
+          const rgb=c=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=c;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3)};
+          const lum=c=>rgb(c).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+          const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+          const button=document.querySelector('#ansbut'),stats=button?.querySelector('.stattxt'),root=document.documentElement;
+          const outer=document.querySelector('#outer'),left=document.querySelector('.stat:first-child button'),right=document.querySelector('.stat:last-child button');
+          const b=button?.getBoundingClientRect(),s=stats?.getBoundingClientRect(),o=outer?.getBoundingClientRect();
+          const bs=button&&getComputedStyle(button),ss=stats&&getComputedStyle(stats),os=outer&&getComputedStyle(outer),bodyStyle=getComputedStyle(document.body);
+          const countTokens={new:'--mist-new',learn:'--mist-learn',review:'--mist-due'};
+          const semanticCounts=[...stats.querySelectorAll('.new-count,.learn-count,.review-count')].map(node=>{
+            const role=node.className.replace('-count',''),style=getComputedStyle(node);
+            return {role,color:'rgb('+rgb(style.color).join(', ')+')',token:'rgb('+rgb(css(root).getPropertyValue(countTokens[role]).trim()).join(', ')+')',contrast:ratio(style.color,bodyStyle.backgroundColor)};
+          });
+          return {label:LABEL,text:stats?.innerText.trim(),onclick:button?.getAttribute('onclick'),
+            button:{left:b?.left,right:b?.right,top:b?.top,bottom:b?.bottom,width:b?.width,height:b?.height,color:bs?.color,background:bs?.backgroundColor,contrast:bs&&ratio(bs.color,bs.backgroundColor)},
+            stats:{top:s?.top,bottom:s?.bottom,color:ss?.color,contrast:ss&&ratio(ss.color,bodyStyle.backgroundColor),semanticCounts},
+            outer:{top:o?.top,bottom:o?.bottom,left:o?.left,right:o?.right,padding:os?.padding},
+            sideCenterDelta:Math.max(Math.abs((left.getBoundingClientRect().top+left.getBoundingClientRect().bottom-b.top-b.bottom)/2),Math.abs((right.getBoundingClientRect().top+right.getBoundingClientRect().bottom-b.top-b.bottom)/2)),
+            overflow:document.documentElement.scrollWidth>innerWidth+1||document.documentElement.scrollHeight>innerHeight+1,
+            palette:document.documentElement.dataset.mistlinePalette,accent:document.documentElement.dataset.mistlineAccent};
+        })()""".replace("LABEL", json.dumps(label))
+        self.js(script, lambda state: self.footer_state_checked(label, state, then), self.mw.bottomWeb)
+
+    def footer_state_checked(self, label, state, then):
+        button, stats, outer = state["button"], state["stats"], state["outer"]
+        self.check(label + " keeps the native Show Answer command", state["onclick"] == 'pycmd("ans");', state)
+        self.check(label + " uses a restrained answer button", 240 <= button["width"] <= 320 and 48 <= button["height"] <= 52, state)
+        self.check(label + " separates readable counts above the button",
+                   bool(state["text"]) and stats["bottom"] <= button["top"] - 2 and stats["top"] >= outer["top"] + 2
+                   and button["contrast"] >= 4.5 and stats["contrast"] >= 4.5, state)
+        self.check(label + " preserves new, learn, and review count colors",
+                   [item["role"] for item in stats["semanticCounts"]] == ["new", "learn", "review"]
+                   and all(item["color"] == item["token"] and item["contrast"] >= 4.5
+                           for item in stats["semanticCounts"]), state)
+        self.check(label + " aligns side actions to the visible answer control",
+                   state["sideCenterDelta"] <= 1 and not state["overflow"], state)
+        self.report.setdefault("reviewer_footer", []).append(state)
+        self.capture("footer-" + label)
+        if label == "latte-mauve":
+            self.capture_footer("footer-latte-mauve-question")
+        then()
+
+    def footer_latte_checked(self):
+        self.mw.resize(820, 760)
+        self.later(450, lambda: self.footer_state("latte-mauve-820", self.footer_narrow_checked))
+
+    def footer_narrow_checked(self):
+        self.mw.resize(1280, 860)
+        self.production_addon._select_palette("mocha")
+        self.later(500, lambda: self.footer_state("mocha-mauve", self.footer_mocha_checked))
+
+    def footer_mocha_checked(self):
+        self.mw.col.conf["dueCounts"] = False
+        self.mw.reviewer._showAnswerButton()
+        self.later(350, self.footer_counts_off)
+
+    def footer_counts_off(self):
+        self.js("""(()=>{const b=document.querySelector('#ansbut').getBoundingClientRect(),s=document.querySelector('#ansbut .stattxt').getBoundingClientRect();return {text:document.querySelector('#ansbut .stattxt').innerText.trim(),buttonTop:b.top,statsWidth:s.width,statsHeight:s.height,onclick:document.querySelector('#ansbut').getAttribute('onclick')}})()""",
+                self.footer_counts_off_checked, self.mw.bottomWeb)
+
+    def footer_counts_off_checked(self, state):
+        self.check("Disabled remaining counts leave no empty reserved row",
+                   not state["text"] and state["buttonTop"] <= 26 and state["statsWidth"] == 0
+                   and state["onclick"] == 'pycmd("ans");', state)
+        self.mw.col.conf["dueCounts"] = True
+        self.production_addon._select_palette("latte")
+        self.mw.reviewer._showAnswerButton()
+        self.later(250, lambda: self.show_answer(self.footer_answer))
+
+    def footer_answer(self):
+        self.js("""(()=>{const buttons=[...document.querySelectorAll('#middle button[data-ease]')],left=document.querySelector('.stat:first-child button'),right=document.querySelector('.stat:last-child button'),first=buttons[0].getBoundingClientRect();const center=r=>(r.top+r.bottom)/2;return {count:buttons.length,commands:buttons.map(b=>b.getAttribute('onclick')),inside:buttons.every(b=>{const r=b.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth}),sideCenterDelta:Math.max(Math.abs(center(left.getBoundingClientRect())-center(first)),Math.abs(center(right.getBoundingClientRect())-center(first)))}})()""",
+                self.footer_answer_checked, self.mw.bottomWeb)
+
+    def footer_answer_checked(self, state):
+        self.check("Question to answer keeps native ratings visible and wired",
+                   state["count"] == 4 and state["inside"] and state["sideCenterDelta"] <= 1
+                   and state["commands"] == ['pycmd("ease1");','pycmd("ease2");','pycmd("ease3");','pycmd("ease4");'], state)
+        self.capture("footer-answer-latte-mauve")
+        self.capture_footer("footer-latte-mauve-answer")
+        self.finish()
 
     def later(self, ms, fn):
         def call():
@@ -184,6 +282,13 @@ class Driver:
         folder.mkdir(exist_ok=True)
         path = folder / (name + ".png")
         self.check("Qt screenshot " + name, self.mw.grab().save(str(path)))
+        self.report["screenshots"].append(str(path))
+
+    def capture_footer(self, name):
+        folder = OUTPUT / "screenshots"
+        folder.mkdir(exist_ok=True)
+        path = folder / (name + "-bottom-web.png")
+        self.check("Qt reviewer footer screenshot " + name, self.mw.bottomWeb.grab().save(str(path)))
         self.report["screenshots"].append(str(path))
 
     def click(self, selector, then, web=None):

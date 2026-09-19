@@ -145,14 +145,16 @@
 :root[data-cabinet-context=top] a.hitem.selected {background:var(--cb-paper)!important;color:var(--cb-ink)!important;box-shadow:var(--cb-shadow)}
 :root[data-cabinet-context=bottom] body {padding:16px 28px!important;border-top:1px solid var(--cb-line)!important;box-sizing:border-box}
 :root[data-cabinet-context=bottom] button {border-radius:9px!important;border:1px solid var(--cb-line)!important;padding:10px 20px!important;background:var(--cb-paper)!important;color:var(--cb-ink)!important;font:13px var(--cb-ui)!important;box-shadow:var(--cb-shadow)}
-:root[data-cabinet-context=reviewer-bottom] body {padding:15px 24px 22px!important;box-sizing:border-box;background:var(--cb-canvas)!important;border-top:1px solid var(--cb-line)!important}
+:root[data-cabinet-context=reviewer-bottom] body {padding:0!important;box-sizing:border-box;background:var(--cb-canvas)!important}
 :root[data-cabinet-context=reviewer-bottom] #bottom-bar {background:none!important;border:0!important;box-shadow:none!important}
-:root[data-cabinet-context=reviewer-bottom] #outer {border:0!important}
+:root[data-cabinet-context=reviewer-bottom] #outer {box-sizing:border-box;width:100%;padding:16px 24px!important;border:0!important;border-top:1px solid var(--cb-line)!important}
 :root[data-cabinet-context=reviewer-bottom] #innertable>tbody>tr>td {vertical-align:middle!important}
 :root[data-cabinet-context=reviewer-bottom] .stat {padding:0!important}
 :root[data-cabinet-context=reviewer-bottom] .stat button {min-height:44px!important;height:44px!important;margin:0!important;padding:10px 16px!important;background:transparent!important;border-color:transparent!important;box-shadow:none!important;font-weight:400!important;color:var(--cb-muted)!important}
+:root[data-cabinet-context=reviewer-bottom] #innertable:has(#ansbut) .stat>button {margin-top:20px!important}
 :root[data-cabinet-context=reviewer-bottom] .stat button:hover {background:var(--cb-paper)!important;color:var(--cb-ink)!important}
 :root[data-cabinet-context=reviewer-bottom] #middle {padding:0 18px!important}
+:root[data-cabinet-context=reviewer-bottom] #middle .stat2 {padding:0!important}
 :root[data-cabinet-context=reviewer-bottom] #middle>center>table {border-collapse:separate!important;border-spacing:10px 0!important;table-layout:fixed;width:100%;max-width:980px;margin:auto}
 :root[data-cabinet-context=reviewer-bottom] #middle td {padding:0!important;vertical-align:middle}
 :root[data-cabinet-context=reviewer-bottom] button {font:13px var(--cb-ui)!important;border:1px solid var(--cb-line)!important;border-radius:10px!important;background:var(--cb-paper)!important;color:var(--cb-ink)!important;padding:13px 20px!important;box-shadow:var(--cb-shadow);min-height:46px;height:auto!important}
@@ -182,16 +184,24 @@
 :root[data-cabinet-context=reviewer-bottom] #middle button[data-ease]:hover {background:color-mix(in srgb,var(--cb-rating) 9%,var(--cb-rating-paper))!important;border-color:color-mix(in srgb,var(--cb-rating-ink) 38%,var(--cb-line))!important;box-shadow:0 3px 7px #1b153012!important}
 :root[data-cabinet-context=reviewer-bottom] #middle button[data-ease]:active {box-shadow:none!important}
 :root[data-cabinet-context=reviewer-bottom] #middle button[data-ease]:focus-visible {outline:2px solid var(--cb-rating-ink)!important;outline-offset:3px!important}
-:root[data-cabinet-context=reviewer-bottom] #ansbut {background:var(--cb-accent)!important;color:var(--cb-on-accent)!important;border-color:var(--cb-accent)!important;min-width:240px!important;padding:14px 30px!important;min-height:56px!important}
-:root[data-cabinet-context=reviewer-bottom] #ansbut .stattxt {display:inline-block;color:inherit!important;margin-left:15px;opacity:.85;font-size:11px}
-:root[data-cabinet-context=reviewer-bottom] #ansbut .stattxt * {color:inherit!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut {box-sizing:border-box;width:clamp(240px,32vw,320px);min-width:0!important;min-height:50px!important;margin:20px 0 0!important;padding:12px 24px!important;background:var(--mist-accent-soft,var(--cb-tab))!important;color:var(--mist-accent,var(--cb-accent))!important;border-color:color-mix(in srgb,var(--mist-accent,var(--cb-accent)) 38%,var(--cb-line))!important;font-weight:600!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut:hover {background:var(--mist-accent-soft,var(--cb-tab))!important;border-color:color-mix(in srgb,var(--mist-accent,var(--cb-accent)) 58%,var(--cb-line))!important;color:var(--mist-accent,var(--cb-accent))!important;box-shadow:0 4px 10px #1b153014!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut:active {background:var(--mist-accent-soft,var(--cb-tab))!important;border-color:var(--mist-accent,var(--cb-accent))!important;box-shadow:none!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut:focus-visible {outline:2px solid var(--mist-focus,var(--cb-accent))!important;outline-offset:3px!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut .stattxt {display:inline-block!important;top:-9px!important;color:var(--mist-label,var(--cb-muted))!important;margin:0!important;opacity:1!important;font-size:12px!important;font-weight:400!important;line-height:1.35!important;font-variant-numeric:tabular-nums}
+:root[data-cabinet-context=reviewer-bottom] #ansbut .stattxt .new-count {color:var(--mist-new,var(--cb-new))!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut .stattxt .learn-count {color:var(--mist-learn,var(--cb-learn))!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut .stattxt .review-count {color:var(--mist-due,var(--cb-again))!important}
+:root[data-cabinet-context=reviewer-bottom] #ansbut:has(.stattxt:empty) {margin-top:0!important}
+:root[data-cabinet-context=reviewer-bottom] #innertable:has(#ansbut .stattxt:empty) .stat>button {margin-top:0!important}
 @media(max-width:800px) {
   :root[data-cabinet-context=deck] body {padding:25px 22px!important}
   .cabinet-folders {grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px}
   :root[data-cabinet-context=reviewer] body {padding:40px 20px 28px!important}
   :root[data-cabinet-context=reviewer] #qa {padding:30px 26px}
-  :root[data-cabinet-context=reviewer-bottom] body {padding:14px 8px 19px!important}
+  :root[data-cabinet-context=reviewer-bottom] #outer {padding:12px 8px!important}
   :root[data-cabinet-context=reviewer-bottom] #middle {padding:0 5px!important}
+  :root[data-cabinet-context=reviewer-bottom] #ansbut {width:min(100%,320px)}
   :root[data-cabinet-context=reviewer-bottom] #middle button[data-ease] {min-width:74px!important;padding:12px 9px!important}
   :root[data-cabinet-context=top] a {padding:9px 11px!important;font-size:13px!important}
 }

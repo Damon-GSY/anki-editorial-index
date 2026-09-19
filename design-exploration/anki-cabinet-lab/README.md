@@ -16,6 +16,12 @@ python3 design-exploration/anki-cabinet-lab/run.py --production --verify
 python3 design-exploration/anki-cabinet-lab/run.py --production --palette
 ```
 
+只检查复习底栏（输出到 `local-tests/reviewer-footer-2026-09-19/`）：
+
+```sh
+python3 design-exploration/anki-cabinet-lab/run.py --production --footer
+```
+
 需要手动试用隔离窗口时使用 `--production --open`。不带 `--production` 则运行本目录 `addon/` 下保留的早期实验版本；其牌组测试为 `python3 design-exploration/anki-cabinet-lab/test_decks.py`。
 
 每次启动生成新的临时资料库和示例笔记，不读取或复制日常资料库、不登录 AnkiWeb、不自动同步。测试只操作生成的数据。不要在实验资料库中保存需要长期保留的学习内容。

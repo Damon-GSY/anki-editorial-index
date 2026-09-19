@@ -241,6 +241,12 @@ def test_auto_and_explicit_flavors(module) -> None:
 
 
 def test_every_selectable_combination(module) -> None:
+    cabinet_css = (ROOT / "addon" / "web" / "cabinet.css").read_text(encoding="utf-8")
+    for state in ("hover", "active"):
+        rule = re.search(rf"#ansbut:{state} \{{([^}}]+)\}}", cabinet_css)
+        assert rule and "background:var(--mist-accent-soft,var(--cb-tab))!important" in rule.group(1), (
+            f"reviewer answer {state} must keep the contrast-checked soft accent surface"
+        )
     checked = 0
     for flavor in OFFICIAL_FLAVORS:
         expected_accents = dict(zip(OFFICIAL_ACCENT_ORDER, OFFICIAL_ACCENTS[flavor]))
@@ -325,6 +331,10 @@ def test_every_selectable_combination(module) -> None:
             assert_contrast(
                 module, f"{label} on-danger", tokens.on_danger, (tokens.danger,), 4.5
             )
+            for state in ("hover", "pressed"):
+                assert module.contrast_ratio(tokens.accent_text, tokens.accent_soft) >= 4.5, (
+                    f"{label} answer {state}: {tokens.accent_text} on {tokens.accent_soft}"
+                )
             for role in ("danger_text", "new", "learn", "due", "good", "easy"):
                 assert_contrast(
                     module,
